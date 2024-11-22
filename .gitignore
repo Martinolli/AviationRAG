@@ -1,1 +1,16 @@
-node_modules
+# Node modules
+node_modules/
+
+# Python environment
+venv/
+
+# Environment variables
+.env
+
+# Raw data
+data/raw/
+
+# Ignore IDE and system files
+.vscode/
+*.DS_Store
+
