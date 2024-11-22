@@ -7,10 +7,6 @@ venv/
 # Environment variables
 .env
 
-# Raw data
-data/raw/
-
-# Ignore IDE and system files
-.vscode/
-*.DS_Store
-
+# Ignore all files in data/raw except the PKL file
+data/raw/*
+!data/raw/aviation_corpus.pkl
