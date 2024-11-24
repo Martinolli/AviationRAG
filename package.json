@@ -1,3 +1,30 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:093cb3a80529dc30fd1bc7c2b039632f11bd8de32a10e97e8fb381c6d1081a01
-size 551
+{
+  "name": "aviationrag",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@astrajs/collections": "^0.0.2",
+    "@datastax/astra-db-ts": "^1.5.0",
+    "cassandra-driver": "^4.7.2",
+    "debug": "^4.3.7",
+    "dotenv": "^16.4.5",
+    "langchain": "^0.3.6",
+    "node": "^20.18.1",
+    "openai": "^4.73.0",
+    "path-to-regex": "^1.3.8",
+    "path-to-regexp": "^8.2.0",
+    "redwood": "^0.0.1",
+    "routing-tools": "^0.0.4",
+    "semver": "^7.6.3",
+    "senver": "^0.0.0",
+    "tar": "^7.4.3",
+    "vercel": "^32.3.0"
+  }
+}
