@@ -3,18 +3,17 @@ const path = require('path');
 const dotenv = require('dotenv');
 const { Configuration, OpenAIApi } = require('openai');
 
-// Log to check the imported objects
-console.log('Configuration:', Configuration);
-console.log('OpenAIApi:', OpenAIApi);
-
 // Load environment variables from .env
 dotenv.config();
 
 // Initialize OpenAI client using the OpenAI SDK
 const configuration = new Configuration({
-apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 const openai = new OpenAIApi(configuration);
+
+// Log to check the initialized OpenAI client
+console.log('OpenAI client initialized:', openai);
 
 async function generateEmbeddings() {
   try {
