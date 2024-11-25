@@ -1,44 +1,53 @@
+const cassandra = require('cassandra-driver');
 const fs = require('fs');
 const path = require('path');
-const { createClient } = require('@astrajs/collections');
 const dotenv = require('dotenv');
-
-// Load environment variables
 dotenv.config();
 
 async function storeEmbeddings() {
-  try {
-    // Connect to Astra DB
-    const client = await createClient({
-      astraDatabaseId: process.env.ASTRA_DB_ID,
-      astraDatabaseRegion: process.env.ASTRA_DB_REGION,
-      astraApplicationToken: process.env.ASTRA_DB_TOKEN,
-    });
+    try {
+        // Initialize the Cassandra client
+        const client = new cassandra.Client({
+            cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
+            keyspace: process.env.ASTRA_DB_KEYSPACE,
+        });
 
-    const table = client.namespace(process.env.ASTRA_DB_KEYSPACE).collection('aviation_documents');
+        // Connect to Astra DB
+        await client.connect();
+        console.log('Connected to Astra DB successfully!');
 
-    // Load embeddings
-    const dataPath = path.join(__dirname, '../../data/processed/aviation_embeddings.json');
-    const rawData = fs.readFileSync(dataPath, 'utf-8');
-    const embeddings = JSON.parse(rawData);
+        // Load embeddings from file
+        const dataPath = path.join(__dirname, '../../data/embeddings/aviation_embeddings.json');
+        const rawData = fs.readFileSync(dataPath, 'utf-8');
+        const embeddings = JSON.parse(rawData);
 
-    // Insert each embedding into the table
-    for (const embedding of embeddings) {
-      const id = embedding.id; // Unique ID
-      const payload = {
-        title: embedding.title,
-        text_chunk: embedding.text_chunk,
-        embedding: embedding.embedding, // Vector embedding
-      };
+        // Insert embeddings into the table
+        for (const embedding of embeddings) {
+            const query = `
+                INSERT INTO aviation_documents (chunk_id, filename, embedding, metadata)
+                VALUES (?, ?, ?, ?);
+            `;
 
-      await table.create(id, payload);
-      console.log(`Stored embedding for ID: ${id}`);
+            const params = [
+                embedding.chunk_id,                         // Chunk ID
+                embedding.filename,                        // Filename
+                Buffer.from(JSON.stringify(embedding.embedding)), // Convert embedding to blob
+                null,                                      // Metadata (optional)
+            ];
+
+            try {
+                await client.execute(query, params, { prepare: true });
+                console.log(`Stored embedding for Chunk ID: ${embedding.chunk_id}`);
+            } catch (err) {
+                console.error(`Failed to store embedding for Chunk ID: ${embedding.chunk_id}`, err);
+            }
+        }
+
+        console.log('All embeddings stored successfully!');
+        await client.shutdown();
+    } catch (err) {
+        console.error('Error connecting to Astra DB or processing embeddings:', err);
     }
-
-    console.log('All embeddings stored successfully!');
-  } catch (err) {
-    console.error('Error storing embeddings:', err);
-  }
 }
 
 // Run the function

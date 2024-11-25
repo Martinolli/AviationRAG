@@ -20,18 +20,20 @@ async function createTable() {
         // Connect to the database
         await client.connect();
 
-        // CQL to create the table
+        // Drop the existing table (if needed)
+        const dropTableQuery = `DROP TABLE IF EXISTS aviation_documents;`;
+        await client.execute(dropTableQuery);
+        console.log('Old table dropped successfully!');
+
+        // Create the new table with the updated schema
         const createTableQuery = `
             CREATE TABLE IF NOT EXISTS aviation_documents (
-                id UUID PRIMARY KEY,
-                title TEXT,
-                text_chunk TEXT,
-                embedding BLOB,
-                metadata TEXT
+                chunk_id TEXT PRIMARY KEY,  -- Use chunk_id as primary key
+                filename TEXT,              -- Store the source filename
+                embedding BLOB,             -- Store vector embeddings
+                metadata TEXT               -- Optional field for future use
             );
         `;
-
-        // Execute the CQL query
         await client.execute(createTableQuery);
         console.log('Table created successfully in Astra DB!');
 
