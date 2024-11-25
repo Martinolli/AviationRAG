@@ -17,10 +17,9 @@ console.log('OpenAI client initialized:', openai);
 
 async function generateEmbeddings() {
   try {
-    // Load chunked documents
-    const dataPath = path.join(__dirname, '../../data/processed/chunked_aviation_corpus.json');
-    const rawData = fs.readFileSync(dataPath, 'utf-8');
-    const chunkedDocs = JSON.parse(rawData);
+    // Path to the folder containing chunked JSON files
+    const chunkedDocsPath = path.join(__dirname, '../../data/processed/chunked_documents');
+    const outputPath = path.join(__dirname, '../../data/embeddings/aviation_embeddings.json');
 
     const embeddings = [];
 
@@ -29,36 +28,47 @@ async function generateEmbeddings() {
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // Loop over each chunk to generate embeddings
-    for (const chunk of chunkedDocs) {
-      try {
-        const response = await openai.createEmbedding({
-          model: 'text-embedding-ada-002', // The embedding model to use
-          input: chunk.text_chunk,
-        });
+    // Read all JSON files in the chunked documents folder
+    const files = fs.readdirSync(chunkedDocsPath).filter(file => file.endsWith('.json'));
 
-        const embeddingVector = response.data.data[0].embedding; // Extract the embedding from the response
+    for (const file of files) {
+      const filePath = path.join(chunkedDocsPath, file);
 
-        embeddings.push({
-          id: chunk.id,
-          title: chunk.title,
-          text_chunk: chunk.text_chunk,
-          embedding: embeddingVector,
-        });
+      // Read and parse the JSON file
+      const rawData = fs.readFileSync(filePath, 'utf-8');
+      const chunkedDocs = JSON.parse(rawData);
 
-        console.log(`Generated embedding for chunk ID: ${chunk.id}`);
+      console.log(`Processing file: ${file}`);
 
-        // Add delay to avoid hitting rate limits
-        await delay(1000); // Adjust delay as needed
-      } catch (err) {
-        console.error(`Error generating embedding for chunk ID: ${chunk.id}`, err);
+      // Process each chunk in the file
+      for (const chunk of chunkedDocs.chunks) {
+        try {
+          const response = await openai.createEmbedding({
+            model: 'text-embedding-ada-002', // The embedding model to use
+            input: chunk.text,
+          });
+
+          const embeddingVector = response.data.data[0].embedding; // Extract the embedding from the response
+
+          embeddings.push({
+            chunk_id: chunk.chunk_id,
+            filename: chunkedDocs.filename,
+            text: chunk.text,
+            embedding: embeddingVector,
+          });
+
+          console.log(`Generated embedding for chunk ID: ${chunk.chunk_id}`);
+
+          // Add delay to avoid hitting rate limits
+          await delay(1000); // Adjust delay as needed
+        } catch (err) {
+          console.error(`Error generating embedding for chunk ID: ${chunk.chunk_id}`, err);
+        }
       }
     }
 
     // Save embeddings to a new JSON file for later processing
-    const outputPath = path.join(__dirname, '../../data/processed/aviation_embeddings.json');
-    const fsPromises = fs.promises;
-    await fsPromises.writeFile(outputPath, JSON.stringify(embeddings, null, 2));
+    await fs.promises.writeFile(outputPath, JSON.stringify(embeddings, null, 2));
     console.log(`Embeddings saved to ${outputPath}`);
 
   } catch (err) {
