@@ -5,10 +5,15 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 async function storeEmbeddings() {
+    let client;
     try {
         // Initialize the Cassandra client
-        const client = new cassandra.Client({
+        client = new cassandra.Client({
             cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
+            credentials: { 
+                username: process.env.ASTRA_DB_CLIENT_ID, 
+                password: process.env.ASTRA_DB_CLIENT_SECRET 
+            },
             keyspace: process.env.ASTRA_DB_KEYSPACE,
         });
 
@@ -18,35 +23,48 @@ async function storeEmbeddings() {
 
         // Load embeddings from file
         const dataPath = path.join(__dirname, '../../data/embeddings/aviation_embeddings.json');
-        const rawData = fs.readFileSync(dataPath, 'utf-8');
-        const embeddings = JSON.parse(rawData);
+        let embeddings;
+        try {
+            const rawData = fs.readFileSync(dataPath, 'utf-8');
+            embeddings = JSON.parse(rawData);
+        } catch (err) {
+            throw new Error(`Failed to read or parse embeddings file: ${err.message}`);
+        }
+
+        // Define the insert query
+        const query = `
+            INSERT INTO aviation_documents (chunk_id, filename, embedding, metadata)
+            VALUES (?, ?, ?, ?);
+        `;
 
         // Insert embeddings into the table
-        for (const embedding of embeddings) {
-            const query = `
-                INSERT INTO aviation_documents (chunk_id, filename, embedding, metadata)
-                VALUES (?, ?, ?, ?);
-            `;
-
-            const params = [
-                embedding.chunk_id,                         // Chunk ID
-                embedding.filename,                        // Filename
-                Buffer.from(JSON.stringify(embedding.embedding)), // Convert embedding to blob
-                null,                                      // Metadata (optional)
-            ];
+        const batchSize = 100;
+        for (let i = 0; i < embeddings.length; i += batchSize) {
+            const batch = embeddings.slice(i, i + batchSize).map(embedding => ({
+                query: query,
+                params: [
+                    embedding.chunk_id,
+                    embedding.filename,
+                    Buffer.from(JSON.stringify(embedding.embedding)),
+                    null,
+                ]
+            }));
 
             try {
-                await client.execute(query, params, { prepare: true });
-                console.log(`Stored embedding for Chunk ID: ${embedding.chunk_id}`);
+                await client.batch(batch, { prepare: true });
+                console.log(`Stored embeddings ${i + 1} to ${Math.min(i + batchSize, embeddings.length)}`);
             } catch (err) {
-                console.error(`Failed to store embedding for Chunk ID: ${embedding.chunk_id}`, err);
+                console.error(`Failed to store embeddings ${i + 1} to ${Math.min(i + batchSize, embeddings.length)}:`, err);
             }
         }
 
         console.log('All embeddings stored successfully!');
-        await client.shutdown();
     } catch (err) {
         console.error('Error connecting to Astra DB or processing embeddings:', err);
+    } finally {
+        if (client) {
+            await client.shutdown();
+        }
     }
 }
 
