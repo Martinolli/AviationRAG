@@ -1,0 +1,4 @@
+Error while generating embeddings: RangeError: Invalid string length
+    at JSON.stringify (<anonymous>)
+    at generateEmbeddings (C:\Users\Aspire5 15 i7 4G2050\Project\AviationRAG\src\scripts\generate_embeddings.js:61:49)
+PS C:\Users\Aspire5 15 i7 4G2050\Project\AviationRAG>
