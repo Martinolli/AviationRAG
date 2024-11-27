@@ -20,13 +20,16 @@ async function storeEmbeddings() {
         // Connect to Astra DB
         await client.connect();
         console.log('Connected to Astra DB successfully!');
-
+        
         // Load embeddings from file
         const dataPath = path.join(__dirname, '../../data/embeddings/aviation_embeddings.json');
         let embeddings;
         try {
             const rawData = fs.readFileSync(dataPath, 'utf-8');
             embeddings = JSON.parse(rawData);
+
+        // Debugging: Print the first embedding for inspection
+            console.log("Sample Embedding:", embeddings[0]);
         } catch (err) {
             throw new Error(`Failed to read or parse embeddings file: ${err.message}`);
         }
@@ -59,6 +62,8 @@ async function storeEmbeddings() {
         }
 
         console.log('All embeddings stored successfully!');
+        console.log(`Processing ${embeddings.length} embeddings...`);
+
     } catch (err) {
         console.error('Error connecting to Astra DB or processing embeddings:', err);
     } finally {
