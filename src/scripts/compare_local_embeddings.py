@@ -1,33 +1,31 @@
 import json
 import numpy as np
 import os
-import openai
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Retrieve the API key from the environment variable
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from openai import OpenAI
 
-print(f"Loaded API Key: {openai.api_key}")
-
-import openai
+# Initialize the OpenAI client
+client = OpenAI(
+    api_key=os.environ['OPENAI_API_KEY']  # or set via environment variable
+)
 
 def get_embedding(text, model="text-embedding-ada-002"):
-    """Generate embedding for the given text using OpenAI's updated API."""
+    """Generate embedding using OpenAI's updated client."""
     try:
-        # Ensure the input is wrapped in a list (as required by the API)
-        response = openai.Embedding.create(
-            input=text if isinstance(text, list) else [text],
+        # Ensure the input is wrapped as a list
+        response = client.embeddings.create(
+            input=[text],  # OpenAI API requires input as a list
             model=model
         )
-        # Return the embedding vector from the response
-        return response['data'][0]['embedding']
+        return response["data"][0]["embedding"]
     except Exception as e:
         print(f"Error generating embedding: {e}")
         return None
-
 
 def cosine_similarity(vec1, vec2):
     """Compute cosine similarity between two vectors."""
@@ -51,6 +49,11 @@ filtered_data = [item for item in data]  # Adjust filters if necessary
 # Ask user for a query statement
 query_text = input("Enter your query statement: ")
 query_embedding = get_embedding(query_text)
+embedding = get_embedding(query_text)
+if embedding:
+    print("Generated embedding:", embedding)
+else:
+    print("Failed to generate embedding.")
 
 # Validate the embedding
 if query_embedding is None:
