@@ -54,7 +54,6 @@ labels = kmeans.fit_predict(pca_embeddings)
 silhouette_avg = silhouette_score(pca_embeddings, labels)
 print(f"Silhouette Score: {silhouette_avg}")
 
-
 # Using t-SNE
 tsne = TSNE(n_components=2, random_state=42, perplexity=30, learning_rate=200, n_iter=1000)
 tsne_embeddings = tsne.fit_transform(embeddings)
