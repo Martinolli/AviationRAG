@@ -1,51 +1,78 @@
-from transformers import BertModel, BertTokenizer
-import torch
-import numpy as np
-from sklearn.metrics.pairwise import cosine_similarity
 import json
+import numpy as np
 import os
+import openai
+from dotenv import load_dotenv
 
-# Load BERT model and tokenizer
-model = BertModel.from_pretrained('bert-base-uncased')
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+# Load environment variables from .env file
+load_dotenv()
 
-def get_embedding(text):
-    inputs = tokenizer(text, return_tensors='pt')
-    outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).detach().numpy()
+# Retrieve the API key from the environment variable
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Your new statement
-new_statement = "system safety"
+print(f"Loaded API Key: {openai.api_key}")
 
-# Generate embedding for the new statement
-new_embedding = get_embedding(new_statement)
+import openai
 
-# Load the JSON file
+def get_embedding(text, model="text-embedding-ada-002"):
+    """Generate embedding for the given text using OpenAI's updated API."""
+    try:
+        # Ensure the input is wrapped in a list (as required by the API)
+        response = openai.Embedding.create(
+            input=text if isinstance(text, list) else [text],
+            model=model
+        )
+        # Return the embedding vector from the response
+        return response['data'][0]['embedding']
+    except Exception as e:
+        print(f"Error generating embedding: {e}")
+        return None
+
+
+def cosine_similarity(vec1, vec2):
+    """Compute cosine similarity between two vectors."""
+    vec1 = np.array(vec1)
+    vec2 = np.array(vec2)
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+    if norm1 == 0 or norm2 == 0:
+        return 0.0  # Handle zero-norm vectors
+    return np.dot(vec1, vec2) / (norm1 * norm2)
+
+# Load stored embeddings from your JSON file
 base_dir = r'C:\Users\Aspire5 15 i7 4G2050\Project\AviationRAG'
 embeddings_path = os.path.join(base_dir, 'data', 'embeddings', 'aviation_embeddings.json')
 with open(embeddings_path, 'r') as file:
     data = json.load(file)
 
-print("Structure of loaded data:")
-print(type(data))
-if isinstance(data, dict):
-    print("Keys in the dictionary:", data.keys())
-elif isinstance(data, list):
-    print("Number of items in the list:", len(data))
-    if len(data) > 0:
-        print("Type of the first item:", type(data[0]))
-        if isinstance(data[0], dict):
-            print("Keys in the first item:", data[0].keys())
+# Filter the stored data (if needed)
+filtered_data = [item for item in data]  # Adjust filters if necessary
 
-# Extract embeddings from the list of dictionaries
-embeddings = np.array([item['embedding'] for item in data if item['filename'] == '14cfr_safety_management_systems.pdf'])
+# Ask user for a query statement
+query_text = input("Enter your query statement: ")
+query_embedding = get_embedding(query_text)
 
-# Calculate similarity
-similarity_scores = cosine_similarity(embeddings, new_embedding)
+# Validate the embedding
+if query_embedding is None:
+    print("Failed to generate query embedding. Exiting.")
+    exit()
 
-# Find the most similar chunk
-most_similar_idx = np.argmax(similarity_scores)
-most_similar_chunk = data[most_similar_idx]
+# Compute similarity for each stored embedding
+similarities = []
+for item in filtered_data:
+    similarity = cosine_similarity(query_embedding, item["embedding"])
+    similarities.append({
+        "chunk_id": item["chunk_id"],
+        "filename": item["filename"],
+        "text": item["text"],
+        "similarity": similarity
+    })
 
-print(f"Most similar chunk: {most_similar_chunk['text']}")
-print(f"Similarity score: {similarity_scores[most_similar_idx]}")
+# Sort results by similarity
+similarities = sorted(similarities, key=lambda x: x["similarity"], reverse=True)
+
+# Display the top 5 matches
+print("\nTop 5 similar chunks:")
+for result in similarities[:5]:
+    print(f"Chunk ID: {result['chunk_id']}, Filename: {result['filename']}, Similarity: {result['similarity']:.4f}")
+    print(f"Text: {result['text']}\n")
