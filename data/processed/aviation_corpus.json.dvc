@@ -1,0 +1,5 @@
+outs:
+- md5: 45b553e8bbf01ad80cc094ef239e67c1
+  size: 3892751
+  hash: md5
+  path: aviation_corpus.json
