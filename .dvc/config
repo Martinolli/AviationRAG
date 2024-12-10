@@ -1,0 +1,4 @@
+[core]
+    remote = stored_dvc
+['remote "stored_dvc"']
+    url = https://drive.google.com/drive/folders/1Bk-NPtPIBZj4oKDQi7lSTGpPob7ZJFC0

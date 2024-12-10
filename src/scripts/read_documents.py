@@ -1,0 +1,320 @@
+import os
+import pickle
+import pdfplumber
+import spacy
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+import csv
+import re
+from docx import Document
+from spellchecker import SpellChecker
+import wordninja
+from sklearn.feature_extraction.text import TfidfVectorizer
+import PyPDF2
+import logging
+import shutil
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, filename='reading_doc.log', format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Load spaCy's English model
+nlp = spacy.load('en_core_web_sm')
+nlp.max_length = 2000000  # or any other suitable value
+
+# Download required NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+# Initialize spellchecker
+spell = SpellChecker()
+
+# Suppress specific warnings
+import warnings
+warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
+
+# Define the base directory
+BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
+
+# Define global constants for file paths
+DIRECTORY_PATH = os.path.join(BASE_DIR, 'data', 'documents')
+TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'ProcessedTex')
+TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'ProcessedTextExapanded')
+PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
+
+# Ensure directories exist
+os.makedirs(TEXT_OUTPUT_DIR, exist_ok=True)
+os.makedirs(TEXT_EXPANDED_DIR, exist_ok=True)
+os.makedirs(os.path.dirname(PKL_FILENAME), exist_ok=True)
+
+# Global stopwords
+STOP_WORDS = set(stopwords.words('english'))
+
+# Create custom pipeline component for aviation NER
+@spacy.Language.component("aviation_ner")
+def aviation_ner(doc):
+    logging.info(f"Starting aviation_ner for document: {doc[:50]}...")
+    patterns = [
+        ("AIRCRAFT_MODEL", r"\b[A-Z]-?[0-9]{1,4}\b"),
+        ("AIRPORT_CODE", r"\b[A-Z]{3}\b"),
+        ("FLIGHT_NUMBER", r"\b[A-Z]{2,3}\s?[0-9]{1,4}\b"),
+        ("AIRLINE", r"\b(American Airlines|Delta Air Lines|United Airlines|Southwest Airlines|Air France|Lufthansa|British Airways)\b"),
+        ("AVIATION_ORG", r"\b(FAA|EASA|ICAO|IATA)\b"),
+    ]
+    
+    new_ents = []
+    for ent_type, pattern in patterns:
+        for match in re.finditer(pattern, doc.text):
+            start, end = match.span()
+            span = doc.char_span(start, end, label=ent_type)
+            if span is not None:
+                # Check for overlap with existing entities
+                if not any(span.start < ent.end and span.end > ent.start for ent in list(doc.ents) + new_ents):
+                    new_ents.append(span)
+                    logging.debug(f"Added new entity: {span.text} ({ent_type})")
+                    
+    doc.ents = list(doc.ents) + new_ents
+    logging.info(f"Finished aviation_ner. Added {len(new_ents)} new entities.")
+    return doc
+
+# Add the custom component to the pipeline
+nlp.add_pipe("aviation_ner", after="ner")
+
+def load_abbreviation_dict():
+    abbreviation_dict = {}
+    try:
+        with open('abbreviations.csv', mode='r') as infile:
+            reader = csv.reader(infile)
+            for rows in reader:
+                if len(rows) < 2:
+                    continue
+                abbreviation_dict[rows[0].strip()] = rows[1].strip()
+    except FileNotFoundError:
+        print("Error: The file 'abbreviations.csv' was not found.")
+    except Exception as e:
+        print(f"An error occurred while loading the abbreviation dictionary: {e}")
+    return abbreviation_dict
+
+def split_connected_words_improved(text):
+    words = re.findall(r'\w+|\W+', text)
+    split_words = []
+    for word in words:
+        if len(word) > 15 and word.isalnum():
+            split_parts = re.findall('[A-Z][a-z]*|[a-z]+|[0-9]+', word)
+            split_words.extend(split_parts)
+        else:
+            split_words.append(word)
+    split_words = ' '.join(split_words)
+    split_words = ' '.join(wordninja.split(split_words))
+    return split_words
+
+def filter_non_sense_strings(text):
+    words = text.split()
+    cleaned_words = []
+    for word in words:
+        if re.match(r'^[a-zA-Z]+$', word) and len(set(word.lower())) > 3:
+            cleaned_words.append(word)
+    return ' '.join(cleaned_words)
+
+def preprocess_text_with_sentences(text):
+    doc = nlp(text)
+    sentences = []
+    for sent in doc.sents:
+        cleaned_sentence = ' '.join(
+            token.lemma_.lower() for token in sent
+            if token.is_alpha and token.text.lower() not in STOP_WORDS
+        )
+        if cleaned_sentence:
+            sentences.append(cleaned_sentence)
+    return ' '.join(sentences)
+
+def extract_personal_names(text):
+    doc = nlp(text)
+    return [ent.text for ent in doc.ents if ent.label_ == 'PERSON']
+
+def extract_entities_and_pos_tags(text):
+    doc = nlp(text)
+    entities = [(ent.text, ent.label_) for ent in doc.ents]
+    pos_tags = [(token.text, token.pos_) for token in doc]
+    return entities, pos_tags
+
+def expand_abbreviations_in_text(text, abbreviation_dict):
+    words = text.split()
+    expanded_words = []
+    for word in words:
+        if word.lower() in abbreviation_dict:
+            expanded_words.append(abbreviation_dict[word.lower()])
+        else:
+            expanded_words.append(word)
+    return ' '.join(expanded_words)
+
+def extract_text_from_pdf_with_pdfplumber(pdf_path):
+    try:
+        with pdfplumber.open(pdf_path) as pdf:
+            text = ''.join([page.extract_text() + '\n' for page in pdf.pages])
+            return text
+    except Exception as e:
+        print(f"Failed to process PDF {pdf_path}: {e}")
+        return ""
+
+def extract_keywords(documents, top_n=10):
+    texts = [doc['text'] for doc in documents]
+    vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
+    tfidf_matrix = vectorizer.fit_transform(texts)
+    
+    feature_names = vectorizer.get_feature_names_out()
+    for idx, doc in enumerate(documents):
+        tfidf_scores = tfidf_matrix[idx].toarray()[0]
+        sorted_indices = tfidf_scores.argsort()[::-1]
+        doc['keywords'] = [feature_names[i] for i in sorted_indices[:top_n]]
+
+def extract_metadata(file_path):
+    metadata = {}
+    if file_path.endswith('.pdf'):
+        with open(file_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            metadata = reader.metadata
+    # Add more file types as needed
+    return metadata
+
+def classify_document(text):
+    keywords = {
+        'safety': ['safety', 'hazard', 'risk', 'incident', 'accident'],
+        'maintenance': ['maintenance', 'repair', 'overhaul', 'inspection'],
+        'operations': ['flight', 'takeoff', 'landing', 'crew', 'pilot'],
+        'regulations': ['regulation', 'compliance', 'standard', 'rule', 'law']
+    }
+    
+    text_lower = text.lower()
+    scores = {category: sum(1 for word in words if word in text_lower) for category, words in keywords.items()}
+    return max(scores, key=scores.get)
+
+def read_documents_from_directory(directory_path, text_output_dir=None, text_expanded_dir=None, existing_documents=None):
+    logging.info(f"Starting to read documents from {directory_path}")
+    if existing_documents is None:
+        existing_documents = []
+    
+    os.makedirs(text_expanded_dir, exist_ok=True)
+    os.makedirs(text_output_dir, exist_ok=True)
+
+    existing_files = {doc['filename'] for doc in existing_documents}
+    new_documents = []
+    abbreviation_dict = load_abbreviation_dict()
+    lemmatizer = WordNetLemmatizer()
+
+    for filename in os.listdir(directory_path):
+        logging.info(f"Processing file: {filename}")
+        if filename in existing_files:
+            continue
+
+        file_path = os.path.join(directory_path, filename)
+        text = ''
+        if filename.endswith(".pdf"):
+            logging.info(f"Extracting text from PDF: {filename}")
+            text = extract_text_from_pdf_with_pdfplumber(file_path)
+        elif filename.endswith(".docx"):
+            logging.info(f"Extracting text from DOCX: {filename}")
+            try:
+                doc = Document(file_path)
+                text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+            except Exception as e:
+                logging.error(f"Failed to process DOCX {filename}: {e}")
+                print(f"Failed to process DOCX {filename}: {e}")
+                continue
+        else:
+            logging.warning(f"Skipping unsupported file type: {filename}")
+            continue
+
+        logging.info(f"Preprocessing text from {filename}")
+        if not text:
+            logging.warning(f"No text extracted from {filename}")
+            continue
+
+        expanded_text = expand_abbreviations_in_text(text, abbreviation_dict)
+        raw_text = expanded_text
+        expanded_text = split_connected_words_improved(expanded_text)
+        expanded_text = filter_non_sense_strings(expanded_text)
+        preprocessed_text = preprocess_text_with_sentences(expanded_text)
+        personal_names = extract_personal_names(preprocessed_text)
+        entities, pos_tags = extract_entities_and_pos_tags(preprocessed_text)
+        tokens = word_tokenize(preprocessed_text)
+        cleaned_tokens = [token.lower() for token in tokens if token.isalpha() and len(token) > 2]
+        tokens_without_stopwords = [token for token in cleaned_tokens if token not in STOP_WORDS]
+        lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens_without_stopwords]
+
+        if text_expanded_dir:
+            output_file_path = os.path.join(text_expanded_dir, f'{filename}.txt')
+            with open(output_file_path, 'w', encoding='utf-8') as out_file:
+                out_file.write(raw_text)
+            logging.info(f"Expanded text saved to: {output_file_path}")
+            print(f"Expanded text saved to: {output_file_path}")
+               
+        if text_output_dir:
+            output_file_path = os.path.join(text_output_dir, f'{filename}.txt')
+            logging.info(f"Processed text saved to: {output_file_path}")
+            with open(output_file_path, 'w', encoding='utf-8') as out_file:
+                out_file.write(preprocessed_text)
+            print(f"Text saved to: {output_file_path}")
+
+        logging.info(f"Finished processing all documents in {directory_path}")
+        metadata = extract_metadata(file_path)
+        document_category = classify_document(preprocessed_text)
+
+        new_documents.append({
+            'filename': filename,
+            'text': preprocessed_text,
+            'tokens': lemmatized_tokens,
+            'personal_names': personal_names,
+            'entities': entities,
+            'pos_tags': pos_tags,
+            'metadata': metadata,
+            'category': document_category
+        })
+
+    return existing_documents + new_documents
+
+def update_existing_documents(documents):
+    for doc in documents:
+        if 'metadata' not in doc:
+            doc['metadata'] = extract_metadata(os.path.join(DIRECTORY_PATH, doc['filename']))
+        if 'category' not in doc:
+            doc['category'] = classify_document(doc['text'])
+    return documents
+
+def main():
+    # Clear previous outputs
+    #   shutil.rmtree(TEXT_OUTPUT_DIR, ignore_errors=True)
+    #   shutil.rmtree(TEXT_EXPANDED_DIR, ignore_errors=True)
+    #   if os.path.exists(PKL_FILENAME):
+    #      os.remove(PKL_FILENAME)
+
+    # Rest of your main function...
+
+    documents = None
+    if os.path.exists(PKL_FILENAME):
+        with open(PKL_FILENAME, 'rb') as file:
+            documents = pickle.load(file)
+        documents = update_existing_documents(documents)
+
+    if documents is None:
+        print("Reading documents from directory...")
+        documents = read_documents_from_directory(DIRECTORY_PATH, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
+    else:
+        print("Appending new documents to the existing list...")
+        documents = read_documents_from_directory(DIRECTORY_PATH, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
+
+    # Apply keyword extraction
+    extract_keywords(documents)
+
+    # Save the updated list
+    with open(PKL_FILENAME, 'wb') as file:
+        pickle.dump(documents, file)
+
+    print(f"Total documents: {len(documents)}")
+
+if __name__ == '__main__':
+    logging.info("Starting document processing script")
+    main()
+    logging.info("Document processing script completed")

@@ -3,7 +3,7 @@ import json
 import os
 
 # Define absolute paths
-base_dir = r'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG'
+base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 pkl_path = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
 json_path = os.path.join(base_dir, 'data', 'processed', 'aviation_corpus.json')
 

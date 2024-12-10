@@ -10,7 +10,7 @@ import pickle
 nltk.download('punkt')
 
 # Define absolute paths
-base_dir = r'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG'
+base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 pkl_file = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
 chunk_output_dir = os.path.join(base_dir, 'data', 'processed', 'chunked_documents')
 
@@ -87,35 +87,32 @@ def validate_and_split_chunks(chunks, max_tokens):
 # Function to process documents and save chunks as JSON
 def save_documents_as_chunks(documents, output_dir, max_tokens=500, overlap=50):
     for doc in documents:
-        if 'filename' not in doc or 'text' not in doc:
-            logging.warning(f"Skipping document due to missing fields: {doc}")
-            continue
-
         filename = doc['filename']
         text = doc['text']
+        metadata = doc.get('metadata', {})  # Get metadata if it exists, otherwise empty dict
+        category = doc.get('category', '')  # Get category if it exists, otherwise empty string
 
-        logging.info(f"Processing document: {filename}")
-
-        # Chunk the text
         chunks = chunk_text_by_sentences(text, max_tokens, overlap)
+        validated_chunks = validate_and_split_chunks(chunks, max_tokens)
 
-        # Prepare JSON structure
-        json_data = {
+        output_filename = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}_chunks.json")
+        
+        chunk_data = {
             "filename": filename,
+            "metadata": metadata,
+            "category": category,
             "chunks": [
-                {"chunk_id": f"{os.path.splitext(filename)[0]}_chunk{i+1}", "text": chunk}
-                for i, chunk in enumerate(chunks)
+                {
+                    "text": chunk,
+                    "tokens": count_tokens(chunk)
+                } for chunk in validated_chunks
             ]
         }
 
-        # Save JSON to file
-        json_filename = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}.json")
-        try:
-            with open(json_filename, 'w', encoding='utf-8') as json_file:
-                json.dump(json_data, json_file, ensure_ascii=False, indent=4)
-            logging.info(f"Chunks saved for '{filename}' in '{json_filename}'")
-        except Exception as e:
-            logging.error(f"Failed to save chunks for '{filename}': {e}")
+        with open(output_filename, 'w', encoding='utf-8') as f:
+            json.dump(chunk_data, f, ensure_ascii=False, indent=2)
+
+        logging.info(f"Processed and saved chunks for {filename}")
 
 # Main routine
 def main():
