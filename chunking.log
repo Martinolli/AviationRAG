@@ -1,0 +1,34 @@
+2024-12-07 19:50:58,373 - INFO - Loaded 1 documents.
+2024-12-07 19:50:58,373 - INFO - Processing document: commercial_aviation_safety_1.docx
+2024-12-07 19:50:58,412 - WARNING - Chunk exceeds token limit: 7864 tokens. Splitting further.
+2024-12-07 19:50:58,442 - INFO - Chunks saved for 'commercial_aviation_safety_1.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\commercial_aviation_safety_1.json'
+2024-12-07 19:50:58,442 - INFO - All documents processed. Chunks saved in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents'.
+2024-12-07 20:29:26,341 - INFO - Loaded 9 documents.
+2024-12-07 20:29:26,342 - INFO - Processing document: commercial_aviation_safety_1.docx
+2024-12-07 20:29:26,360 - WARNING - Chunk exceeds token limit: 7864 tokens. Splitting further.
+2024-12-07 20:29:26,375 - INFO - Chunks saved for 'commercial_aviation_safety_1.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\commercial_aviation_safety_1.json'
+2024-12-07 20:29:26,375 - INFO - Processing document: 14cfr_safety_management_systems.pdf
+2024-12-07 20:29:26,377 - WARNING - Chunk exceeds token limit: 2411 tokens. Splitting further.
+2024-12-07 20:29:26,383 - INFO - Chunks saved for '14cfr_safety_management_systems.pdf' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\14cfr_safety_management_systems.json'
+2024-12-07 20:29:26,383 - INFO - Processing document: accidents_theory_organizational_factors.docx
+2024-12-07 20:29:26,387 - WARNING - Chunk exceeds token limit: 4421 tokens. Splitting further.
+2024-12-07 20:29:26,395 - INFO - Chunks saved for 'accidents_theory_organizational_factors.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\accidents_theory_organizational_factors.json'
+2024-12-07 20:29:26,395 - INFO - Processing document: faa_abreviations_definitions.pdf
+2024-12-07 20:29:26,400 - WARNING - Chunk exceeds token limit: 5923 tokens. Splitting further.
+2024-12-07 20:29:26,412 - INFO - Chunks saved for 'faa_abreviations_definitions.pdf' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\faa_abreviations_definitions.json'
+2024-12-07 20:29:26,412 - INFO - Processing document: hazard_analysis_technique_system_safety_2.docx
+2024-12-07 20:29:26,416 - WARNING - Chunk exceeds token limit: 5192 tokens. Splitting further.
+2024-12-07 20:29:26,427 - INFO - Chunks saved for 'hazard_analysis_technique_system_safety_2.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\hazard_analysis_technique_system_safety_2.json'
+2024-12-07 20:29:26,427 - INFO - Processing document: hazard_analysis_technique_system_safety_3.docx
+2024-12-07 20:29:26,430 - WARNING - Chunk exceeds token limit: 3861 tokens. Splitting further.
+2024-12-07 20:29:26,438 - INFO - Chunks saved for 'hazard_analysis_technique_system_safety_3.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\hazard_analysis_technique_system_safety_3.json'
+2024-12-07 20:29:26,438 - INFO - Processing document: hazard_analysis_technique_system_safety_4.docx
+2024-12-07 20:29:26,440 - WARNING - Chunk exceeds token limit: 2137 tokens. Splitting further.
+2024-12-07 20:29:26,445 - INFO - Chunks saved for 'hazard_analysis_technique_system_safety_4.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\hazard_analysis_technique_system_safety_4.json'
+2024-12-07 20:29:26,445 - INFO - Processing document: hazard_analysis_technique_system_safety_5.docx
+2024-12-07 20:29:26,447 - WARNING - Chunk exceeds token limit: 2417 tokens. Splitting further.
+2024-12-07 20:29:26,452 - INFO - Chunks saved for 'hazard_analysis_technique_system_safety_5.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\hazard_analysis_technique_system_safety_5.json'
+2024-12-07 20:29:26,452 - INFO - Processing document: why_accidents_happen_critical_review_accident_causation_models.docx
+2024-12-07 20:29:26,453 - WARNING - Chunk exceeds token limit: 1205 tokens. Splitting further.
+2024-12-07 20:29:26,456 - INFO - Chunks saved for 'why_accidents_happen_critical_review_accident_causation_models.docx' in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents\why_accidents_happen_critical_review_accident_causation_models.json'
+2024-12-07 20:29:26,456 - INFO - All documents processed. Chunks saved in 'C:\Users\Aspire5 15 i7 4G2050\Project_2\AviationRAG\data\processed\chunked_documents'.

@@ -182,6 +182,23 @@
 
 ## Pseudo Code
 
+### Firt step is to stored the documents to be prepared, the documents shall be in a "PDF" format or "DOCX" format. I realized that documents in "DOCX" are better to work with, in this way the results are better, but it is necessary to verify the content, before to proceed to process the file to extract tokens, and chunk the document.
+
+### When the document is prepared to be processed it needs to be passed trough the script "read_docuemnts_to_txt.py" this routine creates a "pkl" file with the following contents:
+
+1.          'filename': filename,
+2.          'text': preprocessed_text,
+3.          'tokens': lemmatized_tokens,
+4.          'personal_names': personal_names,
+5.          'entities': entities,
+6.          'pos_tags': pos_tags
+
+- This file is: "aviation_corpus.pkl."
+- This file is a dictionary for future use and processing.
+- After this file be constructed it is chunked by the script "aviation_chunk_saver.py", this routine creates for each document saved previously into the dictionary, in the "aviation_corpus.pkl", the correspondent chunk file.
+- These files will be source to generate the embeddings, using the routine "generate_embeddings.js."
+
+
 ## Issues Description
 
 ### AviationDOC issues

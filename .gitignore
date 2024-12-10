@@ -3,10 +3,54 @@ node_modules/
 
 # Python environment
 venv/
+__pycache__/
+*.pyc
 
 # Environment variables
 .env
 
 # Ignore all files in data/raw except the PKL file
 data/raw/*
-!data/raw/aviation_corpus.pkl
+!data/raw/*.pkl
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Astra DB secure connect bundle
+secure-connect-*.zip
+
+# Compiled Python files
+*.pyc
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
