@@ -181,10 +181,11 @@ def extract_metadata(file_path):
 
 def classify_document(text):
     keywords = {
-        'safety': ['safety', 'hazard', 'risk', 'incident', 'accident'],
+        'safety': ['safety', 'hazard', 'risk', 'incident', 'accident','syste','hazard','emergency'],
         'maintenance': ['maintenance', 'repair', 'overhaul', 'inspection'],
-        'operations': ['flight', 'takeoff', 'landing', 'crew', 'pilot'],
-        'regulations': ['regulation', 'compliance', 'standard', 'rule', 'law']
+        'operations': ['flight', 'takeoff', 'landing', 'crew', 'pilot','aircraft', 'airplane'],
+        'regulations': ['regulation', 'compliance', 'standard', 'rule', 'law'],
+        'quality': ['quality', 'performance', 'service', 'customer', 'satisfaction','design'],
     }
     
     text_lower = text.lower()
