@@ -1,48 +1,57 @@
 const cassandra = require('cassandra-driver');
 const dotenv = require('dotenv');
 
-// Load environment variables from .env
 dotenv.config();
 
-// Define the function to create the table
 async function createTable() {
+    const client = new cassandra.Client({
+        cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
+        credentials: {
+            username: process.env.ASTRA_DB_CLIENT_ID,
+            password: process.env.ASTRA_DB_CLIENT_SECRET,
+        },
+        keyspace: process.env.ASTRA_DB_KEYSPACE,
+    });
+
     try {
-        // Create an Astra DB client using the secure connect bundle
-        const client = new cassandra.Client({
-            cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
-            credentials: {
-                username: process.env.ASTRA_DB_CLIENT_ID,
-                password: process.env.ASTRA_DB_CLIENT_SECRET,
-            },
-            keyspace: process.env.ASTRA_DB_KEYSPACE
-        });
-
-        // Connect to the database
         await client.connect();
+        console.log('Connected to Astra DB');
 
-        // Drop the existing table (if needed)
-        const dropTableQuery = `DROP TABLE IF EXISTS aviation_documents;`;
-        await client.execute(dropTableQuery);
-        console.log('Old table dropped successfully!');
-
-        // Create the new table with the updated schema
-        const createTableQuery = `
-            CREATE TABLE IF NOT EXISTS aviation_documents (
-                chunk_id TEXT PRIMARY KEY,  -- Use chunk_id as primary key
-                filename TEXT,              -- Store the source filename
-                embedding BLOB,             -- Store vector embeddings
-                metadata TEXT               -- Optional field for future use
-            );
+        // Check if the table exists
+        const checkTableQuery = `
+            SELECT table_name 
+            FROM system_schema.tables 
+            WHERE keyspace_name = '${process.env.ASTRA_DB_KEYSPACE}' 
+            AND table_name = 'aviation_documents'
         `;
-        await client.execute(createTableQuery);
-        console.log('Table created successfully in Astra DB!');
+        const result = await client.execute(checkTableQuery);
 
-        // Close the connection
-        await client.shutdown();
+        if (result.rows.length > 0) {
+            // Table exists, truncate it
+            const truncateQuery = `TRUNCATE TABLE aviation_documents`;
+            await client.execute(truncateQuery);
+            console.log('Existing table truncated');
+        } else {
+            console.log('Table does not exist, will create new');
+        }
+
+        const createQuery = `
+            CREATE TABLE IF NOT EXISTS aviation_documents (
+                chunk_id TEXT PRIMARY KEY,
+                filename TEXT,
+                text TEXT,
+                tokens INT,
+                embedding BLOB
+            )
+        `;
+
+        await client.execute(createQuery);
+        console.log('Table created or verified successfully');
     } catch (err) {
-        console.error('Failed to create table in Astra DB:', err);
+        console.error('Error:', err);
+    } finally {
+        await client.shutdown();
     }
 }
 
-// Run the function
 createTable();
