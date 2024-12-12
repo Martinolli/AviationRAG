@@ -28,7 +28,7 @@ def load_embeddings(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
         return json.load(file)
 
-def filter_embeddings(embeddings, filename_filter=None, chunk_size_range=(100, 500)):
+def filter_embeddings(embeddings, filename_filter=None, chunk_size_range=(100, 600)):
     """Filter embeddings by filename and chunk size."""
     filtered = []
     for embedding in embeddings:
