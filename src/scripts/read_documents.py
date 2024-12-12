@@ -181,7 +181,7 @@ def extract_metadata(file_path):
 
 def classify_document(text):
     keywords = {
-        'safety': ['safety', 'hazard', 'risk', 'incident', 'accident','syste','hazard','emergency'],
+        'safety': ['safety', 'hazard', 'risk', 'incident', 'accident','system','hazard','emergency'],
         'maintenance': ['maintenance', 'repair', 'overhaul', 'inspection'],
         'operations': ['flight', 'takeoff', 'landing', 'crew', 'pilot','aircraft', 'airplane'],
         'regulations': ['regulation', 'compliance', 'standard', 'rule', 'law'],
