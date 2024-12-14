@@ -14,43 +14,40 @@ import wordninja
 from sklearn.feature_extraction.text import TfidfVectorizer
 import PyPDF2
 import logging
-
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, filename='reading_doc.log', format='%(asctime)s - %(levelname)s - %(message)s')
-
 # Load spaCy's English model
 nlp = spacy.load('en_core_web_sm')
 nlp.max_length = 2000000  # or any other suitable value
-
 # Download required NLTK data
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
-
 # Initialize spellchecker
 spell = SpellChecker()
-
 # Suppress specific warnings
 import warnings
 warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
+# Global stopwords
+STOP_WORDS = set(stopwords.words('english'))
 
-# Define the base directory
+# Configure logging
+logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Define base directory
 BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 
-# Define global constants for file paths
-DIRECTORY_PATH = os.path.join(BASE_DIR, 'data', 'documents')
+# Define paths
 TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
 TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
 PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
 
 # Ensure directories exist
-os.makedirs(TEXT_OUTPUT_DIR, exist_ok=True)
-os.makedirs(TEXT_EXPANDED_DIR, exist_ok=True)
-os.makedirs(os.path.dirname(PKL_FILENAME), exist_ok=True)
+for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        logging.info(f"Created directory: {directory}")
+    else:
+        logging.info(f"Directory already exists: {directory}")
 
-# Global stopwords
-STOP_WORDS = set(stopwords.words('english'))
 
 # Create custom pipeline component for aviation NER
 @spacy.Language.component("aviation_ner")
@@ -276,7 +273,7 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
 def update_existing_documents(documents):
     for doc in documents:
         if 'metadata' not in doc:
-            doc['metadata'] = extract_metadata(os.path.join(DIRECTORY_PATH, doc['filename']))
+            doc['metadata'] = extract_metadata(os.path.join(BASE_DIR, doc['filename']))
         if 'category' not in doc:
             doc['category'] = classify_document(doc['text'])
     return documents
@@ -290,10 +287,10 @@ def main():
 
     if documents is None:
         print("Reading documents from directory...")
-        documents = read_documents_from_directory(DIRECTORY_PATH, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
+        documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
     else:
         print("Appending new documents to the existing list...")
-        documents = read_documents_from_directory(DIRECTORY_PATH, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
+        documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
 
     # Apply keyword extraction
     extract_keywords(documents)
@@ -308,3 +305,4 @@ if __name__ == '__main__':
     logging.info("Starting document processing script")
     main()
     logging.info("Document processing script completed")
+
