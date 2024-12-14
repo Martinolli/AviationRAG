@@ -5,6 +5,7 @@ from pathlib import Path
 import json
 import subprocess
 from dotenv import load_dotenv
+import pickle
 
 # Get the current script's directory
 current_dir = Path(__file__).resolve().parent
@@ -30,15 +31,22 @@ from aviation_chunk_saver import save_documents_as_chunks
 load_dotenv()
 
 # Configure logging
-log_file = project_root / "logs" / "aviation_rag_manager.log"
-log_file.parent.mkdir(parents=True, exist_ok=True)
+# Create the logs directory if it doesn't exist
+log_dir = project_root / "logs"
+log_dir.mkdir(parents=True, exist_ok=True)
+
+# Configure logging
+log_file = log_dir / "aviation_rag_manager.log"
 log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 log_handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
 log_handler.setFormatter(log_formatter)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-logger.addHandler(log_handler)
+if not logger.hasHandlers():
+    logger.addHandler(log_handler)
+
+logger.info("Testing logging setup. This should appear in aviation_rag_manager.log.")
 
 # Define directories and files
 BASE_DIR = project_root
@@ -46,10 +54,55 @@ PROCESSED_DIR = BASE_DIR / "data" / "processed"
 CHUNKED_DIR = PROCESSED_DIR / "chunked_documents"
 EMBEDDINGS_FILE = BASE_DIR / "data" / "embeddings" / "aviation_embeddings.json"
 PROCESSED_FILES_PATH = BASE_DIR / "processed_files.json"
+PROCESSED_TEXT_DIR = BASE_DIR / "data" / "processed" / "ProcessedText"
+PROCESSED_TEXT_EXPANDED_DIR = BASE_DIR / "data" / "processed" / "ProcessedTextExpanded"
 
 # Ensure necessary directories exist
 DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
 CHUNKED_DIR.mkdir(parents=True, exist_ok=True)
+
+# Ensure these directories exist
+PROCESSED_TEXT_DIR.mkdir(parents=True, exist_ok=True)
+PROCESSED_TEXT_EXPANDED_DIR.mkdir(parents=True, exist_ok=True)
+
+text_output_dir=PROCESSED_TEXT_DIR,
+text_expanded_dir=PROCESSED_TEXT_EXPANDED_DIR,
+
+def update_aviation_corpus():
+    """
+    Update the aviation_corpus.pkl file with newly processed documents.
+    """
+    logger.info("Updating aviation_corpus.pkl with new documents.")
+
+    corpus_path = BASE_DIR / "data" / "raw" / "aviation_corpus.pkl"
+    processed_dir = BASE_DIR / "data" / "processed" / "ProcessedText"
+    expanded_dir = BASE_DIR / "data" / "processed" / "ProcessedTextExpanded"
+    logger.info(f"Processed text output directory: {processed_dir}")
+    logger.info(f"Processed text expanded directory: {expanded_dir}")
+
+    # Load the existing corpus if available
+    if corpus_path.exists():
+        with open(corpus_path, 'rb') as file:
+            existing_corpus = pickle.load(file)
+            logger.info(f"Loaded existing corpus with {len(existing_corpus)} documents.")
+    else:
+        existing_corpus = []
+        logger.info("No existing corpus found. Creating a new one.")
+
+    # Update the corpus with new documents
+    updated_corpus = read_documents_from_directory(
+        directory_path=DOCUMENTS_DIR,
+        text_output_dir=PROCESSED_TEXT_DIR,
+        text_expanded_dir=PROCESSED_TEXT_EXPANDED_DIR,
+        existing_documents=existing_corpus
+    )
+
+    # Save the updated corpus back to the PKL file
+    with open(corpus_path, 'wb') as file:
+        pickle.dump(updated_corpus, file)
+    
+    logger.info(f"aviation_corpus.pkl updated with {len(updated_corpus)} total documents.")
+
 
 # Function to run JavaScript files
 def run_js_script(script_name, *args):
@@ -167,6 +220,9 @@ def aviation_rag_manager():
     processed_files.update([doc['filename'] for doc in new_documents])
     save_processed_files(PROCESSED_FILES_PATH, processed_files)
     logging.info(f"Updated processed files list. Total processed files: {len(processed_files)}.")
+
+    # Update aviation_corpus.pkl after processing
+    update_aviation_corpus()
 
     logging.info("Aviation RAG Manager completed.")
 
