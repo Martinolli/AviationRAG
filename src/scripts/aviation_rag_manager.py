@@ -6,6 +6,13 @@ import json
 import subprocess
 from dotenv import load_dotenv
 import pickle
+import sys
+from logging.handlers import RotatingFileHandler
+# Import project-specific modules
+from read_documents import read_documents_from_directory
+from aviation_chunk_saver import save_documents_as_chunks
+# Load environment variables
+load_dotenv()
 
 # Get the current script's directory
 current_dir = Path(__file__).resolve().parent
@@ -23,30 +30,6 @@ if not DOCUMENTS_DIR.exists():
 # Use this DOCUMENTS_DIR in your script
 print(f"DOCUMENTS_DIR is set to: {DOCUMENTS_DIR}")
 
-# Import project-specific modules
-from read_documents import read_documents_from_directory
-from aviation_chunk_saver import save_documents_as_chunks
-
-# Load environment variables
-load_dotenv()
-
-# Configure logging
-# Create the logs directory if it doesn't exist
-log_dir = project_root / "logs"
-log_dir.mkdir(parents=True, exist_ok=True)
-
-# Configure logging
-log_file = log_dir / "aviation_rag_manager.log"
-log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-log_handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
-log_handler.setFormatter(log_formatter)
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-if not logger.hasHandlers():
-    logger.addHandler(log_handler)
-
-logger.info("Testing logging setup. This should appear in aviation_rag_manager.log.")
 
 # Define directories and files
 BASE_DIR = project_root
@@ -60,12 +43,33 @@ PROCESSED_TEXT_EXPANDED_DIR = BASE_DIR / "data" / "processed" / "ProcessedTextEx
 text_output_dir=PROCESSED_TEXT_DIR,
 text_expanded_dir=PROCESSED_TEXT_EXPANDED_DIR,
 
+# Configure logging
+log_dir = project_root / "logs"
+log_dir.mkdir(parents=True, exist_ok=True)
+
+log_file = log_dir / "aviation_rag_manager.log"
+log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+log_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024, backupCount=5)
+log_handler.setFormatter(log_formatter)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  # Use DEBUG to capture all messages
+
+# Clear existing handlers to avoid duplication
+logger.handlers.clear()
+logger.addHandler(log_handler)
+
+# Add console output for immediate feedback
+logger.addHandler(logging.StreamHandler(sys.stdout))
+
+# Test log
+logger.info("Logging setup complete. This should appear in the file and console.")
+
 def update_aviation_corpus():
     """
     Update the aviation_corpus.pkl file with newly processed documents.
     """
     logger.info("Updating aviation_corpus.pkl with new documents.")
-
     corpus_path = BASE_DIR / "data" / "raw" / "aviation_corpus.pkl"
     processed_dir = BASE_DIR / "data" / "processed" / "ProcessedText"
     expanded_dir = BASE_DIR / "data" / "processed" / "ProcessedTextExpanded"
@@ -76,10 +80,10 @@ def update_aviation_corpus():
     if corpus_path.exists():
         with open(corpus_path, 'rb') as file:
             existing_corpus = pickle.load(file)
-            logger.info(f"Loaded existing corpus with {len(existing_corpus)} documents.")
+        logger.info(f"Loaded existing corpus with {len(existing_corpus)} documents.")
     else:
         existing_corpus = []
-        logger.info("No existing corpus found. Creating a new one.")
+    logger.info("No existing corpus found. Creating a new one.")
 
     # Update the corpus with new documents
     updated_corpus = read_documents_from_directory(
@@ -151,7 +155,7 @@ def aviation_rag_manager():
         
         for file in all_files:
             full_path = os.path.join(DOCUMENTS_DIR, file)
-            logger.info(f"File: {file}, Is file: {os.path.isfile(full_path)}, Size: {os.path.getsize(full_path)} bytes")
+        logger.info(f"File: {file}, Is file: {os.path.isfile(full_path)}, Size: {os.path.getsize(full_path)} bytes")
     else:
         logger.error(f"The DOCUMENTS_DIR does not exist: {DOCUMENTS_DIR}")
 
@@ -186,37 +190,37 @@ def aviation_rag_manager():
         logger.info(f"Found {len(new_documents)} new documents to process.")
 
     # Step 2: Create chunks
-    logging.info("Creating text chunks...")
+    logger.info("Creating text chunks...")
     save_documents_as_chunks(
         documents=new_documents,
         output_dir=CHUNKED_DIR,
         max_tokens=500,
         overlap=50
     )
-    logging.info("Chunks created and saved.")
+    logger.info("Chunks created and saved.")
 
     # Step 3: Generate embeddings
-    logging.info("Generating embeddings...")
+    logger.info("Generating embeddings...")
     generate_embeddings(
         chunked_docs_path=CHUNKED_DIR,
         output_path=EMBEDDINGS_FILE
     )
-    logging.info(f"Embeddings saved to {EMBEDDINGS_FILE}.")
+    logger.info(f"Embeddings saved to {EMBEDDINGS_FILE}.")
 
     # Step 4: Store embeddings in database
-    logging.info("Storing embeddings in Astra DB...")
+    logger.info("Storing embeddings in Astra DB...")
     insert_embeddings_into_db(embeddings_path=EMBEDDINGS_FILE)
-    logging.info("Embeddings successfully stored in Astra DB.")
+    logger.info("Embeddings successfully stored in Astra DB.")
 
     # Update processed files list
     processed_files.update([doc['filename'] for doc in new_documents])
     save_processed_files(PROCESSED_FILES_PATH, processed_files)
-    logging.info(f"Updated processed files list. Total processed files: {len(processed_files)}.")
+    logger.info(f"Updated processed files list. Total processed files: {len(processed_files)}.")
 
     # Update aviation_corpus.pkl after processing
     update_aviation_corpus()
 
-    logging.info("Aviation RAG Manager completed.")
+    logger.info("Aviation RAG Manager completed.")
 
 # Entry point
 if __name__ == "__main__":
