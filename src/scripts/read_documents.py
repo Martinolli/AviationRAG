@@ -14,7 +14,7 @@ import wordninja
 from sklearn.feature_extraction.text import TfidfVectorizer
 import PyPDF2
 import logging
-import shutil
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, filename='reading_doc.log', format='%(asctime)s - %(levelname)s - %(message)s')
@@ -40,8 +40,8 @@ BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 
 # Define global constants for file paths
 DIRECTORY_PATH = os.path.join(BASE_DIR, 'data', 'documents')
-TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'ProcessedTex')
-TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'ProcessedTextExapanded')
+TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
+TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
 PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
 
 # Ensure directories exist
@@ -197,9 +197,6 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
     if existing_documents is None:
         existing_documents = []
     
-    os.makedirs(text_expanded_dir, exist_ok=True)
-    os.makedirs(text_output_dir, exist_ok=True)
-
     existing_files = {doc['filename'] for doc in existing_documents}
     new_documents = []
     abbreviation_dict = load_abbreviation_dict()
@@ -285,14 +282,6 @@ def update_existing_documents(documents):
     return documents
 
 def main():
-    # Clear previous outputs
-    #   shutil.rmtree(TEXT_OUTPUT_DIR, ignore_errors=True)
-    #   shutil.rmtree(TEXT_EXPANDED_DIR, ignore_errors=True)
-    #   if os.path.exists(PKL_FILENAME):
-    #      os.remove(PKL_FILENAME)
-
-    # Rest of your main function...
-
     documents = None
     if os.path.exists(PKL_FILENAME):
         with open(PKL_FILENAME, 'rb') as file:

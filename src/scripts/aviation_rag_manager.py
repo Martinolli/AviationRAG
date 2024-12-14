@@ -57,14 +57,6 @@ PROCESSED_FILES_PATH = BASE_DIR / "processed_files.json"
 PROCESSED_TEXT_DIR = BASE_DIR / "data" / "processed" / "ProcessedText"
 PROCESSED_TEXT_EXPANDED_DIR = BASE_DIR / "data" / "processed" / "ProcessedTextExpanded"
 
-# Ensure necessary directories exist
-DOCUMENTS_DIR.mkdir(parents=True, exist_ok=True)
-CHUNKED_DIR.mkdir(parents=True, exist_ok=True)
-
-# Ensure these directories exist
-PROCESSED_TEXT_DIR.mkdir(parents=True, exist_ok=True)
-PROCESSED_TEXT_EXPANDED_DIR.mkdir(parents=True, exist_ok=True)
-
 text_output_dir=PROCESSED_TEXT_DIR,
 text_expanded_dir=PROCESSED_TEXT_EXPANDED_DIR,
 
