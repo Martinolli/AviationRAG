@@ -16,11 +16,32 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Function to load existing embeddings
+function loadExistingEmbeddings(outputPath) {
+  if (fs.existsSync(outputPath)) {
+    const rawData = fs.readFileSync(outputPath, 'utf-8');
+    return JSON.parse(rawData);
+  }
+  return [];
+}
+
+// Function to check if chunk ID exists
+function isChunkIdExists(existingEmbeddings, chunk_id) {
+  return existingEmbeddings.some(embedding => embedding.chunk_id === chunk_id);
+}
+
 // Function to process a single chunk
-async function processChunk(chunk, filename, index) {
+async function processChunk(chunk, filename, index, existingEmbeddings) {
+  const chunk_id = `${filename}-${index}`; // Generate chunk ID dynamically
+
+  // Skip if the chunk ID already exists
+  if (isChunkIdExists(existingEmbeddings, chunk_id)) {
+    console.log(`Skipping duplicate chunk ID: ${chunk_id}`);
+    return null;
+  }
+
   let attempts = 0;
   const maxAttempts = 3;
-  const chunk_id = `${filename}-${index}`; // Generate chunk ID dynamically
 
   while (attempts < maxAttempts) {
     try {
@@ -51,7 +72,7 @@ async function processChunk(chunk, filename, index) {
 }
 
 // Function to process files from the chunked documents directory
-async function processFile(filePath) {
+async function processFile(filePath, existingEmbeddings) {
   const rawData = fs.readFileSync(filePath, 'utf-8');
   const chunkedDoc = JSON.parse(rawData);
   const filename = chunkedDoc.filename;
@@ -61,7 +82,7 @@ async function processFile(filePath) {
   console.log(`Processing file: ${filename}, Category: ${category}`);
   for (let i = 0; i < chunkedDoc.chunks.length; i++) {
     const chunk = chunkedDoc.chunks[i];
-    const result = await processChunk(chunk, filename, i);
+    const result = await processChunk(chunk, filename, i, existingEmbeddings);
     if (result) embeddings.push(result);
     await delay(500); // Delay between processing chunks
   }
@@ -75,12 +96,14 @@ async function generateEmbeddings() {
     const chunkedDocsPath = path.join(__dirname, '../../data/processed/chunked_documents');
     const outputPath = path.join(__dirname, '../../data/embeddings/aviation_embeddings.json');
     const files = fs.readdirSync(chunkedDocsPath).filter(file => file.endsWith('.json'));
-    let allEmbeddings = [];
+
+    // Load existing embeddings
+    let allEmbeddings = loadExistingEmbeddings(outputPath);
 
     console.log(`Found ${files.length} files to process.`);
     for (const file of files) {
       const filePath = path.join(chunkedDocsPath, file);
-      const embeddings = await processFile(filePath);
+      const embeddings = await processFile(filePath, allEmbeddings);
       allEmbeddings = allEmbeddings.concat(embeddings);
     }
 
