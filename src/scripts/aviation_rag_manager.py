@@ -6,6 +6,22 @@ import json
 import subprocess
 from dotenv import load_dotenv
 
+# Get the current script's directory
+current_dir = Path(__file__).resolve().parent
+
+# Navigate up to the project root (assuming the script is in src/scripts)
+project_root = current_dir.parent.parent
+
+# Set the DOCUMENTS_DIR to the existing data/documents folder
+DOCUMENTS_DIR = project_root / 'data' / 'documents'
+
+# Verify that the directory exists
+if not DOCUMENTS_DIR.exists():
+    raise FileNotFoundError(f"The documents directory does not exist: {DOCUMENTS_DIR}")
+
+# Use this DOCUMENTS_DIR in your script
+print(f"DOCUMENTS_DIR is set to: {DOCUMENTS_DIR}")
+
 # Import project-specific modules
 from read_documents import read_documents_from_directory
 from aviation_chunk_saver import save_documents_as_chunks
@@ -14,7 +30,8 @@ from aviation_chunk_saver import save_documents_as_chunks
 load_dotenv()
 
 # Configure logging
-log_file = "aviation_rag_manager.log"
+log_file = project_root / "logs" / "aviation_rag_manager.log"
+log_file.parent.mkdir(parents=True, exist_ok=True)
 log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 log_handler = RotatingFileHandler(log_file, maxBytes=1024*1024, backupCount=5)
 log_handler.setFormatter(log_formatter)
@@ -24,11 +41,10 @@ logger.setLevel(logging.INFO)
 logger.addHandler(log_handler)
 
 # Define directories and files
-BASE_DIR = Path(__file__).resolve().parent.parent
-DOCUMENTS_DIR = BASE_DIR / "data/documents"
-PROCESSED_DIR = BASE_DIR / "data/processed"
+BASE_DIR = project_root
+PROCESSED_DIR = BASE_DIR / "data" / "processed"
 CHUNKED_DIR = PROCESSED_DIR / "chunked_documents"
-EMBEDDINGS_FILE = BASE_DIR / "data/embeddings/aviation_embeddings.json"
+EMBEDDINGS_FILE = BASE_DIR / "data" / "embeddings" / "aviation_embeddings.json"
 PROCESSED_FILES_PATH = BASE_DIR / "processed_files.json"
 
 # Ensure necessary directories exist
@@ -81,6 +97,18 @@ def save_processed_files(file_path, filenames):
 # Main routine
 def aviation_rag_manager():
     logger.info("Starting Aviation RAG Manager.")
+    logger.info(f"DOCUMENTS_DIR is set to: {DOCUMENTS_DIR}")
+    logger.info(f"Does DOCUMENTS_DIR exist? {os.path.exists(DOCUMENTS_DIR)}")
+    
+    if os.path.exists(DOCUMENTS_DIR):
+        all_files = os.listdir(DOCUMENTS_DIR)
+        logger.info(f"Files in directory: {all_files}")
+        
+        for file in all_files:
+            full_path = os.path.join(DOCUMENTS_DIR, file)
+            logger.info(f"File: {file}, Is file: {os.path.isfile(full_path)}, Size: {os.path.getsize(full_path)} bytes")
+    else:
+        logger.error(f"The DOCUMENTS_DIR does not exist: {DOCUMENTS_DIR}")
 
     # Load processed files
     processed_files = load_processed_files(PROCESSED_FILES_PATH)
