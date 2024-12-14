@@ -84,17 +84,27 @@ def aviation_rag_manager():
 
     # Load processed files
     processed_files = load_processed_files(PROCESSED_FILES_PATH)
-
+    logger.info(f"Loaded {len(processed_files)} processed files.")
+    
     # Step 1: Process new documents
     logger.info("Processing new documents...")
+    logger.info(f"Scanning directory: {DOCUMENTS_DIR}")
+
+    # Log all files in the directory
+    all_files = os.listdir(DOCUMENTS_DIR)
+    logger.info(f"Files in directory: {all_files}")
+
+
     all_documents = read_documents_from_directory(
     directory_path=DOCUMENTS_DIR,
     text_output_dir=PROCESSED_DIR / "ProcessedTex",
     text_expanded_dir=PROCESSED_DIR / "ProcessedTextExpanded"
 )
+    logger.info(f"Total documents found: {len(all_documents)}")
 
     # Filter out already processed documents
     new_documents = [doc for doc in all_documents if doc['filename'] not in processed_files]
+    logger.info(f"New documents to process: {[doc['filename'] for doc in new_documents]}")
 
     if not new_documents:
         logger.info("No new documents to process. Exiting routine.")
