@@ -86,17 +86,21 @@ def aviation_rag_manager():
     processed_files = load_processed_files(PROCESSED_FILES_PATH)
 
     # Step 1: Process new documents
-    logging.info("Processing new documents...")
-    new_documents = read_documents_from_directory(
-        directory_path=DOCUMENTS_DIR,
-        processed_filenames=processed_files,
-        text_output_dir=PROCESSED_DIR / "ProcessedTex",
-        text_expanded_dir=PROCESSED_DIR / "ProcessedTextExpanded"
-    )
+    logger.info("Processing new documents...")
+    all_documents = read_documents_from_directory(
+    directory_path=DOCUMENTS_DIR,
+    text_output_dir=PROCESSED_DIR / "ProcessedTex",
+    text_expanded_dir=PROCESSED_DIR / "ProcessedTextExpanded"
+)
+
+    # Filter out already processed documents
+    new_documents = [doc for doc in all_documents if doc['filename'] not in processed_files]
 
     if not new_documents:
-        logging.info("No new documents to process. Exiting routine.")
+        logger.info("No new documents to process. Exiting routine.")
         return
+    else:
+        logger.info(f"Found {len(new_documents)} new documents to process.")
 
     # Step 2: Create chunks
     logging.info("Creating text chunks...")
