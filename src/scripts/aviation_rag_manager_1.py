@@ -162,16 +162,16 @@ def aviation_rag_manager():
     
     # Process new documents using read_documents.py
     try:
-    	all_documents = read_documents_from_directory(
-        	directory_path=DOCUMENTS_DIR,
-        	text_output_dir=PROCESSED_TEXT_DIR,
-        	text_expanded_dir=PROCESSED_TEXT_EXPANDED_DIR,
-        	existing_documents=None  # Set to None to process all new documents
+        all_documents = read_documents_from_directory(
+        directory_path=DOCUMENTS_DIR,
+        text_output_dir=PROCESSED_TEXT_DIR,
+        text_expanded_dir=PROCESSED_TEXT_EXPANDED_DIR,
+    	existing_documents=None  # Set to None to process all new documents
     	)
-    	logger.info(f"Processed {len(all_documents)} documents successfully.")
+        logger.info(f"Processed {len(all_documents)} documents successfully.")
     except Exception as e:
     	logger.error(f"Error processing documents: {e}", exc_info=True)
-    	raise
+    raise
 
     all_documents = read_documents_from_directory(
     directory_path=DOCUMENTS_DIR,

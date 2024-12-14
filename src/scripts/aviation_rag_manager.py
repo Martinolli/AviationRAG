@@ -170,7 +170,7 @@ def aviation_rag_manager():
 
     all_documents = read_documents_from_directory(
     directory_path=DOCUMENTS_DIR,
-    text_output_dir=PROCESSED_DIR / "ProcessedTex",
+    text_output_dir=PROCESSED_DIR / "ProcessedText",
     text_expanded_dir=PROCESSED_DIR / "ProcessedTextExpanded"
 )
     logger.info(f"Total documents found: {len(all_documents)}")
