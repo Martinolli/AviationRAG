@@ -23,67 +23,67 @@ def get_embedding(text, model="text-embedding-ada-002"):
         print(f"Error generating embedding: {e}")
         return None
 
-def load_embeddings(file_path):
-    """Load embeddings from a JSON file."""
-    with open(file_path, 'r', encoding='utf-8') as file:
-        return json.load(file)
-
-def filter_embeddings(embeddings, filename_filter=None, chunk_size_range=(100, 600)):
-    """Filter embeddings by filename and chunk size."""
-    filtered = []
-    for embedding in embeddings:
-        chunk_size = len(embedding['text'].split())
-        if filename_filter and embedding['filename'] != filename_filter:
-            continue
-        if chunk_size < chunk_size_range[0] or chunk_size > chunk_size_range[1]:
-            continue
-        filtered.append(embedding)
-    return filtered
-
 def cosine_similarity(vec1, vec2):
-    """Compute the cosine similarity between two vectors."""
-    dot_product = np.dot(vec1, vec2)
-    norm_vec1 = np.linalg.norm(vec1)
-    norm_vec2 = np.linalg.norm(vec2)
-    if norm_vec1 == 0 or norm_vec2 == 0:
-        return 0.0
-    return dot_product / (norm_vec1 * norm_vec2)
+    """Compute cosine similarity between two vectors."""
+    vec1 = np.array(vec1)
+    vec2 = np.array(vec2)
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+    if norm1 == 0 or norm2 == 0:
+        return 0.0  # Handle zero-norm vectors
+    return np.dot(vec1, vec2) / (norm1 * norm2)
 
-def compute_similarity(query_embedding, document_embeddings):
-    """Compute cosine similarity between query embedding and document embeddings."""
-    similarities = []
-    for embedding in document_embeddings:
-        similarity = cosine_similarity(np.array(query_embedding), np.array(embedding['embedding']))
-        similarities.append((embedding, similarity))
-    return sorted(similarities, key=lambda x: x[1], reverse=True)
+# Load stored embeddings from your JSON file
+base_dir = r'C:\Users\Aspire5 15 i7 4G2050\Project\AviationRAG'
+embeddings_path = os.path.join(base_dir, 'data', 'embeddings', 'aviation_embeddings.json')
 
-def paginate_results(results, page_size=5):
-    """Paginate results for easier viewing."""
-    for i in range(0, len(results), page_size):
-        yield results[i:i+page_size]
+try:
+    with open(embeddings_path, 'r') as file:
+        data = json.load(file)
+except FileNotFoundError:
+    print(f"Embedding file not found at {embeddings_path}. Please check the path.")
+    exit()
 
-if __name__ == "__main__":
-    # Paths and inputs
-    EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-    QUERY_TEXT = input("Enter your query text: ")
-    FILENAME_FILTER = input("Enter filename to filter (or leave blank): ")
+data_filename = input("Choose your embedding file: ") # Define the filename to use
 
-    # Load embeddings
-    embeddings = load_embeddings(EMBEDDINGS_FILE)
+# Filter by filename and chunk length
+filtered_data = [item for item in data if item['filename'] == data_filename
+                 and 100 <= len(item['text'].split()) <= 400]
 
-    # Filter embeddings by filename and chunk size
-    filtered_embeddings = filter_embeddings(embeddings, filename_filter=FILENAME_FILTER)
+print(f"Number of filtered chunks: {len(filtered_data)}")  # Debug print
 
-    # Generate query embedding
-    query_embedding = get_embedding(QUERY_TEXT)
+# Ask user for a query statement
+query_text = input("Enter your query statement: ")
+query_embedding = get_embedding(query_text)
 
-    # Compute similarity
-    results = compute_similarity(query_embedding, filtered_embeddings)
+# Validate the query embedding
+if query_embedding is None:
+    print("Failed to generate query embedding. Exiting.")
+    exit()
 
-    # Display results
-    print(f"Top results for query: {QUERY_TEXT}")
-    for page in paginate_results(results):
-        for result, similarity in page:
-            print(f"Filename: {result['filename']}, Similarity: {similarity:.4f}")
-            print(f"Chunk: {result['text']}\n")
-        input("Press Enter to view the next page...")
+# Compute similarity for each stored embedding
+similarities = []
+for item in filtered_data:
+    similarity = cosine_similarity(query_embedding, item["embedding"])
+    similarities.append({
+        "chunk_id": item["chunk_id"],
+        "filename": item["filename"],
+        "text": item["text"],
+        "similarity": similarity
+    })
+
+# Sort results by similarity
+similarities = sorted(similarities, key=lambda x: x["similarity"], reverse=True)
+
+# Display all filtered and sorted results with pagination
+page_size = 3
+for i in range(0, len(similarities), page_size):
+    page = similarities[i:i+page_size]
+    print("\nFiltered and Sorted Chunks by Similarity:")
+    print(f"\nPage {i // page_size + 1}:\n")
+    for result in page:
+        print(f"Chunk ID: {result['chunk_id']}, Filename: {result['filename']}, Similarity: {result['similarity']:.4f}")
+        print(f"Text: {result['text']}\n")
+
+    if i + page_size < len(similarities):
+        input("Press Enter to see the next page...")

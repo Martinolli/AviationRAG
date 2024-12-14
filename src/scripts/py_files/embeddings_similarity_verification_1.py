@@ -1,20 +1,21 @@
 import json
 import numpy as np
 import os
-from openai import OpenAI
 from dotenv import load_dotenv
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
 
-# Set up the OpenAI API key
+# Initialize the OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def get_embedding(text, model="text-embedding-ada-002"):
     """Generate embedding using OpenAI's updated client."""
     try:
+        # Ensure the input is wrapped as a list
         response = client.embeddings.create(
-            input=[text],  # OpenAI API requires input as a single string or list
+            input=[text],  # OpenAI API requires input as a list
             model=model
         )
         # Extract the embedding
@@ -44,11 +45,11 @@ except FileNotFoundError:
     print(f"Embedding file not found at {embeddings_path}. Please check the path.")
     exit()
 
-data_filename = input("Choose your embedding file: ") # Define the filename to use
-
 # Filter by filename and chunk length
-filtered_data = [item for item in data if item['filename'] == data_filename
-                 and 100 <= len(item['text'].split()) <= 400]
+filtered_data = [item for item in data if item['filename'] == '14cfr_safety_management_systems.pdf'
+                 and 100 <= len(item['text'].split()) <= 400
+                 ]
+
 
 print(f"Number of filtered chunks: {len(filtered_data)}")  # Debug print
 
@@ -64,7 +65,9 @@ if query_embedding is None:
 # Compute similarity for each stored embedding
 similarities = []
 for item in filtered_data:
+    print(f"Document embedding: {item['embedding']}")  # Debug print
     similarity = cosine_similarity(query_embedding, item["embedding"])
+    print(f"Similarity: {similarity}")  # Debug print
     similarities.append({
         "chunk_id": item["chunk_id"],
         "filename": item["filename"],
@@ -87,3 +90,4 @@ for i in range(0, len(similarities), page_size):
 
     if i + page_size < len(similarities):
         input("Press Enter to see the next page...")
+
