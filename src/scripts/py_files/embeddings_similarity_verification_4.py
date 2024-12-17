@@ -24,34 +24,35 @@ def get_embedding(text, model="text-embedding-ada-002"):
     """
     try:
         response = client.embeddings.create(
-            input=[text],
+            input=[text],  # OpenAI API requires input as a single string or list
             model=model
         )
+        # Extract the embedding
         return response.data[0].embedding
     except Exception as e:
         print(f"Error generating embedding: {e}")
         return None
 
-def load_embeddings(file_path, batch_size=1000):
+# Load embeddings from a JSON file
+def load_embeddings(file_path):
     """
-    Load embeddings from a JSON file in batches to improve performance.
+    Load embeddings from a JSON file.
 
     Args:
         file_path (str): Path to the JSON file containing embeddings.
-        batch_size (int): Number of embeddings to load at a time.
 
     Returns:
-        generator: Generator yielding embeddings in batches.
+        list: List of embeddings with metadata.
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"File not found: {file_path}")
 
     with open(file_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
+    
+    return data
 
-    for i in range(0, len(data), batch_size):
-        yield data[i:i + batch_size]
-
+# Compute cosine similarity between a query and a list of embeddings
 def compute_cosine_similarity(query_embedding, embeddings):
     """
     Compute cosine similarity between a query embedding and a list of embeddings.
@@ -66,9 +67,11 @@ def compute_cosine_similarity(query_embedding, embeddings):
     query_vector = np.array(query_embedding).reshape(1, -1)
     embedding_vectors = np.array([item['embedding'] for item in embeddings])
 
-    return cosine_similarity(query_vector, embedding_vectors)[0]
+    similarities = cosine_similarity(query_vector, embedding_vectors)[0]
+    return similarities
 
-def filter_and_rank_embeddings(embeddings, similarities, top_n=10):
+# Filter and rank embeddings by similarity
+def filter_and_rank_embeddings(embeddings, similarities, top_n=10, filename_filter=None):
     """
     Filter and rank embeddings based on similarity scores.
 
@@ -76,6 +79,7 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10):
         embeddings (list): List of embeddings with metadata.
         similarities (list): Corresponding similarity scores.
         top_n (int): Number of top results to return.
+        filename_filter (str): Filter results by filename (optional).
 
     Returns:
         list: Top N ranked embeddings with metadata and similarity scores.
@@ -88,9 +92,9 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10):
             'similarity': sim
         }
         for emb, sim in zip(embeddings, similarities)
+        if filename_filter is None or filename_filter in emb['filename']
     ]
 
-    # Sort results by similarity
     results = sorted(results, key=lambda x: x['similarity'], reverse=True)
     return results[:top_n]
 
@@ -125,39 +129,45 @@ def generate_response(context, query):
         print(f"Error generating response: {e}")
         return None
 
+# Main function to test similarity and generate responses
 if __name__ == "__main__":
+    # Path to the JSON file containing embeddings
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
 
+    # Query and parameters
     QUERY_TEXT = input("Enter your query text: ")
     TOP_N = 10
+    FILENAME_FILTER = None  # Optional: filter results by filename
 
     try:
+        # Generate embedding for the query
         print("Generating query embedding...")
-        query_embedding = get_embedding(QUERY_TEXT)
-        if query_embedding is None:
+        QUERY_EMBEDDING = get_embedding(QUERY_TEXT)
+        if QUERY_EMBEDDING is None:
             raise ValueError("Failed to generate query embedding")
 
+        # Load embeddings
         print("Loading embeddings...")
-        top_results = []
-        for batch in load_embeddings(EMBEDDINGS_FILE):
-            # Compute similarities for this batch
-            print(f"Processing batch of {len(batch)} embeddings...")
-            similarities = compute_cosine_similarity(query_embedding, batch)
+        embeddings = load_embeddings(EMBEDDINGS_FILE)
 
-            # Filter and rank top results
-            top_results.extend(filter_and_rank_embeddings(batch, similarities, top_n=TOP_N))
+        # Compute similarities
+        print("Computing similarities...")
+        similarities = compute_cosine_similarity(QUERY_EMBEDDING, embeddings)
 
-        # Combine context from top N results
-        unique_texts = set()
-        combined_context = ""
-        for result in sorted(top_results, key=lambda x: x['similarity'], reverse=True)[:TOP_N]:
-            if result['text'] not in unique_texts:  # Prevent duplicate context
-                unique_texts.add(result['text'])
-                combined_context += f"{result['text']}\n"
+        # Filter and rank results
+        print("Filtering and ranking results...")
+        top_results = filter_and_rank_embeddings(
+            embeddings, similarities, top_n=TOP_N, filename_filter=FILENAME_FILTER
+        )
 
+        # Combine context from top results
+        context = "\n".join([result['text'] for result in top_results])
+
+        # Generate response from OpenAI
         print("Generating response...")
-        response = generate_response(combined_context, QUERY_TEXT)
+        response = generate_response(context, QUERY_TEXT)
 
+        # Display response
         print("\nGenerated Response:")
         print(response)
 
