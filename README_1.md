@@ -244,8 +244,7 @@
 
 # Routine Algorithm
 
-----------
-> Remarks:
+## Remarks
 
         The original documents are not stored in the same main folder.
         The original documents are preferable in “DOCX” format.
@@ -264,9 +263,9 @@
         -   ARP documents
         -   Etc.
 
-> Routine Steps:
+## Routine Steps
 
-## Prepare the document to be processed
+### Prepare the document to be processed
 
 1. Choose the document from the library and check if it is in a convenient format, preferably "PDF” or “DOCX” format; check the document content, whether it has pictures, tables, and formulas, and whether the text is in column format or not. For the first documents, it is defined that it will accept only documents in “PDF” format and with one-column text
 2. If the document is in “PDF” format, change it to “DOCX” format to be processed. This step could be changed in the future, but it was defined for this first prototype to follow this line.
@@ -331,9 +330,9 @@
 
 ### Generate embeddings questions for test
 
-## Scripts Description
+# Scripts Description
 
-### Below the scripts in the flow sequence
+## Below the scripts in the flow sequence
 
     1. read_documents.py - First script
 
@@ -341,73 +340,74 @@
         - Output = aviation_corpus.pkl file
 
 ```python
-    import os
-    import pickle
-    import pdfplumber
-    import spacy
-    import nltk
-    from nltk.corpus import stopwords
-    from nltk.tokenize import word_tokenize
-    from nltk.stem import WordNetLemmatizer
-    import csv
-    import re
-    from docx import Document
-    from spellchecker import SpellChecker
-    import wordninja
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    import PyPDF2
-    import logging
-    # Load spaCy's English model
-    nlp = spacy.load('en_core_web_sm')
-    nlp.max_length = 2000000  # or any other suitable value
-    # Download required NLTK data
-    nltk.download('punkt')
-    nltk.download('stopwords')
-    nltk.download('wordnet')
-    # Initialize spellchecker
-    spell = SpellChecker()
-    # Suppress specific warnings
-    import warnings
-    warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
-    # Global stopwords
-    STOP_WORDS = set(stopwords.words('english'))
 
-    # Configure logging
-    logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%(asctime)s - %(levelname)s - %(message)s')
+import os
+import pickle
+import pdfplumber
+import spacy
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+import csv
+import re
+from docx import Document
+from spellchecker import SpellChecker
+import wordninja
+from sklearn.feature_extraction.text import TfidfVectorizer
+import PyPDF2
+import logging
 
-    # Define base directory
-    BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
+# Load spaCy's English model
+nlp = spacy.load('en_core_web_sm')
+nlp.max_length = 2000000  # or any other suitable value
+# Download required NLTK data
+nltk.download('punkt')
+nltk.download('stopwords')
+nltk.download('wordnet')
+# Initialize spellchecker
+spell = SpellChecker()
+# Suppress specific warnings
+import warnings
+warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
+# Global stopwords
+STOP_WORDS = set(stopwords.words('english'))
 
-    # Define paths
-    TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
-    TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
-    PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
+# Configure logging
+logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%(asctime)s - %(levelname)s - %(message)s')
 
-    # Ensure directories exist
-    for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            logging.info(f"Created directory: {directory}")
-        else:
-            logging.info(f"Directory already exists: {directory}")
+# Define base directory
+BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 
+# Define paths
+TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
+TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
+PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
 
-    # Create custom pipeline component for aviation NER
-    @spacy.Language.component("aviation_ner")
-    def aviation_ner(doc):
-        logging.info(f"Starting aviation_ner for document: {doc[:50]}...")
-        patterns = [
-            ("AIRCRAFT_MODEL", r"\b[A-Z]-?[0-9]{1,4}\b"),
-            ("AIRPORT_CODE", r"\b[A-Z]{3}\b"),
-            ("FLIGHT_NUMBER", r"\b[A-Z]{2,3}\s?[0-9]{1,4}\b"),
-            ("AIRLINE", r"\b(American Airlines|Delta Air Lines|United Airlines|Southwest Airlines|Air France|Lufthansa|British Airways)\b"),
-            ("AVIATION_ORG", r"\b(FAA|EASA|ICAO|IATA)\b"),
-        ]
+# Ensure directories exist
+for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        logging.info(f"Created directory: {directory}")
+    else:
+        logging.info(f"Directory already exists: {directory}")
+
+# Create custom pipeline component for aviation NER
+@spacy.Language.component("aviation_ner")
+def aviation_ner(doc):
+    logging.info(f"Starting aviation_ner for document: {doc[:50]}...")
+    patterns = [
+        ("AIRCRAFT_MODEL", r"\b[A-Z]-?[0-9]{1,4}\b"),
+        ("AIRPORT_CODE", r"\b[A-Z]{3}\b"),
+        ("FLIGHT_NUMBER", r"\b[A-Z]{2,3}\s?[0-9]{1,4}\b"),
+        ("AIRLINE", r"\b(American Airlines|Delta Air Lines|United Airlines|Southwest Airlines|Air France|Lufthansa|British Airways)\b"),
+        ("AVIATION_ORG", r"\b(FAA|EASA|ICAO|IATA)\b"),
+    ]
         
-        new_ents = []
-        for ent_type, pattern in patterns:
-            for match in re.finditer(pattern, doc.text):
-                start, end = match.span()
+    new_ents = []
+    for ent_type, pattern in patterns:
+        for match in re.finditer(pattern, doc.text):
+            start, end = match.span()
                 span = doc.char_span(start, end, label=ent_type)
                 if span is not None:
                     # Check for overlap with existing entities
@@ -656,20 +656,20 @@
         - Output = chunks for each document from aviation_corpus.pkl stored in the data/processed/chunked_documents
 
 ```python
-    import os
-    import json
-    import logging
-    import nltk
-    from nltk.tokenize import sent_tokenize
-    import tiktoken
-    import pickle
+import os
+import json
+import logging
+import nltk
+from nltk.tokenize import sent_tokenize
+import tiktoken
+import pickle
 
-    # Ensure necessary NLTK data is downloaded
-    nltk.download('punkt')
+# Ensure necessary NLTK data is downloaded
+nltk.download('punkt')
 
-    # Define absolute paths
-    base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
-    pkl_file = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
+# Define absolute paths
+base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
+pkl_file = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
     chunk_output_dir = os.path.join(base_dir, 'data', 'processed', 'chunked_documents')
 
     # Set up logging
