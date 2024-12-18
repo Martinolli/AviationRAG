@@ -648,7 +648,7 @@ Output = aviation_corpus.pkl file
             logging.info("Document processing script completed")
     ```
 
-## aviation_chunk_saver.py
+## 2 - aviation_chunk_saver.py
 
     - This script creates the chunks from data/raw/aviation_corpus.pkl file
     - Output = chunks for each document from aviation_corpus.pkl stored in the data/processed/chunked_documents
@@ -795,7 +795,7 @@ Output = aviation_corpus.pkl file
             main()
     ```
 
-## extract_pkl_to_json.py
+## 3 - extract_pkl_to_json.py
 
 This script extract the original aviation_corpus.pkl to json format and store it on the aviation_corpus.json file
 
@@ -820,7 +820,7 @@ This script extract the original aviation_corpus.pkl to json format and store it
         print(f"Data successfully extracted and saved to {json_path}")
     ```
 
-## generate_embeddings.js
+## 4 - generate_embeddings.js
 
 This script generates the embeddings from chunked_documents
 output - embeddings from chunks saved in the data/embeddings
@@ -947,7 +947,7 @@ output - embeddings from chunks saved in the data/embeddings
         generateEmbeddings();
     ```
 
-## store_embeddings_astra.js
+## 5 - store_embeddings_astra.js
 
 store the embeddings in the AstraDB: aviation_rag_db/aviation_data/aviation_documents
 
