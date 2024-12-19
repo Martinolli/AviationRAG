@@ -1,659 +1,455 @@
-
 # Aviation RAG Project
 
-## Aviation RAG Purpose - Introduction
+AviationRAG is a Retrieval-Augmented Generation system designed for the aviation industry. It processes aviation-related documents, generates embeddings, and provides a query interface for retrieving relevant information.
 
-### The aeronautical community and industry are complex. The journey from a simple idea to design, manufacture, assembly, and flight is long. Today, the industry requires connections between different countries and resources and relies on electronic communication to keep this system functioning accurately. The amount of data, information, and decisions involved in the initial stages of a project through to its final release is substantial, significantly influencing safety outcomes. In aviation, safety is not just a set of practices but a reflection of behaviors and culture; it must be integrated into the core of aviation thinking. Given the intricate landscape of components, systems, and regulations, fostering a robust safety culture is crucial. As the extent of data, processes, and information continues to expand, decision-making becomes more complex. However, recent advancements in Large Language Models (LLMs) have enhanced our ability to manage and analyze vast amounts of information. These models find application across various sectors, including healthcare, education and training, cybersecurity, financial services, military operations, and human resources, ultimately leading to improved decision-making and outcomes. Large Language Models (LLMs) are not just tools for marketing and sales; they are capable of understanding language on a massive scale. These models utilize extensive training processes to absorb vast amounts of text, allowing them to predict sentences effectively. LLMs have a wide range of applications and are transforming how we enhance human productivity, particularly in strategic thinking that requires the integration of analyses from various fields. In the aviation industry, for example, LLMs can play a pivotal role during the early stages of system development. They help address critical questions related to materials, systems, suppliers, assembly line methods, operational environments, and other essential variables that must be considered to finalize the design and define the system. Numerous issues may arise throughout this process that require systematic solutions. It's important to emphasize that human performance is a crucial element of this endeavor. We must remember that all processes are interconnected, and human performance plays a crucial role in determining the best ways to achieve goals. In this context, problems should be analyzed with the understanding that every part is linked and that there are no insignificant variables that can be overlooked. Addressing all relevant factors is essential to ensure the safety of system operations in both the civil aviation industry and the military aviation or defense sectors. With this perspective in mind, an important theory that enhances our understanding is the model developed by Mr. James Reason known as the Swiss Cheese Model. This model was later adapted by the Department of Defense (DoD) and led to the creation of the HFACS taxonomy. This framework takes an organizational approach to identify errors and problems, considering the organization as well as the environment in which this complex system operates. It emphasizes the interplay between human decision-making and performance. In this context, the idea of using a large language model (LLM) tool is to support the identification of gaps or deficiencies in this complex system. It acts as an auxiliary to human performance, helping to address issues that ensure outcomes comply with requirements and identify hidden triggers that could potentially lead to accidents or mishaps in the future, whether in the short or long term. This involves analyzing a non-conformance report related to a specific standard to verify if a task is well-defined and to check if the system functions properly during the early stages of design and testing. The use of an LLM model from the top down could be a breakthrough in the aviation industry, considering the actual stage of development necessary for safety operations. The LLM could be the tool used to bring the system safety analysis to the industry level, to treat the main processes as the engineering system treatment. The main objective of this project is to develop a prototype for an LLM tool tailored for the aviation industry. This tool aims to assist managers in evaluating possible alternatives to address initial problems while considering the impact on the final product. It will provide managers with a holistic perspective, as required by the industry's increasing complexity
+## Disclaimer
 
-## Complete AviationRAG Project Description
+This project, AviationRAG (Retrieval-Augmented Generation for Aviation), is an experimental research tool designed for educational and informational purposes only. It is not intended for use in real-world aviation operations or decision-making processes. The information provided by this system should not be considered as professional advice or a substitute for official aviation documentation, regulations, or expert consultation.
 
-### Step 1: Define Your Project Goals
+Users should be aware that:
 
-- **Goal**: Build a RAG system that allows users to query your aviation corpus in real-time and retrieve relevant information enhanced by an LLM (OpenAI).
-- **Main Features**: The ability to search for related documents, generate answers, and augment responses using embedded knowledge from your aviation corpus.
-- **Tools**: LangChain.js, Vercel for deployment, Astra DB for vector storage, and OpenAI API for LLM capabilities.
+1. The accuracy and completeness of the information cannot be guaranteed.
+2. The system's responses are based on the data it has been trained on and may not reflect the most current aviation standards or practices.
+3. This tool should not be used for any critical aviation-related tasks or decisions.
 
-### Step 2: Set Up Your Environment
+By using this system, you acknowledge and agree that the creators and contributors of AviationRAG are not liable for any consequences resulting from the use or misuse of this tool or the information it provides.
 
-1. Prerequisites**
-   - Install **Node.js** and **npm**: Required for running JavaScript-based LangChain and Vercel.
-   - Create an account on **Astra DB** (DataStax) and **Vercel**.
-   - Obtain an **OpenAI API key**.
+Always refer to official aviation authorities, documentation, and certified professionals for authoritative information and guidance in aviation matters.
 
-2. Install Necessary Tools**
-   - Install LangChain.js: This library will help create embeddings, perform chunking, and connect all components
-   - npm install langchain
-   - Install Astra DB SDK and Vercel CLI for deploying.
-   - npm install @datastax/astra-db-ts vercel
+## Features
 
-### Step 3: Prepare the Aviation Corpus for Use
+- Document processing and chunking
+- Embedding generation using OpenAI's API
+- Vector storage in Astra DB
+- Similarity search for relevant information retrieval
 
-1. Process the Corpus into Embeddings**
-   - Use LangChain.js to convert each text document into **embeddings**.
-   - Preprocess your aviation corpus by breaking documents into chunks suitable for embedding (e.g., 512 or 1024 tokens).
-   - Generate embeddings with **OpenAI API** or another compatible embedding provider.
-   - javascript
-   - const { OpenAIEmbeddings } = require('langchain');
-   - const embeddings = await OpenAIEmbeddings.embed(textChunks, { apiKey: 'your_openai_api_key' });
+## Table of Contents
 
-2. Store Embeddings in Astra DB**
-   - Connect to Astra DB and create a table for storing documents and their corresponding **vector embeddings**.
-   - Store metadata like document titles and keywords to facilitate faster searches.
-   - javascript
-   - const { Client } = require('@datastax/astra-db-ts');
-   - const client = new Client({
-       username: 'your_username',
-       password: 'your_password',
-       secureConnectBundle: 'path/to/secure-connect-database.zip'
-   });
-   // Store embedding vectors
-   - await client.connect();
-   - await client.execute('INSERT INTO aviation_data (id, text, embedding) VALUES (?, ?, ?)', [docId, textChunk, embedding]);
+- [Introduction](#introduction)
+- [Project Description](#project-description)
+- [Project Structure](#project-structure)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Routine Algorithm](#routine-algorithm)
+- [Scripts Description](#scripts-description)
+- [Contributing](#contributing)
+- [License](#license)
+- [Dependencies](#dependencies)
 
-### Step 4: Build Retrieval Mechanism
+## Introduction
 
-1. Search Embeddings for Relevant Texts**
-   - Use **vector similarity search** to locate the most relevant chunks of text when the user asks a question.
-   - Astra DB allows you to run similarity queries directly on your embedded vectors.
-   - javascript
-   - const results = await client.execute('SELECT * FROM aviation_data WHERE similarity(embedding, ?) > threshold', [userQueryEmbedding]);
+The Aviation RAG (Retrieval-Augmented Generation) Project is an innovative initiative designed to address the complex challenges in the aeronautical community and industry. In today's interconnected world, the journey from conceptualization to flight involves a vast network of processes, data, and decision-making that spans across countries and relies heavily on electronic communication.
 
-2. Integrate with OpenAI for RAG**
-   - Use **LangChain** to construct a retrieval-augmented generation workflow.
-   - The retrieved chunks can be fed to OpenAI’s `gpt-3.5-turbo` or similar to generate detailed responses.
-   - javascript
-   - const response = await openai.generate({ prompt: `Here is the context: ${retrievedTexts}.
-   - Answer the user query: ${userQuery}`, apiKey: 'your_openai_api_key' });
+### The Complexity of Aviation
 
-### Step 5: Deploy the Application with Vercel
+The aviation industry is characterized by its intricate landscape of components, systems, and regulations. From the initial design phase to manufacturing, assembly, and eventual flight, each step involves substantial amounts of data, information exchange, and critical decision-making. This complexity significantly influences safety outcomes, which are paramount in aviation.
 
-1. Create a Simple Frontend**
-   - Design a minimal **frontend interface** using JavaScript and HTML to allow users to type questions.
-   - Use Vercel to host your application for easy scalability.
+### Safety as a Core Value
 
-2. Deploy Your Application**
-   - Configure **Vercel** to deploy the application with one command.
-   - sh
-   - vercel --prod
-   - Ensure your app connects to Astra DB and the OpenAI API.
+In aviation, safety is not merely a set of practices but a fundamental aspect of the industry's culture. It must be integrated into every facet of aviation thinking, from design to operation. As the industry continues to evolve and expand, fostering a robust safety culture becomes increasingly crucial.
 
-### Step 6: Test and Iterate
+### The Data Challenge
 
-1. Testing Workflow**
-   - Query the aviation corpus for typical user questions like "What are the common safety measures for maintenance?"
-   - Ensure the retrieved context is correct and that the responses from OpenAI are relevant and informative.
+With the exponential growth of data, processes, and information in the aviation sector, decision-making has become more complex than ever before. The sheer volume of information that needs to be processed, analyzed, and acted upon presents a significant challenge to industry professionals.
 
-2. Refine Embeddings and Pipeline**
-   - Review the relevance of the retrieved documents.
-   - Fine-tune embedding creation or chunking sizes if necessary.
+### Leveraging Advanced Technology
 
-### Step 7: Monitor and Improve
+Recent advancements in Large Language Models (LLMs) have opened new possibilities for managing and analyzing vast amounts of information. The Aviation RAG Project harnesses these technological breakthroughs to enhance our ability to process, understand, and utilize the wealth of data available in the aviation industry.
 
-1. Set Up Monitoring**
-   - Monitor the usage of your application (e.g., which questions users ask most often, response accuracy).
-   - Use Astra DB’s **built-in monitoring tools** or services like **Datadog** to track performance.
+### Project Goals
 
-2. Improve Based on Feedback**
-   - Continuously improve the relevance of the retrieval and the quality of the LLM’s response.
-   - If certain queries aren't returning valuable results, consider enriching the corpus or adjusting the retrieval parameters.
+The primary goal of this project is to develop a sophisticated Retrieval-Augmented Generation system that allows users to query a comprehensive aviation corpus in real-time. By combining the power of LLMs with a curated database of aviation knowledge, we aim to provide a tool that can:
 
-### Summary
+1. Quickly retrieve relevant information from a vast corpus of aviation documents
+2. Generate accurate and context-aware responses to complex queries
+3. Augment decision-making processes with data-driven insights
+4. Enhance safety practices by making critical information more accessible
+5. Foster a more interconnected and informed aviation community
 
-- **Environment Setup**: Node.js, Astra DB, Vercel, OpenAI API.
-- **Corpus Preparation**: Process the aviation documents into embeddings using LangChain.js and store them in Astra DB.
-- **Build Retrieval Mechanism**: Implement vector similarity searches and integrate OpenAI to generate responses.
-- **Deploy**: Use Vercel for easy hosting and scalability.
-- **Test and Improve**: Iterate on the RAG system based on testing and user feedback.
+Through this project, we strive to contribute to the ongoing efforts to make aviation safer, more efficient, and better equipped to handle the challenges of the 21st century.
 
-## Architecture/Folder Structure Overview
+## Project Description
 
-    AviationRAG/
-    |
-    |
-    |
-    |_____.dvc/
-    |      |___cache/
-    |      |___tmp/
-    |      |___.gitignore
-    |      |___config
-    |
-    |_____.git/
-    |      |___hooks/
-    |      |___info/
-    |      |___lfs/
-    |      |___logs/
-    |      |___objects/
-    |      |___refs/
-    |      |___COMMIT_EDITMSG
-    |      |___config
-    |      |___description
-    |      |___FETCH_HEAD
-    |      |___HEAD
-    |      |___INDEX
-    |      |___ORIG_HEAD
-    |
-    |
-    |_____config/
-    |          |___secure-connect-aviation_rag-db
-    |
-    |_____data/
-    |      |___documents/documents to be processed "PDF" or "DOCX" files
-    |      |___embeddings/aviation_embeddings.json
-    |      |___processed/
-    |      |           |________chunked_documents/
-    |      |           |                        |_______chunked files for each document processed (json)
-    |      |           |________aviation_corpus.json
-    |      |           |________aviation_corpus.json.dvc
-    |      |
-    |      |___processed/ProcessedText/
-    |      |                          |______processed texts from PDF and DOCX files (TXT files)
-    |      |
-    |      |___processed/ProcessedTestExapanded/
-    |      |                                  |______texts from PDF and DOCX files (TXT files)
-    |      |
-    |      |___raw/
-    |            |___aviation_corpus.pkl
-    |
-    |_____logs/
-    |        |___aviation_rag_manager.log 
-    |
-    |
-    |_____models/
-    |
-    |
-    |
-    |_____node_modules/
-    |
-    |
-    |
-    |_____public/
-    |          |_____index.html
-    |
-    |
-    |
-    |_____src/
-    |      |
-    |      |___components/
-    |      |
-    |      |
-    |      |___scripts/
-    |      |          |____ __pycache__/
-    |      |          |
-    |      |          |____js_files/
-    |      |          |           |_____js script files tests
-    |      |          |
-    |      |          |____py_files
-    |      |          |           |_____python files test scripts
-    |      |
-    |      |__________check_astradb.js - check the Astra database
-    |      |
-    |      |__________check_astradb_content.js
-    |      |
-    |      |__________connect_astra.js - connect Astra database
-    |      |
-    |      |__________create_table_astra.js - create the AstraDB table
-    |      |
-    |      |__________generate_embeddings.js - generate embeddings from chunk files
-    |      |
-    |      |__________store_embeddings_astra.js - store the embeddings AstraDB
-    |      |
-    |      |__________test_openai.js - test openai connection
-    |      |
-    |      |__________aviation_chunk_saver.py - create the chunks from aviation corpus
-    |      |
-    |      |__________aviation_rag_manager.py - to manage the pipeline throughout the flow
-    |      |
-    |      |__________aviationrag_interface.py - generate an interface streamlit to check the embeddings similarity
-    |      |
-    |      |__________check_pkl_content.py - to check the pkl file content
-    |      |
-    |      |__________config.py - config the data stored folders
-    |      |
-    |      |__________embeddings_similarity.py - check the embeddings similarities
-    |      |
-    |      |__________embeddings_similarity_verification - check the embeddings answers
-    |      |
-    |      |__________extract_pkl_to_json.py - extract files from corpus to json format
-    |      |
-    |      |__________read_documents.py - create the corpus from documents processed
-    |      |
-    |      |__________utils/
-    |
-    |
-    |_____.dvcignore
-    |
-    |_____.env
-    |
-    |_____.gitattributes
-    |
-    |_____.gitignore
-    |
-    |_____chunking.txt
-    |
-    |_____diary.txt
-    |
-    |_____package.json
-    |
-    |_____processed_files.json
-    |
-    |_____README.md
-    |
-    |_____update_data.bat
-    |
-    |_____vercel.json
+The Aviation RAG Project is a sophisticated information retrieval and generation system designed for the aviation industry. It combines advanced natural language processing with a comprehensive aviation knowledge base to provide accurate, context-aware responses to complex queries in real-time.
 
-# Routine Algorithm
+### Overview
 
-## Remarks
+This project implements a Retrieval-Augmented Generation (RAG) system, allowing users to query a vast aviation corpus and receive enhanced responses powered by Large Language Models (LLMs). The system excels in quickly retrieving relevant information, generating accurate answers, and augmenting decision-making processes with data-driven insights.
 
-        The original documents are not stored in the same main folder.
-        The original documents are preferable in “DOCX” format.
-        If the original documents are in “PDF” or another format, the information is assumed to be passed into “DOCX” format to be processed.
-        Information with the following subjects is acceptable such as knowledge source:
-        -   Aircraft Certification Regulations from different Aviation authorities, such as FAA, EASA, CAA, etc.
-        -   Military Standards with information related to System Safety, System Design, Requirements Criteria, Handbooks, etc.
-        Technical books addressing knowledge from the following areas:
-        -   Aircraft Design
-        -   Aircraft System Safety Analysis
-        -   Aircraft Operation
-        -   Aircraft Maintenance
-        -   Aircraft Certification
-        ISO/SAE Standards
-        -   Quality
-        -   ARP documents
-        -   Etc.
+### Key Features
 
-## Routine Steps
+- Real-time querying of an extensive aviation knowledge base
+- Context-aware response generation using state-of-the-art LLMs
+- Vector similarity search for efficient information retrieval
+- Scalable architecture suitable for handling large volumes of data
+- User-friendly interface for easy interaction with the system
 
-### Prepare the document to be processed
+### Technology Stack
 
-1. Choose the document from the library and check if it is in a convenient format, preferably "PDF” or “DOCX” format; check the document content, whether it has pictures, tables, and formulas, and whether the text is in column format or not. For the first documents, it is defined that it will accept only documents in “PDF” format and with one-column text
-2. If the document is in “PDF” format, change it to “DOCX” format to be processed. This step could be changed in the future, but it was defined for this first prototype to follow this line.
-3. Change the document in “DOCX” format or if not necessary, check the document content, number of pages, if it has tables, headers, footers, page numbers, etc. Check the size of documents If they are too extensive, split the document in a better way to process, as recommended by the chapters.
+- **LangChain.js**: For embedding generation and RAG pipeline management
+- **Vercel**: Deployment and hosting platform
+- **Astra DB**: Vector database for storing and querying embeddings
+- **OpenAI API**: Provides LLM capabilities for response generation
+- **Node.js**: Runtime environment for the application
 
-4. After the document is prepared store it in the corresponding folder in the AviationRAG folder
+### RAG System Explanation
 
-- AviationRAG/data/documents
+Retrieval-Augmented Generation (RAG) combines the power of large language models with a knowledge base to generate more accurate and contextually relevant responses. In our system:
 
-### Process the document
+1. User queries are processed to find relevant information in the aviation corpus.
+2. Retrieved information is used to augment the context provided to the LLM.
+3. The LLM generates a response based on both its training and the retrieved context.
 
-1. This part of the routine is responsible for preparing the core of the complete process flow, generating the document tokens, and saving the “aviation_corpus.pkl” file, where the data are stored for future manipulation and creation of the embeddings. The routine that implements this task is the “read_documents.py.” Following is the summary of the routine steps
-2. Check if there is a new document in the “documents” folder
-3. If there is a new document, the process starts.
-4. Process the document
+### System Architecture
 
-    - read the "PDF" or "DOCX" file
-    - change it to "TXT" file;
-    - save it to ProcessedText folder, data/ProcessedText Folder storage
-    - start process the "TXT" file:
-        - remove the stop words
-        - clean the file
-        - extract the text
-        - extract the tokens
-        - extract names
-        - check the abbreviations
-        - check the pos-tags
-        - check for metadata
-        - generate the dictionary with all information about the new corpus
-        - generate the aviation_corpus.pkl file
-        - store the aviation_corpus.pkl file in the correct folder, aviationrag/data/raw
-    - store the information in the dictionary format
-        - filename
-        - text
-        - tokens
-        - names
-        - entities
-        - pos-tags
-        - matadata
-        - final file = aviation_corpus.pkl
-        - stored the file in the data/documents/raw
+[Consider adding a simple diagram here showing the flow from user input to response generation]
 
-### Generate the Chunks
+1. User Input → 2. Query Processing → 3. Vector Search in Astra DB → 4. Context Retrieval → 5. LLM Processing → 6. Response Generation
 
-1. First Step
+### Data Sources
 
-2. Second Step
+Our aviation corpus includes a wide range of documents such as:
 
-    - alfa
-    - beta
-    - charlie
+- Technical manuals
+- Safety regulations
+- Aircraft specifications
+- Incident reports
+- Industry best practices
 
-3. Thirs Step
+### Performance Metrics
 
-### Saved chunks as a json file
+[If available, add some metrics about response time, accuracy, or other relevant performance indicators]
 
-### Generate the embeddings for chunks
+### Future Enhancements
 
-### Generate the similarity cosines to check the results adherence to the queries
+- Integration with real-time aviation data feeds
+- Multi-language support for global accessibility
+- Advanced visualization of complex aviation concepts
+- Mobile application for on-the-go access
 
-### Store the embeddings into AstraDB
+### Implementation Steps
 
-### Generate embeddings questions for test
-
-# Scripts Description - Below the scripts in the flow sequence
-
-## 1 - read_documents.py - First script
+#### 1 - read_documents.py - First script
 
 This script read documents from data/documents The documents shall be in the following formats: "PDF" or "DOCX" the preferable format is "DOCX"
 Output = aviation_corpus.pkl file
 
-    ```python
+```python
+        import os
+        import pickle
+        import pdfplumber
+        import spacy
+        import nltk
+        from nltk.corpus import stopwords
+        from nltk.tokenize import word_tokenize
+        from nltk.stem import WordNetLemmatizer
+        import csv
+        import re
+        from docx import Document
+        from spellchecker import SpellChecker
+        import wordninja
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        import PyPDF2
+        import logging
 
-    import os
-    import pickle
-    import pdfplumber
-    import spacy
-    import nltk
-    from nltk.corpus import stopwords
-    from nltk.tokenize import word_tokenize
-    from nltk.stem import WordNetLemmatizer
-    import csv
-    import re
-    from docx import Document
-    from spellchecker import SpellChecker
-    import wordninja
-    from sklearn.feature_extraction.text import TfidfVectorizer
-    import PyPDF2
-    import logging
+        # Load spaCy's English model
+        nlp = spacy.load('en_core_web_sm')
+        nlp.max_length = 2000000  # or any other suitable value
+        # Download required NLTK data
+        nltk.download('punkt')
+        nltk.download('stopwords')
+        nltk.download('wordnet')
+        # Initialize spellchecker
+        spell = SpellChecker()
+        # Suppress specific warnings
+        import warnings
+        warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
+        # Global stopwords
+        STOP_WORDS = set(stopwords.words('english'))
 
-    # Load spaCy's English model
-    nlp = spacy.load('en_core_web_sm')
-    nlp.max_length = 2000000  # or any other suitable value
-    # Download required NLTK data
-    nltk.download('punkt')
-    nltk.download('stopwords')
-    nltk.download('wordnet')
-    # Initialize spellchecker
-    spell = SpellChecker()
-    # Suppress specific warnings
-    import warnings
-    warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
-    # Global stopwords
-    STOP_WORDS = set(stopwords.words('english'))
+        # Configure logging
+        logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%(asctime)s - %(levelname)s - %(message)s')
 
-    # Configure logging
-    logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%(asctime)s - %(levelname)s - %(message)s')
+        # Define base directory
+        BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 
-    # Define base directory
-    BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
+        # Define paths
+        TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
+        TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
+        PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
 
-    # Define paths
-    TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
-    TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
-    PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
-
-    # Ensure directories exist
-    for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            logging.info(f"Created directory: {directory}")
-        else:
-            logging.info(f"Directory already exists: {directory}")
-
-    # Create custom pipeline component for aviation NER
-    @spacy.Language.component("aviation_ner")
-    def aviation_ner(doc):
-        logging.info(f"Starting aviation_ner for document: {doc[:50]}...")
-        patterns = [
-            ("AIRCRAFT_MODEL", r"\b[A-Z]-?[0-9]{1,4}\b"),
-            ("AIRPORT_CODE", r"\b[A-Z]{3}\b"),
-            ("FLIGHT_NUMBER", r"\b[A-Z]{2,3}\s?[0-9]{1,4}\b"),
-            ("AIRLINE", r"\b(American Airlines|Delta Air Lines|United Airlines|Southwest Airlines|Air France|Lufthansa|British Airways)\b"),
-            ("AVIATION_ORG", r"\b(FAA|EASA|ICAO|IATA)\b"),
-        ]
-
-        new_ents = []
-        for ent_type, pattern in patterns:
-            for match in re.finditer(pattern, doc.text):
-                start, end = match.span()
-                    span = doc.char_span(start, end, label=ent_type)
-                    if span is not None:
-                        # Check for overlap with existing entities
-                        if not any(span.start < ent.end and span.end > ent.start for ent in list(doc.ents) + new_ents):
-                            new_ents.append(span)
-                            logging.debug(f"Added new entity: {span.text} ({ent_type})")
-                            
-            doc.ents = list(doc.ents) + new_ents
-            logging.info(f"Finished aviation_ner. Added {len(new_ents)} new entities.")
-            return doc
-
-        # Add the custom component to the pipeline
-        nlp.add_pipe("aviation_ner", after="ner")
-
-        def load_abbreviation_dict():
-            abbreviation_dict = {}
-            try:
-                with open('abbreviations.csv', mode='r') as infile:
-                    reader = csv.reader(infile)
-                    for rows in reader:
-                        if len(rows) < 2:
-                            continue
-                        abbreviation_dict[rows[0].strip()] = rows[1].strip()
-            except FileNotFoundError:
-                print("Error: The file 'abbreviations.csv' was not found.")
-            except Exception as e:
-                print(f"An error occurred while loading the abbreviation dictionary: {e}")
-            return abbreviation_dict
-
-        def split_connected_words_improved(text):
-            words = re.findall(r'\w+|\W+', text)
-            split_words = []
-            for word in words:
-                if len(word) > 15 and word.isalnum():
-                    split_parts = re.findall('[A-Z][a-z]*|[a-z]+|[0-9]+', word)
-                    split_words.extend(split_parts)
-                else:
-                    split_words.append(word)
-            split_words = ' '.join(split_words)
-            split_words = ' '.join(wordninja.split(split_words))
-            return split_words
-
-        def filter_non_sense_strings(text):
-            words = text.split()
-            cleaned_words = []
-            for word in words:
-                if re.match(r'^[a-zA-Z]+$', word) and len(set(word.lower())) > 3:
-                    cleaned_words.append(word)
-            return ' '.join(cleaned_words)
-
-        def preprocess_text_with_sentences(text):
-            doc = nlp(text)
-            sentences = []
-            for sent in doc.sents:
-                cleaned_sentence = ' '.join(
-                    token.lemma_.lower() for token in sent
-                    if token.is_alpha and token.text.lower() not in STOP_WORDS
-                )
-                if cleaned_sentence:
-                    sentences.append(cleaned_sentence)
-            return ' '.join(sentences)
-
-        def extract_personal_names(text):
-            doc = nlp(text)
-            return [ent.text for ent in doc.ents if ent.label_ == 'PERSON']
-
-        def extract_entities_and_pos_tags(text):
-            doc = nlp(text)
-            entities = [(ent.text, ent.label_) for ent in doc.ents]
-            pos_tags = [(token.text, token.pos_) for token in doc]
-            return entities, pos_tags
-
-        def expand_abbreviations_in_text(text, abbreviation_dict):
-            words = text.split()
-            expanded_words = []
-            for word in words:
-                if word.lower() in abbreviation_dict:
-                    expanded_words.append(abbreviation_dict[word.lower()])
-                else:
-                    expanded_words.append(word)
-            return ' '.join(expanded_words)
-
-        def extract_text_from_pdf_with_pdfplumber(pdf_path):
-            try:
-                with pdfplumber.open(pdf_path) as pdf:
-                    text = ''.join([page.extract_text() + '\n' for page in pdf.pages])
-                    return text
-            except Exception as e:
-                print(f"Failed to process PDF {pdf_path}: {e}")
-                return ""
-
-        def extract_keywords(documents, top_n=10):
-            texts = [doc['text'] for doc in documents]
-            vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-            tfidf_matrix = vectorizer.fit_transform(texts)
-            
-            feature_names = vectorizer.get_feature_names_out()
-            for idx, doc in enumerate(documents):
-                tfidf_scores = tfidf_matrix[idx].toarray()[0]
-                sorted_indices = tfidf_scores.argsort()[::-1]
-                doc['keywords'] = [feature_names[i] for i in sorted_indices[:top_n]]
-
-        def extract_metadata(file_path):
-            metadata = {}
-            if file_path.endswith('.pdf'):
-                with open(file_path, 'rb') as file:
-                    reader = PyPDF2.PdfReader(file)
-                    metadata = reader.metadata
-            # Add more file types as needed
-            return metadata
-
-        def classify_document(text):
-            keywords = {
-                'safety': ['safety', 'hazard', 'risk', 'incident', 'accident','system','hazard','emergency'],
-                'maintenance': ['maintenance', 'repair', 'overhaul', 'inspection'],
-                'operations': ['flight', 'takeoff', 'landing', 'crew', 'pilot','aircraft', 'airplane'],
-                'regulations': ['regulation', 'compliance', 'standard', 'rule', 'law'],
-                'quality': ['quality', 'performance', 'service', 'customer', 'satisfaction','design'],
-            }
-            
-            text_lower = text.lower()
-            scores = {category: sum(1 for word in words if word in text_lower) for category, words in keywords.items()}
-            return max(scores, key=scores.get)
-
-        def read_documents_from_directory(directory_path, text_output_dir=None, text_expanded_dir=None, existing_documents=None):
-            logging.info(f"Starting to read documents from {directory_path}")
-            if existing_documents is None:
-                existing_documents = []
-            
-            existing_files = {doc['filename'] for doc in existing_documents}
-            new_documents = []
-            abbreviation_dict = load_abbreviation_dict()
-            lemmatizer = WordNetLemmatizer()
-
-            for filename in os.listdir(directory_path):
-                logging.info(f"Processing file: {filename}")
-                if filename in existing_files:
-                    continue
-
-                file_path = os.path.join(directory_path, filename)
-                text = ''
-                if filename.endswith(".pdf"):
-                    logging.info(f"Extracting text from PDF: {filename}")
-                    text = extract_text_from_pdf_with_pdfplumber(file_path)
-                elif filename.endswith(".docx"):
-                    logging.info(f"Extracting text from DOCX: {filename}")
-                    try:
-                        doc = Document(file_path)
-                        text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
-                    except Exception as e:
-                        logging.error(f"Failed to process DOCX {filename}: {e}")
-                        print(f"Failed to process DOCX {filename}: {e}")
-                        continue
-                else:
-                    logging.warning(f"Skipping unsupported file type: {filename}")
-                    continue
-
-                logging.info(f"Preprocessing text from {filename}")
-                if not text:
-                    logging.warning(f"No text extracted from {filename}")
-                    continue
-
-                expanded_text = expand_abbreviations_in_text(text, abbreviation_dict)
-                raw_text = expanded_text
-                expanded_text = split_connected_words_improved(expanded_text)
-                expanded_text = filter_non_sense_strings(expanded_text)
-                preprocessed_text = preprocess_text_with_sentences(expanded_text)
-                personal_names = extract_personal_names(preprocessed_text)
-                entities, pos_tags = extract_entities_and_pos_tags(preprocessed_text)
-                tokens = word_tokenize(preprocessed_text)
-                cleaned_tokens = [token.lower() for token in tokens if token.isalpha() and len(token) > 2]
-                tokens_without_stopwords = [token for token in cleaned_tokens if token not in STOP_WORDS]
-                lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens_without_stopwords]
-
-                if text_expanded_dir:
-                    output_file_path = os.path.join(text_expanded_dir, f'{filename}.txt')
-                    with open(output_file_path, 'w', encoding='utf-8') as out_file:
-                        out_file.write(raw_text)
-                    logging.info(f"Expanded text saved to: {output_file_path}")
-                    print(f"Expanded text saved to: {output_file_path}")
-                    
-                if text_output_dir:
-                    output_file_path = os.path.join(text_output_dir, f'{filename}.txt')
-                    logging.info(f"Processed text saved to: {output_file_path}")
-                    with open(output_file_path, 'w', encoding='utf-8') as out_file:
-                        out_file.write(preprocessed_text)
-                    print(f"Text saved to: {output_file_path}")
-
-                logging.info(f"Finished processing all documents in {directory_path}")
-                metadata = extract_metadata(file_path)
-                document_category = classify_document(preprocessed_text)
-
-                new_documents.append({
-                    'filename': filename,
-                    'text': preprocessed_text,
-                    'tokens': lemmatized_tokens,
-                    'personal_names': personal_names,
-                    'entities': entities,
-                    'pos_tags': pos_tags,
-                    'metadata': metadata,
-                    'category': document_category
-                })
-
-            return existing_documents + new_documents
-
-        def update_existing_documents(documents):
-            for doc in documents:
-                if 'metadata' not in doc:
-                    doc['metadata'] = extract_metadata(os.path.join(BASE_DIR, doc['filename']))
-                if 'category' not in doc:
-                    doc['category'] = classify_document(doc['text'])
-            return documents
-
-        def main():
-            documents = None
-            if os.path.exists(PKL_FILENAME):
-                with open(PKL_FILENAME, 'rb') as file:
-                    documents = pickle.load(file)
-                documents = update_existing_documents(documents)
-
-            if documents is None:
-                print("Reading documents from directory...")
-                documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
+        # Ensure directories exist
+        for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+                logging.info(f"Created directory: {directory}")
             else:
-                print("Appending new documents to the existing list...")
-                documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
+                logging.info(f"Directory already exists: {directory}")
 
-            # Apply keyword extraction
-            extract_keywords(documents)
+        # Create custom pipeline component for aviation NER
+        @spacy.Language.component("aviation_ner")
+        def aviation_ner(doc):
+            logging.info(f"Starting aviation_ner for document: {doc[:50]}...")
+            patterns = [
+                ("AIRCRAFT_MODEL", r"\b[A-Z]-?[0-9]{1,4}\b"),
+                ("AIRPORT_CODE", r"\b[A-Z]{3}\b"),
+                ("FLIGHT_NUMBER", r"\b[A-Z]{2,3}\s?[0-9]{1,4}\b"),
+                ("AIRLINE", r"\b(American Airlines|Delta Air Lines|United Airlines|Southwest Airlines|Air France|Lufthansa|British Airways)\b"),
+                ("AVIATION_ORG", r"\b(FAA|EASA|ICAO|IATA)\b"),
+            ]
 
-            # Save the updated list
-            with open(PKL_FILENAME, 'wb') as file:
-                pickle.dump(documents, file)
+            new_ents = []
+            for ent_type, pattern in patterns:
+                for match in re.finditer(pattern, doc.text):
+                    start, end = match.span()
+                        span = doc.char_span(start, end, label=ent_type)
+                        if span is not None:
+                            # Check for overlap with existing entities
+                            if not any(span.start < ent.end and span.end > ent.start for ent in list(doc.ents) + new_ents):
+                                new_ents.append(span)
+                                logging.debug(f"Added new entity: {span.text} ({ent_type})")
+                                
+                doc.ents = list(doc.ents) + new_ents
+                logging.info(f"Finished aviation_ner. Added {len(new_ents)} new entities.")
+                return doc
 
-            print(f"Total documents: {len(documents)}")
+            # Add the custom component to the pipeline
+            nlp.add_pipe("aviation_ner", after="ner")
 
-        if __name__ == '__main__':
-            logging.info("Starting document processing script")
-            main()
-            logging.info("Document processing script completed")
-    ```
+            def load_abbreviation_dict():
+                abbreviation_dict = {}
+                try:
+                    with open('abbreviations.csv', mode='r') as infile:
+                        reader = csv.reader(infile)
+                        for rows in reader:
+                            if len(rows) < 2:
+                                continue
+                            abbreviation_dict[rows[0].strip()] = rows[1].strip()
+                except FileNotFoundError:
+                    print("Error: The file 'abbreviations.csv' was not found.")
+                except Exception as e:
+                    print(f"An error occurred while loading the abbreviation dictionary: {e}")
+                return abbreviation_dict
 
-## 2 - aviation_chunk_saver.py
+            def split_connected_words_improved(text):
+                words = re.findall(r'\w+|\W+', text)
+                split_words = []
+                for word in words:
+                    if len(word) > 15 and word.isalnum():
+                        split_parts = re.findall('[A-Z][a-z]*|[a-z]+|[0-9]+', word)
+                        split_words.extend(split_parts)
+                    else:
+                        split_words.append(word)
+                split_words = ' '.join(split_words)
+                split_words = ' '.join(wordninja.split(split_words))
+                return split_words
 
-    - This script creates the chunks from data/raw/aviation_corpus.pkl file
-    - Output = chunks for each document from aviation_corpus.pkl stored in the data/processed/chunked_documents
+            def filter_non_sense_strings(text):
+                words = text.split()
+                cleaned_words = []
+                for word in words:
+                    if re.match(r'^[a-zA-Z]+$', word) and len(set(word.lower())) > 3:
+                        cleaned_words.append(word)
+                return ' '.join(cleaned_words)
 
-    ```python
+            def preprocess_text_with_sentences(text):
+                doc = nlp(text)
+                sentences = []
+                for sent in doc.sents:
+                    cleaned_sentence = ' '.join(
+                        token.lemma_.lower() for token in sent
+                        if token.is_alpha and token.text.lower() not in STOP_WORDS
+                    )
+                    if cleaned_sentence:
+                        sentences.append(cleaned_sentence)
+                return ' '.join(sentences)
+
+            def extract_personal_names(text):
+                doc = nlp(text)
+                return [ent.text for ent in doc.ents if ent.label_ == 'PERSON']
+
+            def extract_entities_and_pos_tags(text):
+                doc = nlp(text)
+                entities = [(ent.text, ent.label_) for ent in doc.ents]
+                pos_tags = [(token.text, token.pos_) for token in doc]
+                return entities, pos_tags
+
+            def expand_abbreviations_in_text(text, abbreviation_dict):
+                words = text.split()
+                expanded_words = []
+                for word in words:
+                    if word.lower() in abbreviation_dict:
+                        expanded_words.append(abbreviation_dict[word.lower()])
+                    else:
+                        expanded_words.append(word)
+                return ' '.join(expanded_words)
+
+            def extract_text_from_pdf_with_pdfplumber(pdf_path):
+                try:
+                    with pdfplumber.open(pdf_path) as pdf:
+                        text = ''.join([page.extract_text() + '\n' for page in pdf.pages])
+                        return text
+                except Exception as e:
+                    print(f"Failed to process PDF {pdf_path}: {e}")
+                    return ""
+
+            def extract_keywords(documents, top_n=10):
+                texts = [doc['text'] for doc in documents]
+                vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
+                tfidf_matrix = vectorizer.fit_transform(texts)
+                
+                feature_names = vectorizer.get_feature_names_out()
+                for idx, doc in enumerate(documents):
+                    tfidf_scores = tfidf_matrix[idx].toarray()[0]
+                    sorted_indices = tfidf_scores.argsort()[::-1]
+                    doc['keywords'] = [feature_names[i] for i in sorted_indices[:top_n]]
+
+            def extract_metadata(file_path):
+                metadata = {}
+                if file_path.endswith('.pdf'):
+                    with open(file_path, 'rb') as file:
+                        reader = PyPDF2.PdfReader(file)
+                        metadata = reader.metadata
+                # Add more file types as needed
+                return metadata
+
+            def classify_document(text):
+                keywords = {
+                    'safety': ['safety', 'hazard', 'risk', 'incident', 'accident','system','hazard','emergency'],
+                    'maintenance': ['maintenance', 'repair', 'overhaul', 'inspection'],
+                    'operations': ['flight', 'takeoff', 'landing', 'crew', 'pilot','aircraft', 'airplane'],
+                    'regulations': ['regulation', 'compliance', 'standard', 'rule', 'law'],
+                    'quality': ['quality', 'performance', 'service', 'customer', 'satisfaction','design'],
+                }
+                
+                text_lower = text.lower()
+                scores = {category: sum(1 for word in words if word in text_lower) for category, words in keywords.items()}
+                return max(scores, key=scores.get)
+
+            def read_documents_from_directory(directory_path, text_output_dir=None, text_expanded_dir=None, existing_documents=None):
+                logging.info(f"Starting to read documents from {directory_path}")
+                if existing_documents is None:
+                    existing_documents = []
+                
+                existing_files = {doc['filename'] for doc in existing_documents}
+                new_documents = []
+                abbreviation_dict = load_abbreviation_dict()
+                lemmatizer = WordNetLemmatizer()
+
+                for filename in os.listdir(directory_path):
+                    logging.info(f"Processing file: {filename}")
+                    if filename in existing_files:
+                        continue
+
+                    file_path = os.path.join(directory_path, filename)
+                    text = ''
+                    if filename.endswith(".pdf"):
+                        logging.info(f"Extracting text from PDF: {filename}")
+                        text = extract_text_from_pdf_with_pdfplumber(file_path)
+                    elif filename.endswith(".docx"):
+                        logging.info(f"Extracting text from DOCX: {filename}")
+                        try:
+                            doc = Document(file_path)
+                            text = '\n'.join([paragraph.text for paragraph in doc.paragraphs])
+                        except Exception as e:
+                            logging.error(f"Failed to process DOCX {filename}: {e}")
+                            print(f"Failed to process DOCX {filename}: {e}")
+                            continue
+                    else:
+                        logging.warning(f"Skipping unsupported file type: {filename}")
+                        continue
+
+                    logging.info(f"Preprocessing text from {filename}")
+                    if not text:
+                        logging.warning(f"No text extracted from {filename}")
+                        continue
+
+                    expanded_text = expand_abbreviations_in_text(text, abbreviation_dict)
+                    raw_text = expanded_text
+                    expanded_text = split_connected_words_improved(expanded_text)
+                    expanded_text = filter_non_sense_strings(expanded_text)
+                    preprocessed_text = preprocess_text_with_sentences(expanded_text)
+                    personal_names = extract_personal_names(preprocessed_text)
+                    entities, pos_tags = extract_entities_and_pos_tags(preprocessed_text)
+                    tokens = word_tokenize(preprocessed_text)
+                    cleaned_tokens = [token.lower() for token in tokens if token.isalpha() and len(token) > 2]
+                    tokens_without_stopwords = [token for token in cleaned_tokens if token not in STOP_WORDS]
+                    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens_without_stopwords]
+
+                    if text_expanded_dir:
+                        output_file_path = os.path.join(text_expanded_dir, f'{filename}.txt')
+                        with open(output_file_path, 'w', encoding='utf-8') as out_file:
+                            out_file.write(raw_text)
+                        logging.info(f"Expanded text saved to: {output_file_path}")
+                        print(f"Expanded text saved to: {output_file_path}")
+                        
+                    if text_output_dir:
+                        output_file_path = os.path.join(text_output_dir, f'{filename}.txt')
+                        logging.info(f"Processed text saved to: {output_file_path}")
+                        with open(output_file_path, 'w', encoding='utf-8') as out_file:
+                            out_file.write(preprocessed_text)
+                        print(f"Text saved to: {output_file_path}")
+
+                    logging.info(f"Finished processing all documents in {directory_path}")
+                    metadata = extract_metadata(file_path)
+                    document_category = classify_document(preprocessed_text)
+
+                    new_documents.append({
+                        'filename': filename,
+                        'text': preprocessed_text,
+                        'tokens': lemmatized_tokens,
+                        'personal_names': personal_names,
+                        'entities': entities,
+                        'pos_tags': pos_tags,
+                        'metadata': metadata,
+                        'category': document_category
+                    })
+
+                return existing_documents + new_documents
+
+            def update_existing_documents(documents):
+                for doc in documents:
+                    if 'metadata' not in doc:
+                        doc['metadata'] = extract_metadata(os.path.join(BASE_DIR, doc['filename']))
+                    if 'category' not in doc:
+                        doc['category'] = classify_document(doc['text'])
+                return documents
+
+            def main():
+                documents = None
+                if os.path.exists(PKL_FILENAME):
+                    with open(PKL_FILENAME, 'rb') as file:
+                        documents = pickle.load(file)
+                    documents = update_existing_documents(documents)
+
+                if documents is None:
+                    print("Reading documents from directory...")
+                    documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
+                else:
+                    print("Appending new documents to the existing list...")
+                    documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
+
+                # Apply keyword extraction
+                extract_keywords(documents)
+
+                # Save the updated list
+                with open(PKL_FILENAME, 'wb') as file:
+                    pickle.dump(documents, file)
+
+                print(f"Total documents: {len(documents)}")
+
+            if __name__ == '__main__':
+                logging.info("Starting document processing script")
+                main()
+                logging.info("Document processing script completed")
+```
+
+#### 2 - aviation_chunk_saver.py
+
+This script creates the chunks from data/raw/aviation_corpus.pkl file
+Output = chunks for each document from aviation_corpus.pkl stored in the data/processed/chunked_documents
+
+```python
 
     import os
     import json
@@ -793,13 +589,13 @@ Output = aviation_corpus.pkl file
 
         if __name__ == '__main__':
             main()
-    ```
+```
 
-## 3 - extract_pkl_to_json.py
+#### 3 - extract_pkl_to_json.py
 
 This script extract the original aviation_corpus.pkl to json format and store it on the aviation_corpus.json file
 
-    ```python
+```python
 
         import pickle
         import json
@@ -818,14 +614,14 @@ This script extract the original aviation_corpus.pkl to json format and store it
                 json.dump(corpus, json_file, ensure_ascii=False, indent=4)
 
         print(f"Data successfully extracted and saved to {json_path}")
-    ```
+```
 
-## 4 - generate_embeddings.js
+#### 4 - generate_embeddings.js
 
 This script generates the embeddings from chunked_documents
 output - embeddings from chunks saved in the data/embeddings
 
-    ```java
+```java
         const fs = require('fs');
         const path = require('path');
         const dotenv = require('dotenv');
@@ -945,13 +741,13 @@ output - embeddings from chunks saved in the data/embeddings
 
         // Run the function
         generateEmbeddings();
-    ```
+```
 
-## 5 - store_embeddings_astra.js
+#### 5 - store_embeddings_astra.js
 
 store the embeddings in the AstraDB: aviation_rag_db/aviation_data/aviation_documents
 
-    ```java
+```java
         const cassandra = require('cassandra-driver');
         const fs = require('fs').promises;
         const path = require('path');
@@ -1010,9 +806,9 @@ store the embeddings in the AstraDB: aviation_rag_db/aviation_data/aviation_docu
         }
 
         insertEmbeddings();
-    ```
+```
 
-## Supportive Routines
+#### Supportive Routines
 
 The following routines were created to:
 
@@ -1020,3 +816,179 @@ Manage the flow since from "read" a document and create the chunks to verify the
 Check the AstraDB content
 Create the AstraDB table
 Connect AstraDB database
+
+## Project Structure
+
+```python
+    AviationRAG/
+        |
+        |
+        |
+        |_____.dvc/
+        |      |___cache/
+        |      |___tmp/
+        |      |___.gitignore
+        |      |___config
+        |
+        |_____.git/
+        |      |___hooks/
+        |      |___info/
+        |      |___lfs/
+        |      |___logs/
+        |      |___objects/
+        |      |___refs/
+        |      |___COMMIT_EDITMSG
+        |      |___config
+        |      |___description
+        |      |___FETCH_HEAD
+        |      |___HEAD
+        |      |___INDEX
+        |      |___ORIG_HEAD
+        |
+        |
+        |_____config/
+        |          |___secure-connect-aviation_rag-db
+        |
+        |_____data/
+        |      |___documents/
+        |      |           |_____documents to be processed "PDF" or "DOCX" files
+        |      |
+        |      |___embeddings/
+        |      |            |_______aviation_embeddings.json
+        |      |
+        |      |___processed/
+        |      |           |________chunked_documents/
+        |      |           |                        |_______chunked files for each document processed (json)
+        |      |           |
+        |      |           |________aviation_corpus.json
+        |      |           |________aviation_corpus.json.dvc
+        |      |
+        |      |___processed/ProcessedText/
+        |      |                          |______processed texts from PDF and DOCX files (TXT files)
+        |      |
+        |      |___processed/ProcessedTestExapanded/
+        |      |                                  |______texts from PDF and DOCX files (TXT files)
+        |      |
+        |      |___raw/
+        |            |___aviation_corpus.pkl
+        |
+        |_____logs/
+        |        |___aviation_rag_manager.log 
+        |
+        |
+        |_____models/
+        |
+        |
+        |
+        |_____node_modules/
+        |
+        |
+        |
+        |_____public/
+        |          |_____index.html
+        |
+        |
+        |
+        |_____src/
+        |      |
+        |      |___components/
+        |      |
+        |      |
+        |      |___scripts/
+        |      |          |______pycache__/
+        |      |          |
+        |      |          |____js_files/
+        |      |          |           |_____js script files tests
+        |      |          |
+        |      |          |____py_files
+        |      |          |           |_____python files test scripts
+        |      |
+        |      |__________check_astradb.js - check the Astra database
+        |      |
+        |      |__________check_astradb_content.js
+        |      |
+        |      |__________connect_astra.js - connect Astra database
+        |      |
+        |      |__________create_table_astra.js - create the AstraDB table
+        |      |
+        |      |__________generate_embeddings.js - generate embeddings from chunk files
+        |      |
+        |      |__________store_embeddings_astra.js - store the embeddings AstraDB
+        |      |
+        |      |__________test_openai.js - test openai connection
+        |      |
+        |      |__________aviation_chunk_saver.py - create the chunks from aviation corpus
+        |      |
+        |      |__________aviation_rag_manager.py - to manage the pipeline throughout the flow
+        |      |
+        |      |__________aviationrag_interface.py - generate an interface streamlit to check the embeddings similarity
+        |      |
+        |      |__________check_pkl_content.py - to check the pkl file content
+        |      |
+        |      |__________config.py - config the data stored folders
+        |      |
+        |      |__________embeddings_similarity.py - check the embeddings similarities
+        |      |
+        |      |__________embeddings_similarity_verification - check the embeddings answers
+        |      |
+        |      |__________extract_pkl_to_json.py - extract files from corpus to json format
+        |      |
+        |      |__________read_documents.py - create the corpus from documents processed
+        |      |
+        |      |__________utils/
+        |
+        |
+        |_____.dvcignore
+        |
+        |_____.env
+        |
+        |_____.gitattributes
+        |
+        |_____.gitignore
+        |
+        |_____chunking.txt
+        |
+        |_____diary.txt
+        |
+        |_____package.json
+        |
+        |_____processed_files.json
+        |
+        |_____README.md
+        |
+        |_____update_data.bat
+        |
+        |_____vercel.json
+```
+
+## Installation
+
+```bash
+    # Clone the repository
+    git clone https://github.com/yourusername/AviationRAG.git
+
+    # Navigate to the project directory
+    cd AviationRAG
+
+    # Install dependencies
+    npm install
+```
+
+## Usage
+
+## Routine Algorithm
+
+## Scripts Description
+
+## Contributing
+
+## License
+
+## Dependencies
+
+- Node.js
+- Python 3.7+
+- OpenAI API
+- Astra DB
+- LangChain
+- [List other major dependencies]
