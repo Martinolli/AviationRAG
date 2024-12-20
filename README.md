@@ -134,7 +134,7 @@ Our aviation corpus includes a wide range of documents such as:
 This script read documents from data/documents The documents shall be in the following formats: "PDF" or "DOCX" the preferable format is "DOCX"
 Output = aviation_corpus.pkl file
 
-```python
+    ```python
         import os
         import pickle
         import pdfplumber
@@ -442,14 +442,14 @@ Output = aviation_corpus.pkl file
                 logging.info("Starting document processing script")
                 main()
                 logging.info("Document processing script completed")
-```
+    ```
 
 #### 2 - aviation_chunk_saver.py
 
 This script creates the chunks from data/raw/aviation_corpus.pkl file
 Output = chunks for each document from aviation_corpus.pkl stored in the data/processed/chunked_documents
 
-```python
+    ```python
 
     import os
     import json
@@ -589,13 +589,13 @@ Output = chunks for each document from aviation_corpus.pkl stored in the data/pr
 
         if __name__ == '__main__':
             main()
-```
+    ```
 
 #### 3 - extract_pkl_to_json.py
 
 This script extract the original aviation_corpus.pkl to json format and store it on the aviation_corpus.json file
 
-```python
+    ```python
 
         import pickle
         import json
@@ -614,14 +614,14 @@ This script extract the original aviation_corpus.pkl to json format and store it
                 json.dump(corpus, json_file, ensure_ascii=False, indent=4)
 
         print(f"Data successfully extracted and saved to {json_path}")
-```
+    ```
 
 #### 4 - generate_embeddings.js
 
 This script generates the embeddings from chunked_documents
 output - embeddings from chunks saved in the data/embeddings
 
-```java
+    ```java
         const fs = require('fs');
         const path = require('path');
         const dotenv = require('dotenv');
@@ -741,13 +741,13 @@ output - embeddings from chunks saved in the data/embeddings
 
         // Run the function
         generateEmbeddings();
-```
+    ```
 
 #### 5 - store_embeddings_astra.js
 
 store the embeddings in the AstraDB: aviation_rag_db/aviation_data/aviation_documents
 
-```java
+    ```java
         const cassandra = require('cassandra-driver');
         const fs = require('fs').promises;
         const path = require('path');
@@ -806,7 +806,7 @@ store the embeddings in the AstraDB: aviation_rag_db/aviation_data/aviation_docu
         }
 
         insertEmbeddings();
-```
+    ```
 
 #### Supportive Routines
 
@@ -819,7 +819,8 @@ Connect AstraDB database
 
 ## Project Structure
 
-```python
+    ```python
+
     AviationRAG/
         |
         |
@@ -959,11 +960,12 @@ Connect AstraDB database
         |_____update_data.bat
         |
         |_____vercel.json
-```
+
+    ```
 
 ## Installation
 
-```bash
+    ```bash
     # Clone the repository
     git clone https://github.com/yourusername/AviationRAG.git
 
@@ -972,11 +974,55 @@ Connect AstraDB database
 
     # Install dependencies
     npm install
-```
+    ```
 
 ## Usage
 
 ## Routine Algorithm
+
+-----
+Below there is a pseudo-algorithm description
+
+    1.  Preparing documents to be processed
+        - Verify type of documents, PDF – TXT
+        - Check for figures, tables
+        - Check for columns
+        - Filter the documents to be processed
+        - Choose the documents 
+        - Store the documents into the data/documents Folder
+    2.  Documents stored in the data/documents Folder
+    3.  Run the script read_documents.py
+        - Processes the documents to generate the corpus data
+        - Create the aviation_corpus.pkl file
+        - Storing aviation_corpus in the data/raw Folder
+            - Corpus content (dictionary)
+                
+                {'filename': filename,
+                'text': preprocessed_text,
+                'tokens': lemmatized_tokens,
+                'personal_names': personal_names,
+                'entities': entities,
+                'pos_tags': pos_tags,
+                'metadata': metadata,
+                'category': document_category}
+                
+    4.  Generating the chunks from the aviation_corpus.pkl
+        - Run the script aviation_chunk_saver.py
+        - Create the chunks for each document processed with read_document.py, stored in the aviation_corpus.pkl
+        - Storing the chunks in the data/processed/chunked_documents Folder
+    5.  Generating the aviation_corpus.json file
+        - Run the script extract_pkl_to_json.py
+        - Storing the aviation_corpus.json in the data/processed Folder
+    6.  Generate the embeddings
+        - Run the script generate_embeddings.js
+        - Read the chunks files from data/processed/chunked_documents
+        - Processing each new document and generate a embedding
+        - Storing the embeddings in the data/embeddings/aviation_embeddings.json
+    7.  Storing the embeddings in the AstraDB
+        - Run the script store_embeddings_astra.js
+        - The embeddings are stored in the AstraDB
+    8.
+-----
 
 ## Scripts Description
 
