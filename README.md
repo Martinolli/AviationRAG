@@ -4,7 +4,7 @@ AviationRAG is a Retrieval-Augmented Generation system designed for the aviation
 
 ## Disclaimer
 
-This project, AviationRAG (Retrieval-Augmented Generation for Aviation), is an experimental research tool designed for educational and informational purposes only. It is not intended for use in real-world aviation operations or decision-making processes. The information provided by this system should not be considered as professional advice or a substitute for official aviation documentation, regulations, or expert consultation.
+This project, AviationRAG (Retrieval-Augmented Generation for Aviation), is an xperimental research tool designed. It is not intended for use main real-world aviation operations or decision-making processes. The information provided by this systeme should not be considered as a substitute for official aviation documentation, regulations, or expert consultation.
 
 Users should be aware that:
 
@@ -103,6 +103,11 @@ Retrieval-Augmented Generation (RAG) combines the power of large language models
 ### System Architecture
 
 [Consider adding a simple diagram here showing the flow from user input to response generation]
+
+![Figure_1](md_figures/choose_documents.png "Choosen Documents")
+![Figure_2](md_figures/check_document.png "Checking Documents")
+![Figure_3](md_figures/prepare_document.png "Preparing Documents")
+![Figure_4](md_figures/clean_document.png" "Cleaning Documents")
 
 1. User Input → 2. Query Processing → 3. Vector Search in Astra DB → 4. Context Retrieval → 5. LLM Processing → 6. Response Generation
 
