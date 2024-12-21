@@ -28,12 +28,12 @@ def get_embedding(text, model="text-embedding-ada-002"):
         list: The generated embedding.
     """
     try:
-        response = client.Embedding.create(
+        response = client.embeddings.create(
             input=[text],
             model=model
         )
         # Extract the embedding correctly
-        return response['data'][0]['embedding']
+        return response.data[0].embedding
     except Exception as e:
         print(f"Error generating embedding: {e}")
         return None
@@ -50,12 +50,12 @@ def compute_similarities(query_embedding, embeddings):
 def generate_response(context, query, model="gpt-4", temperature=0.7):
     prompt = f"The user asked: {query}\n\nHere is the context:\n{context}\n\nProvide a detailed response:"
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=temperature,
         )
-        return response.choices[0].message['content']
+        return response.choices[0].message.content
     except Exception as e:
         return f"Error generating response: {e}"
 
@@ -83,26 +83,29 @@ def main():
     user_query = st.text_input("Enter your query", key="query")
     if st.button("Submit Query") and user_query and embeddings_file:
         # Generate embedding for user query
-        query_embedding = openai.embeddings.create(input=[user_query], model="text-embedding-ada-002")['data'][0]['embedding']
+        query_embedding = get_embedding(user_query)
         
-        # Compute similarities
-        similarities = compute_similarities(query_embedding, embeddings)
-        top_contexts = [sim[0]['text'] for sim in similarities[:5]]
+        if query_embedding:
+            # Compute similarities
+            similarities = compute_similarities(query_embedding, embeddings)
+            top_contexts = [sim[0]['text'] for sim in similarities[:5]]
 
-        # Create context for response
-        context = " ".join(top_contexts)
+            # Create context for response
+            context = " ".join(top_contexts)
 
-        # Generate response
-        response = generate_response(context, user_query, model=model, temperature=temperature)
-        st.session_state.history.append({"query": user_query, "response": response})
+            # Generate response
+            response = generate_response(context, user_query, model=model, temperature=temperature)
+            st.session_state.history.append({"query": user_query, "response": response})
 
-        # Display response and context
-        st.subheader("Response")
-        st.write(response)
-        
-        st.subheader("Top Relevant Contexts")
-        for idx, context in enumerate(top_contexts, start=1):
-            st.write(f"**Context {idx}:** {context}")
+            # Display response and context
+            st.subheader("Response")
+            st.write(response)
+            
+            st.subheader("Top Relevant Contexts")
+            for idx, context in enumerate(top_contexts, start=1):
+                st.write(f"**Context {idx}:** {context}")
+        else:
+            st.error("Failed to generate embedding for the query.")
 
     # Display conversation history
     if st.session_state.history:
