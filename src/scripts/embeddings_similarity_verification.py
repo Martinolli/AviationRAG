@@ -94,13 +94,14 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10):
     results = sorted(results, key=lambda x: x['similarity'], reverse=True)
     return results[:top_n]
 
-def generate_response(context, query):
+def generate_response(context, query, model):
     """
     Generate a response using OpenAI.
 
     Args:
         context (str): The context string generated from retrieved chunks.
         query (str): The user query.
+        model (str): The model to use for generating a response.
 
     Returns:
         str: The generated response from OpenAI.
@@ -115,12 +116,23 @@ def generate_response(context, query):
     Provide a detailed response based on the context above.
     """
     try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.7
-        )
-        return response.choices[0].message.content.strip()
+        if model in ["gpt-3.5-turbo", "gpt-4"]:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7
+            )
+            return response.choices[0].message.content.strip()
+        elif model == "text-davinci-003":
+            response = client.completions.create(
+                model=model,
+                prompt=prompt,
+                temperature=0.7,
+                max_tokens=500
+            )
+            return response.choices[0].text.strip()
+        else:
+            raise ValueError(f"Unsupported model: {model}")
     except Exception as e:
         print(f"Error generating response: {e}")
         return None
@@ -129,6 +141,11 @@ if __name__ == "__main__":
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
 
     QUERY_TEXT = input("Enter your query text: ")
+    print("Choose a model: 1. gpt-3.5-turbo  2. gpt-4  3. text-davinci-003")
+    MODEL_SELECTION = input("Enter model number (1/2/3): ")
+    MODEL_MAP = {"1": "gpt-3.5-turbo", "2": "gpt-4", "3": "text-davinci-003"}
+    MODEL = MODEL_MAP.get(MODEL_SELECTION, "gpt-3.5-turbo")
+
     TOP_N = 10
 
     try:
@@ -156,7 +173,7 @@ if __name__ == "__main__":
                 combined_context += f"{result['text']}\n"
 
         print("Generating response...")
-        response = generate_response(combined_context, QUERY_TEXT)
+        response = generate_response(combined_context, QUERY_TEXT, MODEL)
 
         print("\nGenerated Response:")
         print(response)
