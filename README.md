@@ -94,7 +94,8 @@ This project implements a Retrieval-Augmented Generation (RAG) system, allowing 
 
 ### RAG System Explanation
 
-Retrieval-Augmented Generation (RAG) combines the power of large language models with a knowledge base to generate more accurate and contextually relevant responses. In our system:
+Retrieval-Augmented Generation (RAG) combines the power of large language models with a knowledge base
+to generate more accurate and contextually relevant responses. In our system:
 
 1. User queries are processed to find relevant information in the aviation corpus.
 2. Retrieved information is used to augment the context provided to the LLM.
@@ -102,12 +103,29 @@ Retrieval-Augmented Generation (RAG) combines the power of large language models
 
 ### System Architecture
 
-[Consider adding a simple diagram here showing the flow from user input to response generation]
+The flow starts with the selection of primary documents to be processed, changing documents to
+the “DOCX” extension, cleaning the documents, removing tables, figures, headers, and other
+features, storing the documents in the data/documents folder, processing the documents, to
+create store them as part of aviation_corpus.pkl file. The next step is to process the aviation
+corpus into chunks, with chunks the data is processed to create the embeddings for each chunk
+and stored in the AstraDB database. The system then moves on to query processing, where user
+queries are received and interpreted. Once the query is processed, the system efficiently performs
+a vector search in the AstraDB, converting the query into a vector representation.
+The vector search swiftly identifies relevant data points that match the user's query
+based on similarity measures for quick information retrieval. After identifying relevant
+vectors, context retrieval takes place. The system gathers data that provides a comprehensive
+understanding of the topic, ensuring that the response generated later is well-informed and
+contextually relevant. With the context in hand, the next phase is LLM processing; the large
+language model is utilized to analyze the retrieved context and formulate a coherent response.
+The LLM leverages its training on vast datasets to understand nuances and generate human-like text,
+ensuring that the response is accurate and engaging. Finally, the response generation step takes place.
+The processed information and insights from the LLM are synthesized into a clear and concise answer
+to the user's query. The response is then formatted and delivered to the user,
+completing the query processing cycle.
+The complete process is shown below, two Figures.
 
-![Figure_1](md_figures/choose_documents.png "Choosen Documents")
-![Figure_2](md_figures/check_document.png "Checking Documents")
-![Figure_3](md_figures/prepare_document.png "Preparing Documents")
-![Figure_4](md_figures/clean_document.png" "Cleaning Documents")
+![Figure_1](md_figures/step_1.png "Preparing/Processing Documents")
+![Figure_2](md_figures/step_2.png "Query Processing Response Generation")
 
 1. User Input → 2. Query Processing → 3. Vector Search in Astra DB → 4. Context Retrieval → 5. LLM Processing → 6. Response Generation
 
