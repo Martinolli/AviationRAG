@@ -3,14 +3,12 @@ import json
 import os
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
-import nltk
 from nltk.probability import FreqDist
 from nltk.text import Text
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 from openai import OpenAI
 from dotenv import load_dotenv
-import pickle
 
 # Load environment variables
 load_dotenv()
@@ -26,11 +24,23 @@ def load_embeddings():
     with open(EMBEDDINGS_FILE, 'r') as f:
         return json.load(f)
 
+def get_embedding(text, model="text-embedding-ada-002"):
+    """Generate embedding using OpenAI's API."""
+    try:
+        response = client.embeddings.create(
+            input=[text],
+            model=model
+        )
+        return response.data[0].embedding
+    except Exception as e:
+        st.error(f"Error generating embedding: {e}")
+        return None
+
 def compute_similarity(embeddings, query_embedding):
     """Compute cosine similarity between query embedding and all document embeddings."""
     results = []
     for embedding in embeddings:
-        similarity = cosine_similarity([query_embedding], [embedding['embedding']])[0]
+        similarity = cosine_similarity([query_embedding], [embedding['embedding']])[0][0]
         results.append({
             'chunk_id': embedding['chunk_id'],
             'filename': embedding['filename'],
@@ -55,28 +65,32 @@ if st.button("Submit Query"):
     if query:
         st.session_state.query_history.append(query)
 
-        # Generate query embedding (placeholder, replace with actual embedding generation logic)
-        query_embedding = [0.5] * 768  # Replace this with actual embedding generation logic
+        # Generate query embedding
+        st.write("Generating query embedding...")
+        query_embedding = get_embedding(query)
 
-        # Load embeddings and compute similarities
-        st.write("Loading embeddings...")
-        embeddings = load_embeddings()
-        
-        st.write("Computing similarities...")
-        try:
-            results = compute_similarity(embeddings, query_embedding)
+        if query_embedding:
+            # Load embeddings and compute similarities
+            st.write("Loading embeddings...")
+            embeddings = load_embeddings()
+            
+            st.write("Computing similarities...")
+            try:
+                results = compute_similarity(embeddings, query_embedding)
 
-            # Display results
-            st.subheader("Top Results")
-            for result in results[:5]:
-                st.markdown(f"**Chunk ID**: {result['chunk_id']}")
-                st.markdown(f"**Filename**: {result['filename']}")
-                st.markdown(f"**Similarity**: {result['similarity']:.4f}")
-                st.markdown(f"**Text**: {result['text']}")
-                st.markdown("---")
+                # Display results
+                st.subheader("Top Results")
+                for result in results[:5]:
+                    st.markdown(f"**Chunk ID**: {result['chunk_id']}")
+                    st.markdown(f"**Filename**: {result['filename']}")
+                    st.markdown(f"**Similarity**: {result['similarity']:.4f}")
+                    st.markdown(f"**Text**: {result['text']}")
+                    st.markdown("---")
 
-        except Exception as e:
-            st.error(f"Error computing similarities: {e}")
+            except Exception as e:
+                st.error(f"Error computing similarities: {e}")
+        else:
+            st.error("Failed to generate embedding for the query.")
 
 # Display query history
 if st.session_state['query_history']:
