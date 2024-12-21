@@ -1044,10 +1044,60 @@ Below there is a pseudo-algorithm description
     7.  Storing the embeddings in the AstraDB
         - Run the script store_embeddings_astra.js
         - The embeddings are stored in the AstraDB
-    8.
+    8.  Next Steps
 -----
 
 ## Scripts Description
+
+-----
+
+### read_documents.py
+
+    1. Initialization and Setup
+    Load Required Libraries: Imports libraries for text processing, NER, and metadata extraction(spaCy, nltk, PyPDF2, spellchecker, etc.).
+    Download NLTK Resources: Downloads necessary NLTK datasets like stopwords, tokenizer, and lemmatizer.
+    Configure Logging: Logs are saved to read_documents.log for tracking the script's execution.
+    Directory Setup: Creates directories for processed text, expanded text, and raw data storage if they do not already exist.
+    NER Component: Adds a custom aviation_ner component to the spaCy pipeline for domain-specific entity recognition.
+
+    2. Utility Functions
+    Aviation-Specific NER: Matches patterns like AIRCRAFT_MODEL or AIRLINE and adds them to document entities.
+    Abbreviation Expansion: Reads abbreviations from abbreviations.csv and expands them in the text.
+    Connected Words Splitting: Uses improved logic to split unusually long words and clean nonsensical strings.
+    Text Cleaning: Removes stopwords, lemmatizes tokens, and preprocesses the text to lowercase and structured sentences.
+    Metadata Extraction: Extracts metadata from file headers for supported formats (e.g., PDF metadata).
+    Keyword Classification: Classifies documents based on keywords into categories like "safety" or "operations."
+
+    3. Document Processing
+    Text Extraction: Reads text from PDFs (using pdfplumber) and DOCX files.
+    Text Cleaning Pipeline:
+    Expands abbreviations.
+    Splits connected words.
+    Filters nonsensical strings.
+    Tokenizes and lemmatizes words while removing stopwords.
+    Entity Extraction: Extracts personal names, entities, and POS tags from text.
+    Save Preprocessed Text:
+    Saves expanded text to ProcessedTextExpanded.
+    Saves cleaned and structured text to ProcessedText.
+
+    4. Document Categorization
+    Document Classification: Uses keyword matching to classify the document into predefined categories such as "safety" or "maintenance."
+
+    5. Data Management
+    Existing Data Update: Updates metadata and categories for existing documents.
+    Keyword Extraction: Uses TF-IDF to extract key terms from documents for quick reference.
+    Save to PKL: Saves the final processed documents to a serialized .pkl file for future use.
+
+    6. Script Execution
+    Reads all documents from the directory specified in BASE_DIR.
+    Applies the text extraction and cleaning pipeline to each file.
+    Updates or appends data to the list of documents if aviation_corpus.pkl exists.
+    Outputs the total number of processed documents and their locations.
+
+    7. Usage:
+    Tnis srcipt can be used standalone or under aviation_rag_manager script.
+    To run this script we can use "python read_documents.py" on the command line.
+-----
 
 ## Contributing
 
