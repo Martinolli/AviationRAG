@@ -4,17 +4,17 @@ AviationRAG is a Retrieval-Augmented Generation system designed for the aviation
 
 ## Disclaimer
 
-This project, AviationRAG (Retrieval-Augmented Generation for Aviation), is designed as an xperimental research tool. It is not intended for as main toll for aviation decision-making processes. The information provided by this system should not be considered as a substitute for official aviation documentation, regulations, or expert consultation.
+This project, AviationRAG (Retrieval-Augmented Generation for Aviation), is designed as an experimental research tool. It is not intended as the main toll for aviation decision-making processes. The information provided by this system should not be considered a substitute for official aviation documentation, regulations, or expert consultation.
 
 Users should be aware that:
 
 1. The accuracy and completeness of the information cannot be guaranteed.
 2. The system's responses are based on the data it has been trained on and may not reflect the most current aviation standards or practices.
-3. This tool should not be used for any critical aviation-related tasks or decisions.
+3. This tool should not be used for critical aviation-related tasks or decisions.
 
-By using this system, you acknowledge and agree that the creators and contributors of AviationRAG are not liable for any consequences resulting from the use or misuse of this tool or the information it provides.
+By using this system, you acknowledge and agree that AviationRAG's creators and contributors are not liable for any consequences resulting from the use or misuse of this tool or the information it provides.
 
-Always refer to official aviation authorities, documentation, and certified professionals for authoritative information and guidance in aviation matters.
+Always refer to official aviation authorities, documentation, and certified professionals for authoritative information and guidance.
 
 ## Features
 
