@@ -28,6 +28,8 @@ import warnings
 warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
 # Global stopwords
 STOP_WORDS = set(stopwords.words('english'))
+import docx
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%(asctime)s - %(levelname)s - %(message)s')
@@ -168,12 +170,41 @@ def extract_keywords(documents, top_n=10):
         doc['keywords'] = [feature_names[i] for i in sorted_indices[:top_n]]
 
 def extract_metadata(file_path):
+    """
+    Extract metadata from PDF or DOCX files.
+    
+    Args:
+        file_path (str): Path to the file.
+
+    Returns:
+        dict: Metadata extracted from the file.
+    """
     metadata = {}
+    
+    # Handle PDF files
     if file_path.endswith('.pdf'):
         with open(file_path, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
-            metadata = reader.metadata
-    # Add more file types as needed
+            metadata = reader.metadata or {}
+    
+    # Handle DOCX files
+    elif file_path.endswith('.docx'):
+        try:
+            doc = docx.Document(file_path)
+            # Assume metadata is in the first paragraph
+            first_paragraph = doc.paragraphs[0].text.strip()
+            
+            # Check if the first paragraph contains metadata in key-value format
+            if ":" in first_paragraph:
+                for line in first_paragraph.split('\n'):
+                    if ":" in line:
+                        key, value = map(str.strip, line.split(":", 1))
+                        metadata[key] = value
+        except Exception as e:
+            print(f"Error reading DOCX metadata: {e}")
+    
+    # Extend for other file types if needed
+
     return metadata
 
 def classify_document(text):
