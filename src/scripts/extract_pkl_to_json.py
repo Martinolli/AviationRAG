@@ -14,6 +14,9 @@ def extract_pkl_to_json(pkl_path, json_path):
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json.dump(corpus, json_file, ensure_ascii=False, indent=4)
 
+# Call the function to actually perform the extraction
+extract_pkl_to_json(pkl_path, json_path)
+
 
 print(f"Data successfully extracted and saved to {json_path}")
 
