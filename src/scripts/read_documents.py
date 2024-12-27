@@ -179,32 +179,47 @@ def extract_metadata(file_path):
     Returns:
         dict: Metadata extracted from the file.
     """
-    metadata = {}
+    metadata = {
+        'title': '',
+        'author(s)': '',
+        'category': '',
+        'tags': ''
+    }
     
     # Handle PDF files
     if file_path.endswith('.pdf'):
         with open(file_path, 'rb') as file:
             reader = PyPDF2.PdfReader(file)
-            metadata = reader.metadata or {}
+            pdf_metadata = reader.metadata or {}
+            metadata['title'] = pdf_metadata.get('/Title', '')
+            metadata['author(s)'] = pdf_metadata.get('/Author', '')
     
-    # Handle DOCX files
     elif file_path.endswith('.docx'):
         try:
             doc = docx.Document(file_path)
-            # Assume metadata is in the first paragraph
-            first_paragraph = doc.paragraphs[0].text.strip()
+            # Look at the first few paragraphs for metadata
+            text = '\n'.join([p.text for p in doc.paragraphs[:5]])
             
-            # Check if the first paragraph contains metadata in key-value format
-            if ":" in first_paragraph:
-                for line in first_paragraph.split('\n'):
-                    if ":" in line:
-                        key, value = map(str.strip, line.split(":", 1))
-                        metadata[key] = value
+            # Use regex to find metadata
+            title_match = re.search(r'Title:\s*(.*)', text)
+            if title_match:
+                metadata['title'] = title_match.group(1).strip()
+            
+            author_match = re.search(r'Author\(s\):\s*(.*)', text)
+            if author_match:
+                metadata['author(s)'] = author_match.group(1).strip()
+            
+            category_match = re.search(r'Category:\s*(.*)', text)
+            if category_match:
+                metadata['category'] = category_match.group(1).strip()
+            
+            tags_match = re.search(r'Tags:\s*(.*)', text)
+            if tags_match:
+                metadata['tags'] = tags_match.group(1).strip()
+            
         except Exception as e:
             print(f"Error reading DOCX metadata: {e}")
     
-    # Extend for other file types if needed
-
     return metadata
 
 def classify_document(text):
