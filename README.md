@@ -2224,4 +2224,4 @@ The charts below were generated using the script visualizing_data.py
 
 - Figure 11 - Shows the Word Cloud View
 
-[Figure_10](pictures/wordcloud.png "Word Cloud")
+[Figure_11](pictures/wordcloud.png "Word Cloud")
