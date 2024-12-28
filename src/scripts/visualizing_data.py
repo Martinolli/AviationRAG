@@ -31,6 +31,11 @@ from nltk import FreqDist
 import numpy as np
 from wordcloud import WordCloud
 import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from nltk.tokenize import word_tokenize
+from collections import Counter
+from textblob import TextBlob
+import textstat
 
 # Define paths
 base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
@@ -204,20 +209,47 @@ plt.ylabel('Positive Score')
 plt.savefig('pictures/positive_vs_negative_scatter.png')
 plt.close()
 
+# Fucntion to calculate the most frequent words
+def most_frequent_words(text, n=5):
+    tokens = word_tokenize(text)
+    freq_dist = Counter(tokens)
+    return freq_dist.most_common(n)
+
+# Calculate readability score
+
+def calculate_readability_score(text):
+    return textstat.flesch_reading_ease(text)
+
+# Calculate sentiment score
+
+def calculate_sentiment_score(text):
+    return TextBlob(text).sentiment.polarity
+
+# Calculate Lexicon diversity score
+
+def lexical_diversity(text):
+    return (len(set(text)) / len(text))  * 100
+
+
 # Add sentiment scores to df_aviation_corpus
 df_aviation_corpus['Sentiment_Negative'] = sentiment_df['Negative']
 df_aviation_corpus['Sentiment_Neutral'] = sentiment_df['Neutral']
 df_aviation_corpus['Sentiment_Positive'] = sentiment_df['Positive']
 df_aviation_corpus['Sentiment_Compound'] = sentiment_df['Compound']
+df_aviation_corpus['texts_lengths'] = doc_lengths
+df_aviation_corpus['frequent_words'] = df_aviation_corpus['text'].apply(most_frequent_words)
+df_aviation_corpus['readability_score'] = df_aviation_corpus['text'].apply(calculate_readability_score)
+df_aviation_corpus['sentiment_score'] = df_aviation_corpus['text'].apply(calculate_sentiment_score)
+df_aviation_corpus['lexicon_diversity'] = df_aviation_corpus['tokens'].apply(lexical_diversity)
+
 
 # Verify the new columns
 print(df_aviation_corpus.head())
 
 # If you want to save the updated dataframe
-df_aviation_corpus.to_pickle('updated_aviation_corpus.pkl')
+df_aviation_corpus.to_pickle('data/processed/updated_aviation_corpus.pkl')
 
-df_aviation_corpus.to_csv("data/processed/combined_data.csv", index=False)
-df_aviation_corpus.to_pickle("data/processed/combined_data.pkl")
+df_aviation_corpus.to_csv("data/processed/updated_aviation_corpus.csv", index=False)
 
 print(df_aviation_corpus.info())
 
@@ -226,4 +258,10 @@ print("Updated dataframe with sentiment scores has been created and saved.")
 print("Sentiment analysis visualizations have been saved as PNG files.")
 
 print("Analysis complete. Plots have been saved as PNG files.")
+
+print(df_aviation_corpus.head())
+
+print('Aviation Corpus: Filename, Texts Lengths, Frequent Words, Readability, Sentiment Scores, and Lexicon Diversity.')
+
+print(df_aviation_corpus[['filename', 'texts_lengths', 'frequent_words', 'readability_score', 'sentiment_score','lexicon_diversity']].head())
 
