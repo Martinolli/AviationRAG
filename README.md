@@ -2182,14 +2182,46 @@ Next Steps
 
 The charts below were generated using the script visualizing_data.py
 
+- Figure 1 - Shows the Average Names per Category from Documents
+
 ![Figure_1](pictures/avg_names_per_category.png "Average Names per Category")
+
+- Figure 2 - Shows the Category Distribtuion from Documents
+
 ![figure_2](pictures/category_distribution.png "Category Distribution")
+
+- Figure 3  - Shows the Compound Score Distribution
+
 ![Figure_3](pictures/compound_score_distribution.png "Compound Score Distribution")
+
+- Figure 4 - Shows the Documents Length Distribution
+
 ![Figure_4](pictures/doc_length_distribution.png "Documents Length Distribution")
+
+- Figure 5 - Show the Positive vs Negative Scores Scatter
+
 ![Figure_5](pictures/positive_vs_negative_scatter.png "Positive Vs Negative Scatter")
-[Figure_5](pictures/sentiment_scores_boxplot.png "Sentiment Scores")
-[Figure_6](pictures/sentiment_scores_heatmap.png "Sentiment Scores Heatmap")
-[Figure_7](pictures/sentiment_scores_violin.png "Sentiment Scores Violin")
-[Figure_8](pictures/token_counts.png "Tokens Counts")
-[Figure_9](pictures/word_category_heatmap.png "Word Category Heatmap")
-[Figure_10](pictures/word_cloud.png "Word Cloud")
+
+- Figure 6 - Shows the Sentiment Scores
+
+[Figure_6](pictures/sentiment_scores_boxplot.png "Sentiment Scores")
+
+- Figure 7 - Shows the Sentiment Scores Heatmap
+
+[Figure_7](pictures/sentiment_scores_heatmap.png "Sentiment Scores Heatmap")
+
+- Figure 8 - Shows the Sentiment Scores in Violin Format
+
+[Figure_8](pictures/sentiment_scores_violin.png "Sentiment Scores Violin")
+
+- Figure 9 - Shows the Toknes Count
+
+[Figure_9](pictures/token_counts.png "Tokens Counts")
+
+- Figure 10 - Shows the Word Category by Heatmap
+
+[Figure_10](pictures/word_category_heatmap.png "Word Category Heatmap")
+
+- Figure 11 - Shows the Word Cloud View
+
+[Figure_10](pictures/wordcloud.png "Word Cloud")
