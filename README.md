@@ -35,6 +35,7 @@ Always refer to official aviation authorities, documentation, and certified prof
 - [Contributing](#contributing)
 - [License](#license)
 - [Dependencies](#dependencies)
+- [Metrics](#metrics)
 
 ## Introduction
 
@@ -1909,18 +1910,24 @@ The following routines were created to:
         |      |           |
         |      |           |________aviation_corpus.json
         |      |           |________aviation_corpus.json.dvc
-        |      |
-        |      |___processed/ProcessedText/
-        |      |                          |______processed texts from PDF and DOCX files (TXT files)
-        |      |
-        |      |___processed/ProcessedTestExapanded/
-        |      |                                  |______texts from PDF and DOCX files (TXT files)
+        |      |           |________combined_data.csv (aviation_corpus_data with metrics)
+        |      |           |________combined_data.pkl (aviation_corpus_data with metrics)
+        |      |           |
+        |      |           |___processed/ProcessedText/
+        |      |           |                         |______processed texts from PDF and DOCX files (TXT files)
+        |      |           |
+        |      |           |___processed/ProcessedTestExpanded/
+        |      |                                             |______texts from PDF and DOCX files (TXT files)
         |      |
         |      |___raw/
         |            |___aviation_corpus.pkl
         |
         |_____logs/
         |        |___aviation_rag_manager.log 
+        |
+        |
+        |_____md_figures/
+        |              |____"png" figures to compose README.md file
         |
         |
         |_____models/
@@ -1931,9 +1938,12 @@ The following routines were created to:
         |
         |
         |
+        |_____pictures/
+        |            |_____"png" figures from metrics
+        |
+        |
         |_____public/
         |          |_____index.html
-        |
         |
         |
         |_____src/
@@ -1982,6 +1992,16 @@ The following routines were created to:
         |      |
         |      |__________read_documents.py - create the corpus from documents processed
         |      |
+        |      |__________streamlit_app.py - create a streamlit interface - 1 
+        |      |
+        |      |__________streamlit_dynamic_query.py - create a streamlit interface - 2
+        |      |
+        |      |__________streamlit_embeddings_app.py - create a streamlit interface - 3
+        |      |
+        |      |__________streamlit_embeddings.py - create a streamlit interface - 4
+        |      |
+        |      |__________visualizing_data.py - generate metrics from aviation_corpus.pkl file
+        |      |
         |      |__________utils/
         |
         |
@@ -1999,8 +2019,10 @@ The following routines were created to:
         |
         |_____package.json
         |
-        |_____processed_files.json
+        |_____package-lock.json
         |
+        |_____processed_files.json
+        | 
         |_____README.md
         |
         |_____update_data.bat
@@ -2155,3 +2177,19 @@ Next Steps
 - Astra DB
 - LangChain
 - [List other major dependencies]
+
+## Metrics
+
+The charts below were generated using the script visualizing_data.py
+
+![Figure_1](pictures/avg_names_per_category.png "Average Names per Category")
+![figure_2](pictures/category_distribution.png "Category Distribution")
+![Figure_3](pictures/compound_score_distribution.png "Compound Score Distribution")
+![Figure_4](pictures/doc_length_distribution.png "Documents Length Distribution")
+![Figure_5](pictures/positive_vs_negative_scatter.png "Positive Vs Negative Scatter")
+[Figure_5](pictures/sentiment_scores_boxplot.png "Sentiment Scores")
+[Figure_6](pictures/sentiment_scores_heatmap.png "Sentiment Scores Heatmap")
+[Figure_7](pictures/sentiment_scores_violin.png "Sentiment Scores Violin")
+[Figure_8](pictures/token_counts.png "Tokens Counts")
+[Figure_9](pictures/word_category_heatmap.png "Word Category Heatmap")
+[Figure_10](pictures/word_cloud.png "Word Cloud")
