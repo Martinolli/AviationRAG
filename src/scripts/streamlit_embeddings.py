@@ -63,7 +63,7 @@ def plot_frequency_distribution(corpus_tokens):
     plt.figure(figsize=(10, 6))
     plt.bar(words, counts)
     plt.title('Top 20 Words in Corpus')
-    plt.xticks(rotation=70)
+    plt.xticks(rotation=70, ha='right')
     st.pyplot(plt)
 
 # Generate concordance
