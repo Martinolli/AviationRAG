@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation RAG</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #queryInput { width: 100%; padding: 10px; margin-bottom: 10px; }
+        #submitButton { padding: 10px 20px; }
+        #response { margin-top: 20px; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>Aviation RAG Query System</h1>
+    <textarea id="queryInput" rows="4" placeholder="Enter your query"></textarea>
+    <button id="submitButton" onclick="submitQuery()">Submit</button>
+    <div id="response"></div>
+
+    <script>
+        async function submitQuery() {
+            const query = document.getElementById('queryInput').value;
+            const responseDiv = document.getElementById('response');
+            const submitButton = document.getElementById('submitButton');
+
+            submitButton.disabled = true;
+            responseDiv.textContent = 'Processing...';
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query }),
+                });
+                const data = await response.json();
+                responseDiv.textContent = data.response;
+            } catch (error) {
+                responseDiv.textContent = 'An error occurred while processing your request.';
+            } finally {
+                submitButton.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

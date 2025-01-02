@@ -1,30 +1,23 @@
 {
   "name": "aviationrag",
   "version": "1.0.0",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev",
+    "build": "echo 'No build step required'",
+    "start": "vercel dev"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
     "@astrajs/collections": "^0.0.2",
     "@datastax/astra-db-ts": "^1.5.0",
     "cassandra-driver": "^4.7.2",
-    "debug": "^4.3.7",
     "dotenv": "^16.4.5",
     "langchain": "^0.3.6",
-    "node": "^20.18.1",
-    "openai": "^3.2.1",
-    "path-to-regex": "^1.3.8",
-    "path-to-regexp": "^8.2.0",
-    "redwood": "^0.0.1",
-    "routing-tools": "^0.0.4",
-    "semver": "^7.6.3",
-    "senver": "^0.0.0",
-    "tar": "^7.4.3",
+    "openai": "^3.2.1"
+  },
+  "devDependencies": {
     "vercel": "^32.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }
