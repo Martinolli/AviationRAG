@@ -22,29 +22,22 @@ async function insertEmbeddings() {
         const embeddingsPath = path.join(__dirname, '../../data/embeddings/aviation_embeddings.json');
         const embeddingsData = JSON.parse(await fs.readFile(embeddingsPath, 'utf8'));
 
-        const selectQuery = 'SELECT chunk_id FROM aviation_documents WHERE chunk_id = ?';
         const insertQuery = 'INSERT INTO aviation_documents (chunk_id, filename, text, tokens, embedding) VALUES (?, ?, ?, ?, ?)';
 
         for (const item of embeddingsData) {
-            // Check if the chunk_id already exists
-            const result = await client.execute(selectQuery, [item.chunk_id], { prepare: true });
+            // Convert the embedding array to a Float32Array
+            const embeddingVector = Float32Array.from(item.embedding);
 
-            if (result.rows.length > 0) {
-                console.log(`Skipping chunk_id: ${item.chunk_id} (already exists)`);
-            } else {
-                // Convert the embedding array to a Buffer
-                const embeddingBuffer = Buffer.from(new Float32Array(item.embedding).buffer);
+            // Insert new embedding
+            await client.execute(insertQuery, [
+                item.chunk_id,
+                item.filename,
+                item.text,
+                item.tokens,
+                embeddingVector
+            ], { prepare: true });
 
-                // Insert new embedding
-                await client.execute(insertQuery, [
-                    item.chunk_id,
-                    item.filename,
-                    item.text,
-                    item.tokens,
-                    embeddingBuffer
-                ], { prepare: true });
-                console.log(`Inserted embedding for chunk_id: ${item.chunk_id}`);
-            }
+            console.log(`Inserted embedding for chunk_id: ${item.chunk_id}`);
         }
 
         console.log('All embeddings processed successfully');
