@@ -2,25 +2,24 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { OpenAI } from '@langchain/openai';
 import { Client } from 'cassandra-driver';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { VectorStore } from '@langchain/core/vectorstores';
 import { RetrievalQAChain } from 'langchain/chains';
+import { Document } from 'langchain/document';
 
-class CustomAstraDBVectorStore extends VectorStore {
+class CustomAstraDBRetriever {
   private client: Client;
+  private embeddings: OpenAIEmbeddings;
 
-  constructor(embeddings: OpenAIEmbeddings, client: Client) {
-    super(embeddings, {});
+  constructor(client: Client, embeddings: OpenAIEmbeddings) {
     this.client = client;
+    this.embeddings = embeddings;
   }
 
-  async similaritySearch(query: string, k: number) {
-    // Implement similarity search using AstraDB
-    // This is a placeholder and needs to be implemented based on your AstraDB setup
+  async getRelevantDocuments(query: string): Promise<Document[]> {
     const embedding = await this.embeddings.embedQuery(query);
-    const queryText = 'SELECT * FROM aviation_documents ORDER BY embedding ANN OF ? LIMIT ?';
-    const results = await this.client.execute(queryText, [embedding, k], { prepare: true });
+    const queryText = 'SELECT * FROM aviation_documents ORDER BY embedding ANN OF ? LIMIT 5';
+    const results = await this.client.execute(queryText, [embedding], { prepare: true });
     
-    return results.rows.map((row: any) => ({
+    return results.rows.map((row: any) => new Document({
       pageContent: row.text,
       metadata: { filename: row.filename, chunk_id: row.chunk_id },
     }));
@@ -52,11 +51,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await client.connect();
 
     const embeddings = new OpenAIEmbeddings();
-    const vectorStore = new CustomAstraDBVectorStore(embeddings, client);
+    const retriever = new CustomAstraDBRetriever(client, embeddings);
 
     const model = new OpenAI({ openAIApiKey: process.env.OPENAI_API_KEY });
 
-    const chain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
+    const chain = RetrievalQAChain.fromLLM(model, retriever);
 
     const response = await chain.call({ query });
 
