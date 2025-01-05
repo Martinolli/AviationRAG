@@ -8,6 +8,7 @@ import { BaseRetriever } from "@langchain/core/retrievers";
 
 
 class CustomAstraDBRetriever extends BaseRetriever {
+  lc_namespace: string[];
   private client: Client;
   private embeddings: OpenAIEmbeddings;
 
