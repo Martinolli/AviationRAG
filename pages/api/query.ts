@@ -4,7 +4,8 @@ import { Client } from 'cassandra-driver';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { RetrievalQAChain } from 'langchain/chains';
 import { Document } from 'langchain/document';
-import { BaseRetriever } from 'langchain/schema/retriever';
+import { BaseRetriever } from "@langchain/core/retrievers";
+
 
 class CustomAstraDBRetriever extends BaseRetriever {
   private client: Client;
