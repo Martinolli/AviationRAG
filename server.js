@@ -1,86 +1,108 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const { Client } = require("cassandra-driver");
-const { Configuration, OpenAIApi } = require("openai");
+// Updated server.js
+const { VectorStoreRetriever, OpenAI } = require('langchain');
+const { Client } = require('cassandra-driver');
+const dotenv = require('dotenv');
 
-require("dotenv").config();
+dotenv.config();
 
-const app = express();
-app.use(bodyParser.json());
-
+// Initialize Cassandra Client
 const client = new Client({
-  cloud: { secureConnectBundle: "./config/secure-connect-database.zip" },
+  cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
   credentials: {
     username: process.env.ASTRA_DB_CLIENT_ID,
     password: process.env.ASTRA_DB_CLIENT_SECRET,
   },
+  keyspace: process.env.ASTRA_DB_KEYSPACE,
 });
 
-const openai = new OpenAIApi(
-  new Configuration({
-    apiKey: process.env.OPENAI_API_KEY,
-  })
-);
+// Initialize OpenAI Client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-client.connect().then(() => console.log("Connected to AstraDB"));
+// Define constants
+const SIMILARITY_THRESHOLD = 0.8;
+const MAX_CHUNKS = 5;
+const MAX_TOKENS = 1500;
 
-/**
- * Utility function to compute cosine similarity between two vectors.
- */
-function cosineSimilarity(vectorA, vectorB) {
-  const dotProduct = vectorA.reduce((sum, a, idx) => sum + a * vectorB[idx], 0);
-  const magnitudeA = Math.sqrt(vectorA.reduce((sum, a) => sum + a * a, 0));
-  const magnitudeB = Math.sqrt(vectorB.reduce((sum, b) => sum + b * b, 0));
-  return magnitudeA && magnitudeB ? dotProduct / (magnitudeA * magnitudeB) : 0;
+// Query function
+async function handleQuery(userQuery) {
+  try {
+    // Step 1: Generate Query Embedding
+    const queryEmbedding = await generateQueryEmbedding(userQuery);
+
+    // Step 2: Retrieve Relevant Chunks
+    const relevantChunks = await retrieveRelevantChunks(queryEmbedding);
+
+    // Step 3: Construct Context
+    const context = constructContext(relevantChunks);
+
+    // Step 4: Generate Response from LLM
+    const response = await generateLLMResponse(userQuery, context);
+
+    return response;
+  } catch (error) {
+    console.error("Error in handleQuery:", error);
+    return "An error occurred while processing your request.";
+  }
 }
 
-app.post("/query", async (req, res) => {
-  const { userQuery } = req.body;
+// Helper function to generate query embedding
+async function generateQueryEmbedding(query) {
+  const embedding = await openai.embeddings.create({
+    model: "text-embedding-ada-002",
+    input: query,
+  });
+  return embedding.data[0].embedding;
+}
 
-  if (!userQuery) {
-    return res.status(400).send("Query text is required.");
-  }
+// Helper function to retrieve relevant chunks
+async function retrieveRelevantChunks(queryEmbedding) {
+  const query = `SELECT chunk_id, text, embedding FROM aviation_documents;`;
+  const result = await client.execute(query);
 
-  try {
-    // Step 1: Generate embedding for the query
-    const queryEmbeddingResponse = await openai.createEmbedding({
-      model: "text-embedding-ada-002",
-      input: userQuery,
-    });
-    const queryEmbedding = queryEmbeddingResponse.data.data[0].embedding;
+  const chunks = result.rows.map(row => ({
+    chunk_id: row.chunk_id,
+    text: row.text,
+    similarity: computeCosineSimilarity(queryEmbedding, row.embedding),
+  }));
 
-    // Step 2: Fetch all documents and embeddings from AstraDB
-    const query = "SELECT chunk_id, filename, text, embedding FROM aviation_data.aviation_documents";
-    const result = await client.execute(query);
-    const documents = result.rows.map((row) => ({
-      chunk_id: row.chunk_id,
-      filename: row.filename,
-      text: row.text,
-      embedding: row.embedding.toJSON().data, // Convert blob to array
-    }));
+  return chunks
+    .filter(chunk => chunk.similarity >= SIMILARITY_THRESHOLD)
+    .sort((a, b) => b.similarity - a.similarity)
+    .slice(0, MAX_CHUNKS);
+}
 
-    // Step 3: Calculate similarity
-    const similarities = documents.map((doc) => ({
-      ...doc,
-      similarity: cosineSimilarity(queryEmbedding, doc.embedding),
-    }));
+// Helper function to construct context
+function constructContext(chunks) {
+  return chunks.map(chunk => chunk.text).join("\n\n");
+}
 
-    // Step 4: Sort by similarity and return top results
-    const sortedResults = similarities.sort((a, b) => b.similarity - a.similarity).slice(0, 10);
+// Helper function to generate response
+async function generateLLMResponse(query, context) {
+  const prompt = `Context:
+  ${context}
 
-    res.status(200).json({ results: sortedResults });
-  } catch (error) {
-    console.error("Error querying documents:", error);
-    res.status(500).send("Error querying documents.");
-  }
-});
+  Question:
+  ${query}
 
-// Utility: Basic health check endpoint
-app.get("/", (req, res) => {
-  res.send("Server is running!");
-});
+  Provide a detailed and accurate response based on the context.`;
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+  const response = await openai.chat.create({
+    model: "gpt-3.5-turbo",
+    prompt: prompt,
+    max_tokens: MAX_TOKENS,
+    temperature: 0.7,
+  });
+
+  return response.choices[0].message.content.trim();
+}
+
+// Cosine Similarity Helper
+function computeCosineSimilarity(vec1, vec2) {
+  return vec1.reduce((sum, val, i) => sum + val * vec2[i], 0) /
+         (Math.sqrt(vec1.reduce((sum, val) => sum + val ** 2, 0)) *
+          Math.sqrt(vec2.reduce((sum, val) => sum + val ** 2, 0)));
+}
+
+module.exports = handleQuery;
