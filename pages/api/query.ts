@@ -1,13 +1,14 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { OpenAI } from '@langchain/openai';
+import { ChatOpenAI } from '@langchain/openai';
 import { Client } from 'cassandra-driver';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { RetrievalQAChain } from 'langchain/chains';
+import { createRetrievalChain } from "langchain/chains/retrieval";
 import { Document } from 'langchain/document';
-import { BaseRetriever } from "@langchain/core/retrievers";
+import { BaseRetriever, BaseRetrieverInterface } from "@langchain/core/retrievers";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
+import { ChatPromptTemplate } from "@langchain/core/prompts";
 
-
-class CustomAstraDBRetriever extends BaseRetriever {
+class CustomAstraDBRetriever extends BaseRetriever implements BaseRetrieverInterface<Record<string, any>> {
   lc_namespace: string[];
   private client: Client;
   private embeddings: OpenAIEmbeddings;
@@ -19,29 +20,33 @@ class CustomAstraDBRetriever extends BaseRetriever {
   }
 
   async getRelevantDocuments(query: string): Promise<Document[]> {
+    console.log("Retrieving documents for query:", query);
     const embedding = await this.embeddings.embedQuery(query);
-    const queryText = 'SELECT * FROM aviation_documents LIMIT 100'; // Retrieve a batch of documents
+    const queryText = 'SELECT * FROM aviation_documents LIMIT 200';
     const results = await this.client.execute(queryText, [], { prepare: true });
 
-    // Calculate similarity in application logic
     const documents = results.rows.map((row: any) => new Document({
       pageContent: row.text,
       metadata: { filename: row.filename, chunk_id: row.chunk_id },
     }));
 
-    // Sort documents by similarity
     const sortedDocuments = documents.sort((a, b) => {
       const simA = this.calculateSimilarity(embedding, a);
       const simB = this.calculateSimilarity(embedding, b);
       return simB - simA;
     });
 
-    return sortedDocuments.slice(0, 5); // Return top 5 most similar documents
+    console.log("Retrieved and sorted documents:", sortedDocuments);
+    return sortedDocuments.slice(0, 5);
   }
 
   private calculateSimilarity(queryEmbedding: number[], document: Document): number {
-    // Implement your similarity calculation logic here
-    return 0; // Placeholder
+    // Implement similarity calculation
+    return 0;
+  }
+
+  async invoke(input: string): Promise<Document[]> {
+    return this.getRelevantDocuments(input);
   }
 }
 
@@ -52,6 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { query } = req.body;
+    console.log("Received query:", query);
 
     if (!process.env.ASTRA_DB_CLIENT_ID || !process.env.ASTRA_DB_CLIENT_SECRET || !process.env.ASTRA_DB_KEYSPACE || !process.env.ASTRA_DB_SECURE_BUNDLE_PATH) {
       throw new Error('Missing Astra DB environment variables');
@@ -66,20 +72,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       keyspace: process.env.ASTRA_DB_KEYSPACE,
     });
 
-    await client.connect();
+    const prompt = ChatPromptTemplate.fromTemplate(
+      `Answer the user's question from the following context: 
+      {context}
+      Question: {input}`
+    );
 
+    await client.connect();
     const embeddings = new OpenAIEmbeddings();
     const retriever = new CustomAstraDBRetriever(client, embeddings);
+    const model = new ChatOpenAI({
+      openAIApiKey: process.env.OPENAI_API_KEY, 
+      modelName: "gpt-3.5-turbo",
+      temperature: 0.7,
+      maxTokens: 1000,
+      maxRetries: 5,
+    });
 
-    const model = new OpenAI({ openAIApiKey: process.env.OPENAI_API_KEY });
+    const combineDocsChain = await createStuffDocumentsChain({
+      llm: model,
+      prompt: prompt,
+    });
 
-    const chain = RetrievalQAChain.fromLLM(model, retriever);
+    const chain = await createRetrievalChain({ retriever, combineDocsChain });
+    const response = await chain.invoke({ input: query });
 
-    const response = await chain.call({ query });
+    console.log("Raw response from chain.invoke:", response);
+
+    // Check if response is an object and has a 'text' property
+    if (response && typeof response === 'object') {
+      const responseText = response.text || response.answer || response.content; // Adjust based on actual structure
+      if (responseText) {
+        console.log("Generated response:", responseText);
+        res.status(200).json({ response: responseText });
+      } else {
+        console.error("Response is missing expected text property");
+        res.status(500).json({ message: 'Failed to generate a response' });
+      }
+    } else {
+      console.error("Response is undefined or not an object");
+      res.status(500).json({ message: 'Failed to generate a response' });
+    }
 
     await client.shutdown();
-
-    res.status(200).json({ response: response.text });
   } catch (error) {
     console.error('Error processing query:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });

@@ -1,21 +1,12 @@
-// Updated index.tsx
 import { useState } from 'react';
 import styles from '../styles/Home.module.css';
 
 export default function Home() {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) {
-      setResponse("Please enter a valid query.");
-      return;
-    }
-
-    setIsLoading(true);
-    setResponse("");
     try {
       const res = await fetch('/api/query', {
         method: 'POST',
@@ -29,8 +20,6 @@ export default function Home() {
     } catch (error) {
       console.error('Error:', error);
       setResponse('An error occurred while processing your request.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -49,7 +38,6 @@ export default function Home() {
           />
           <button type="submit" className={styles.button}>Submit</button>
         </form>
-        {isLoading && <div className={styles.loader}>Loading...</div>}
         {response && (
           <div className={styles.response}>
             <h2>Response:</h2>
