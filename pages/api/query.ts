@@ -20,29 +20,37 @@ class CustomAstraDBRetriever extends BaseRetriever implements BaseRetrieverInter
   }
 
   async getRelevantDocuments(query: string): Promise<Document[]> {
-    console.log("Retrieving documents for query:", query);
-    const embedding = await this.embeddings.embedQuery(query);
-    const queryText = 'SELECT * FROM aviation_documents LIMIT 500';
-    const results = await this.client.execute(queryText, [], { prepare: true });
+    try {
+      console.log("Retrieving documents for query:", query);
+      const embedding = await this.embeddings.embedQuery(query);
+      const queryText = 'SELECT * FROM aviation_documents LIMIT 500';
+      const results = await this.client.execute(queryText, [], { prepare: true });
 
-    const documents = results.rows.map((row: any) => new Document({
-      pageContent: row.text,
-      metadata: { filename: row.filename, chunk_id: row.chunk_id },
-    }));
+      const documents = results.rows.map((row: any) => new Document({
+        pageContent: row.text,
+        metadata: { filename: row.filename, chunk_id: row.chunk_id, embedding: row.embedding },
+      }));
 
-    const sortedDocuments = documents.sort((a, b) => {
-      const simA = this.calculateSimilarity(embedding, a);
-      const simB = this.calculateSimilarity(embedding, b);
-      return simB - simA;
-    });
+      const sortedDocuments = documents.sort((a, b) => {
+        const simA = this.calculateSimilarity(embedding, a);
+        const simB = this.calculateSimilarity(embedding, b);
+        return simB - simA;
+      });
 
-    console.log("Retrieved and sorted documents:", sortedDocuments);
-    return sortedDocuments.slice(0, 5);
+      console.log("Retrieved and sorted documents:", sortedDocuments);
+      return sortedDocuments.slice(0, 5);
+    } catch (error) {
+      console.error("Error retrieving documents:", error);
+      throw new Error("Failed to retrieve documents");
+    }
   }
 
   private calculateSimilarity(queryEmbedding: number[], document: Document): number {
-    // Implement similarity calculation
-    return 0;
+    const docEmbedding = document.metadata.embedding;
+    const dotProduct = queryEmbedding.reduce((sum, q, i) => sum + q * docEmbedding[i], 0);
+    const queryMagnitude = Math.sqrt(queryEmbedding.reduce((sum, q) => sum + q * q, 0));
+    const docMagnitude = Math.sqrt(docEmbedding.reduce((sum, d) => sum + d * d, 0));
+    return dotProduct / (queryMagnitude * docMagnitude);
   }
 
   async invoke(input: string): Promise<Document[]> {
@@ -83,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const retriever = new CustomAstraDBRetriever(client, embeddings);
     const model = new ChatOpenAI({
       openAIApiKey: process.env.OPENAI_API_KEY, 
-      modelName: "gpt-3.5-turbo",
+      modelName: "gpt-3.5-turbo-1106",
       temperature: 0.7,
       maxTokens: 1000,
       maxRetries: 5,
@@ -115,4 +123,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error('Error processing query:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
-}
+} 
