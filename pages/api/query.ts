@@ -22,7 +22,7 @@ class CustomAstraDBRetriever extends BaseRetriever implements BaseRetrieverInter
   async getRelevantDocuments(query: string): Promise<Document[]> {
     console.log("Retrieving documents for query:", query);
     const embedding = await this.embeddings.embedQuery(query);
-    const queryText = 'SELECT * FROM aviation_documents LIMIT 200';
+    const queryText = 'SELECT * FROM aviation_documents LIMIT 500';
     const results = await this.client.execute(queryText, [], { prepare: true });
 
     const documents = results.rows.map((row: any) => new Document({
@@ -89,11 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       maxRetries: 5,
     });
 
-    const combineDocsChain = await createStuffDocumentsChain({
-      llm: model,
-      prompt: prompt,
-    });
-
+    const combineDocsChain = await createStuffDocumentsChain({ llm: model as any, prompt : prompt});
     const chain = await createRetrievalChain({ retriever, combineDocsChain });
     const response = await chain.invoke({ input: query });
 
