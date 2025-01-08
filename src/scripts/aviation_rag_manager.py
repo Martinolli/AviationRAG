@@ -1,3 +1,4 @@
+import subprocess
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -68,6 +69,19 @@ logger.info("Logging setup complete. This should appear in the file and console.
 def update_aviation_corpus():
     """
     Update the aviation_corpus.pkl file with newly processed documents.
+
+    :param BASE_DIR: The root directory of the project.
+    :param DOCUMENTS_DIR: The directory containing the existing data/documents folder.
+    :param PROCESSED_DIR: The directory where processed documents are saved.
+    :param CHUNKED_DIR: The directory where chunked documents are saved.
+    :param EMBEDDINGS_FILE: The file where embeddings are saved.
+    :param PROCESSED_FILES_PATH: The path to the JSON file containing processed filenames.
+    :param text_output_dir: The directory where processed text is saved.
+    :param text_expanded_dir: The directory where expanded processed text is saved.
+
+    :return: None
+
+    :raises FileNotFoundError: If the documents directory does not exist.
     """
     logger.info("Updating aviation_corpus.pkl with new documents.")
     corpus_path = BASE_DIR / "data" / "raw" / "aviation_corpus.pkl"
@@ -83,7 +97,7 @@ def update_aviation_corpus():
         logger.info(f"Loaded existing corpus with {len(existing_corpus)} documents.")
     else:
         existing_corpus = []
-    logger.info("No existing corpus found. Creating a new one.")
+        logger.info("No existing corpus found. Creating a new one.")
 
     # Update the corpus with new documents
     updated_corpus = read_documents_from_directory(
@@ -96,31 +110,36 @@ def update_aviation_corpus():
     # Save the updated corpus back to the PKL file
     with open(corpus_path, 'wb') as file:
         pickle.dump(updated_corpus, file)
-    
     logger.info(f"aviation_corpus.pkl updated with {len(updated_corpus)} total documents.")
 
 
+
 # Function to run JavaScript files
-def run_js_script(script_name, *args):
-    script_path = BASE_DIR / "src" / "scripts" / script_name
-    result = subprocess.run(["node", str(script_path)] + list(args), capture_output=True, text=True)
-    if result.returncode != 0:
-        logger.error(f"Error running {script_name}: {result.stderr}")
-        raise RuntimeError(f"Error running {script_name}")
-    return result.stdout
+async def run_js_script(script_name, script_args_str):
+    try:
+        await subprocess.run([
+            "node",
+            script_name
+        ],
+        stdin=subprocess.TextIOWrapper(io.BytesIO(script_args_str.encode('utf-8'))),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Error running {script_name}: {e}")
+
 
 # Modified functions to call JavaScript files
 def generate_embeddings(chunked_docs_path, output_path):
     logger.info("Generating embeddings using Node.js script...")
-    run_js_script("generate_embeddings.js", str(chunked_docs_path), str(output_path))
+    run_js_script("generate_embeddings.js", str(chunked_docs_path))
     logger.info(f"Embeddings saved to {output_path}.")
 
-def insert_embeddings_into_db(embeddings_path):
+async def insert_embeddings_into_db(embeddings_path):
     logger.info("Storing embeddings in Astra DB using Node.js script...")
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            run_js_script("store_embeddings_astra.js", str(embeddings_path))
+            await run_js_script("generate_embeddings.js", "chunked_docs_path=CHUNKED_DIR&output_path=EMBEDDINGS_FILE")
             logger.info("Embeddings successfully stored in Astra DB.")
             return
         except RuntimeError as e:
@@ -129,6 +148,7 @@ def insert_embeddings_into_db(embeddings_path):
             else:
                 logger.error("Failed to store embeddings after multiple attempts.")
                 raise
+
 
 # Utility functions for tracking processed files
 def load_processed_files(file_path):
