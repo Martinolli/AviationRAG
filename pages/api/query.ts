@@ -23,7 +23,7 @@ class CustomAstraDBRetriever extends BaseRetriever implements BaseRetrieverInter
     try {
       console.log("Retrieving documents for query:", query);
       const embedding = await this.embeddings.embedQuery(query);
-      const queryText = 'SELECT * FROM aviation_documents LIMIT 500';
+      const queryText = 'SELECT * FROM aviation_documents LIMIT 10';
       const results = await this.client.execute(queryText, [], { prepare: true });
 
       const documents = results.rows.map((row: any) => new Document({

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviation RAG Query System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+        button { padding: 10px 20px; }
+        .response, .debug-info { margin-top: 20px; white-space: pre-wrap; }
+        .chunk { margin-bottom: 10px; border: 1px solid #ccc; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Aviation RAG Query System</h1>
+    <textarea id="queryInput" rows="4" placeholder="Enter your query"></textarea>
+    <button id="submitButton" onclick="submitQuery()">Submit</button>
+    <div id="response" class="response"></div>
+    <div id="chunks"></div>
+    <div id="debugInfo" class="debug-info"></div>
+
+    <script>
+        async function submitQuery() {
+            const query = document.getElementById('queryInput').value;
+            const responseDiv = document.getElementById('response');
+            const chunksDiv = document.getElementById('chunks');
+            const debugInfoDiv = document.getElementById('debugInfo');
+            const submitButton = document.getElementById('submitButton');
+
+            submitButton.disabled = true;
+            responseDiv.textContent = 'Processing...';
+            chunksDiv.innerHTML = '';
+            debugInfoDiv.textContent = '';
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query }),
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    responseDiv.textContent = `Error: ${data.error}`;
+                } else {
+                    responseDiv.textContent = data.response || 'No response generated.';
+
+                    if (Array.isArray(data.chunks)) {
+                        chunksDiv.innerHTML = '<h3>Relevant Chunks:</h3>';
+                        data.chunks.forEach((chunk, index) => {
+                            const chunkDiv = document.createElement('div');
+                            chunkDiv.className = 'chunk';
+                            chunkDiv.innerHTML = `
+                                <strong>Chunk ${index + 1}</strong><br>
+                                Filename: ${chunk.filename}<br>
+                                Chunk ID: ${chunk.chunk_id}<br>
+                                Similarity: ${chunk.similarity.toFixed(4)}<br>
+                                Text: ${chunk.text}
+                            `;
+                            chunksDiv.appendChild(chunkDiv);
+                        });
+                    } else {
+                        chunksDiv.textContent = 'No relevant chunks found.';
+                    }
+                }
+
+                // Display debug info
+                debugInfoDiv.textContent = `Debug Info:\n${JSON.stringify(data, null, 2)}`;
+            } catch (error) {
+                responseDiv.textContent = 'An error occurred while processing your request.';
+                debugInfoDiv.textContent = `Error: ${error.message}`;
+            } finally {
+                submitButton.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
