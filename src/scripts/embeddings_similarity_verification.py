@@ -68,7 +68,7 @@ def compute_cosine_similarity(query_embedding, embeddings):
 
     return cosine_similarity(query_vector, embedding_vectors)[0]
 
-def filter_and_rank_embeddings(embeddings, similarities, top_n=10):
+def filter_and_rank_embeddings(embeddings, similarities, top_n=15):
     """
     Filter and rank embeddings based on similarity scores.
 
@@ -106,28 +106,36 @@ def generate_response(context, query, model):
     Returns:
         str: The generated response from OpenAI.
     """
+    max_context_length = 4000  # Adjust based on the model's capabilities
+    truncated_context = context[:max_context_length]
+    
     prompt = f"""
     Context:
-    {context}
+    {truncated_context}
 
     Question:
     {query}
 
-    Provide a detailed response based on the context above.
+    Provide a detailed, comprehensive, and accurate response based on the context above. 
+    Include relevant facts, explanations, and examples where appropriate. 
+    For each key piece of information in your response, cite the source document in square brackets, 
+    e.g., [Document: Safety Manual]. If information comes from multiple sources, list all relevant sources.
+    If the context doesn't contain enough information to fully answer the question, 
+    clearly state what information is missing or uncertain.
     """
     try:
         if model in ["gpt-3.5-turbo", "gpt-4"]:
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.7
+                temperature=0.5
             )
             return response.choices[0].message.content.strip()
         elif model == "text-davinci-003":
             response = client.completions.create(
                 model=model,
                 prompt=prompt,
-                temperature=0.7,
+                temperature=0.4,
                 max_tokens=500
             )
             return response.choices[0].text.strip()
@@ -137,6 +145,52 @@ def generate_response(context, query, model):
         print(f"Error generating response: {e}")
         return None
 
+def generate_followup_questions(response, query, model):
+    prompt = f"""
+    Based on the following query and response, generate 2-3 relevant follow-up questions 
+    that would help provide a more comprehensive answer:
+
+    Original Query: {query}
+
+    Response: {response}
+
+    Follow-up Questions:
+    """
+    try:
+        followup_response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7
+        )
+        return followup_response.choices[0].message.content.strip().split("\n")
+    except Exception as e:
+        print(f"Error generating follow-up questions: {e}")
+        return []
+
+def fact_check_response(response, context, model):
+    prompt = f"""
+    Response to be fact-checked:
+    {response}
+
+    Original Context:
+    {context}
+
+    Please fact-check the response against the original context. 
+    Identify any inaccuracies, misinterpretations, or unsupported claims. 
+    If the response is accurate and well-supported, confirm this.
+    Provide a brief report on the accuracy and completeness of the response.
+    """
+    try:
+        fact_check_result = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2
+        )
+        return fact_check_result.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error during fact-checking: {e}")
+        return "Fact-checking could not be completed due to an error."
+
 if __name__ == "__main__":
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
 
@@ -144,9 +198,9 @@ if __name__ == "__main__":
     print("Choose a model: 1. gpt-3.5-turbo  2. gpt-4  3. text-davinci-003")
     MODEL_SELECTION = input("Enter model number (1/2/3): ")
     MODEL_MAP = {"1": "gpt-3.5-turbo", "2": "gpt-4", "3": "text-davinci-003"}
-    MODEL = MODEL_MAP.get(MODEL_SELECTION, "gpt-3.5-turbo")
+    MODEL = MODEL_MAP.get(MODEL_SELECTION, "gpt-4")  # Default to GPT-4
 
-    TOP_N = 10
+    TOP_N = 15
 
     try:
         print("Generating query embedding...")
@@ -157,18 +211,14 @@ if __name__ == "__main__":
         print("Loading embeddings...")
         top_results = []
         for batch in load_embeddings(EMBEDDINGS_FILE):
-            # Compute similarities for this batch
             print(f"Processing batch of {len(batch)} embeddings...")
             similarities = compute_cosine_similarity(query_embedding, batch)
-
-            # Filter and rank top results
             top_results.extend(filter_and_rank_embeddings(batch, similarities, top_n=TOP_N))
 
-        # Combine context from top N results
         unique_texts = set()
         combined_context = ""
         for result in sorted(top_results, key=lambda x: x['similarity'], reverse=True)[:TOP_N]:
-            if result['text'] not in unique_texts:  # Prevent duplicate context
+            if result['text'] not in unique_texts:
                 unique_texts.add(result['text'])
                 combined_context += f"{result['text']}\n"
 
@@ -177,6 +227,19 @@ if __name__ == "__main__":
 
         print("\nGenerated Response:")
         print(response)
+
+        print("\nFact-Checking Response...")
+        fact_check_report = fact_check_response(response, combined_context, MODEL)
+        print("Fact-Check Report:")
+        print(fact_check_report)
+
+        print("\nGenerating Follow-up Questions...")
+        followup_questions = generate_followup_questions(response, QUERY_TEXT, MODEL)
+        for i, question in enumerate(followup_questions, 1):
+            print(f"\nFollow-up Question {i}: {question}")
+            followup_response = generate_response(combined_context, question, MODEL)
+            print(f"Follow-up Response {i}:")
+            print(followup_response)
 
     except Exception as e:
         print(f"Error: {e}")
