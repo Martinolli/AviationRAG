@@ -92,8 +92,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const model = new ChatOpenAI({
       openAIApiKey: process.env.OPENAI_API_KEY, 
       modelName: "gpt-3.5-turbo-1106",
-      temperature: 0.7,
-      maxTokens: 1000,
+      temperature: 0.6,
+      maxTokens: 300,
       maxRetries: 5,
     });
 
