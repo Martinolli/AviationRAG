@@ -12,7 +12,7 @@ export default function Home() {
     }[];
   }
   const [response, setResponse] = useState<QueryResponse | null>(null);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -24,15 +24,14 @@ export default function Home() {
         body: JSON.stringify({ query }),
       });
       const data = await res.json();
-      setResponse(data);
-      console.log("Backend response in frontend:", data); // Log the backend response
-      setResponse(data); // Assign the entire backend response
-      console.log("Frontend state:", data); // Log the frontend state after updating
+      console.log("Received data from backend:", data); // Log backend response
+      setResponse(data); // Assign the full backend response
     } catch (error) {
       console.error('Error:', error);
-      setResponse(null); // Reset response state on error
+      setResponse(null); // Clear response state on error
     }
   };
+
   return (
     <div className={styles.container}>
       <main className={styles.main}>
@@ -48,23 +47,27 @@ export default function Home() {
           />
           <button type="submit" className={styles.button}>Submit</button>
         </form>
-        {response && response.results && response.results.length > 0 ? (
+        {response ? (
           <div className={styles.response}>
             <h2>Generated Response:</h2>
             <p>{response.response}</p>
             <h3>Retrieved Context:</h3>
-            <ul>
-              {response.results.map((result, index) => (
-                <li key={index}>
-                  <strong>Similarity:</strong> {result.similarity.toFixed(2)}
-                  <br />
-                  {result.text}
-                </li>
-              ))}
-            </ul>
+            {response.results && response.results.length > 0 ? (
+              <ul>
+                {response.results.map((result, index) => (
+                  <li key={index}>
+                    <strong>Similarity:</strong> {result.similarity.toFixed(2)}
+                    <br />
+                    {result.text}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No relevant context found for this query. The retrieved documents had low similarity scores.</p>
+            )}
           </div>
         ) : (
-          <p>No results to display. Please submit a query.</p>
+          <p>No response available. Please submit a query.</p>
         )}
       </main>
     </div>

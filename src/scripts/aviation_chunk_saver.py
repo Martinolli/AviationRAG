@@ -103,12 +103,13 @@ def save_documents_as_chunks(documents, output_dir, max_tokens=500, overlap=50):
             "category": category,
             "chunks": [
                 {
+                    "chunk_id": f"{filename}_{i}",  # Add a unique chunk_id
                     "text": chunk,
                     "tokens": count_tokens(chunk)
-                } for chunk in validated_chunks
+                } for i, chunk in enumerate(validated_chunks)
             ]
         }
-
+       
         with open(output_filename, 'w', encoding='utf-8') as f:
             json.dump(chunk_data, f, ensure_ascii=False, indent=2)
 

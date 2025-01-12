@@ -93,10 +93,22 @@ app.post("/query", async (req, res) => {
     }));
 
     // Step 3: Calculate similarity
-    const similarities = documents.map((doc) => ({
-      ...doc,
-      similarity: cosineSimilarity(queryEmbedding, doc.embedding),
-    }));
+    const similarities = documents.map((doc) => {
+      if (!doc.embedding || doc.embedding.length !== queryEmbedding.length) {
+        console.warn(`Skipping document ${doc.chunk_id} due to embedding dimension mismatch.`);
+        return { ...doc, similarity: 0 };
+      }
+      return {
+        ...doc,
+        similarity: cosineSimilarity(queryEmbedding, doc.embedding),
+      };
+    });
+    
+    console.log("Query Embedding Length:", queryEmbedding.length);
+    documents.forEach((doc, index) => {
+      console.log(`Document ${index} (${doc.chunk_id}) Embedding Length:`, doc.embedding?.length || "No embedding");
+    });
+
 
     // Step 4: Sort by similarity and select top results
     const sortedResults = similarities.sort((a, b) => b.similarity - a.similarity).slice(0, 10);

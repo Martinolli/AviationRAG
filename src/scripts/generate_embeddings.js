@@ -3,17 +3,19 @@ import path from 'path';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 
+// Load environment variables
 dotenv.config();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-
+// Utility function to add delay
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Function to load existing embeddings
 function loadExistingEmbeddings(outputPath) {
   if (fs.existsSync(outputPath)) {
     const rawData = fs.readFileSync(outputPath, 'utf-8');
@@ -22,15 +24,17 @@ function loadExistingEmbeddings(outputPath) {
   return [];
 }
 
-function isChunkIdExists(existingEmbeddings, chunk_id) {
-  return existingEmbeddings.some(embedding => embedding.chunk_id === chunk_id);
+// Function to check if chunk ID exists
+function isChunkIdExists(existingEmbeddings, chunkId) {
+  console.log("Checking if chunk ID exists:", chunkId);
+  console.log("Existing embeddings:", existingEmbeddings);
+  return existingEmbeddings.some(embedding => embedding.chunk_id === chunkId);
 }
 
-async function processChunk(chunk, filename, index, existingEmbeddings) {
-  const chunk_id = `${filename}-${index}`;
-
-  if (isChunkIdExists(existingEmbeddings, chunk_id)) {
-    console.log(`Skipping duplicate chunk ID: ${chunk_id}`);
+// Function to process a chunk
+async function processChunk(chunk, filename, chunkId, metadata, existingEmbeddings) {
+  if (isChunkIdExists(existingEmbeddings, chunkId)) {
+    console.log(`Skipping duplicate chunk ID: ${chunkId}`);
     return null;
   }
 
@@ -39,25 +43,26 @@ async function processChunk(chunk, filename, index, existingEmbeddings) {
 
   while (attempts < maxAttempts) {
     try {
-      const response = await openai.createEmbedding({
+      const response = await openai.embeddings.create({
         model: 'text-embedding-ada-002',
         input: chunk.text,
       });
 
-      const embeddingVector = response.data.data[0].embedding;
-      console.log(`Generated embedding for chunk ID: ${chunk_id}`);
+      const embeddingVector = response.data[0].embedding;
+      console.log(`Generated embedding for chunk ID: ${chunkId}`);
       return {
-        chunk_id,
+        chunk_id: chunkId,
         filename,
+        metadata,
         text: chunk.text,
         tokens: chunk.tokens,
         embedding: embeddingVector,
       };
     } catch (err) {
       attempts++;
-      console.error(`Error generating embedding for chunk ID: ${chunk_id} (Attempt ${attempts})`, err);
+      console.error(`Error generating embedding for chunk ID: ${chunkId} (Attempt ${attempts})`, err);
       if (attempts >= maxAttempts) {
-        console.error(`Failed to generate embedding for chunk ID: ${chunk_id} after ${maxAttempts} attempts`);
+        console.error(`Failed to generate embedding for chunk ID: ${chunkId} after ${maxAttempts} attempts`);
         return null;
       }
       await delay(2000);
@@ -65,17 +70,17 @@ async function processChunk(chunk, filename, index, existingEmbeddings) {
   }
 }
 
+// Function to process a file
 async function processFile(filePath, existingEmbeddings) {
-  const rawData = fs.readFileSync(filePath, 'utf-8');
-  const chunkedDoc = JSON.parse(rawData);
-  const filename = chunkedDoc.filename;
-  const category = chunkedDoc.category;
   const embeddings = [];
+  const content = fs.readFileSync(filePath, 'utf8');
+  const chunkedDoc = JSON.parse(content);
+  const { filename, metadata } = chunkedDoc;
 
-  console.log(`Processing file: ${filename}, Category: ${category}`);
+  console.log(`Processing file: ${filename}, Metadata:`, metadata);
   for (let i = 0; i < chunkedDoc.chunks.length; i++) {
     const chunk = chunkedDoc.chunks[i];
-    const result = await processChunk(chunk, filename, i, existingEmbeddings);
+    const result = await processChunk(chunk, filename, chunk.chunk_id, metadata, existingEmbeddings);
     if (result) embeddings.push(result);
     await delay(500);
   }
@@ -83,10 +88,11 @@ async function processFile(filePath, existingEmbeddings) {
   return embeddings;
 }
 
+// Function to generate embeddings
 async function generateEmbeddings() {
   try {
-    const chunkedDocsPath = path.resolve(__dirname, '../../data/processed/chunked_documents');
-    const outputPath = path.resolve(__dirname, '../../data/embeddings/aviation_embeddings.json');
+    const chunkedDocsPath = path.resolve('data/processed/chunked_documents');
+    const outputPath = path.resolve('data/embeddings/aviation_embeddings.json');
     const files = fs.readdirSync(chunkedDocsPath).filter(file => file.endsWith('.json'));
 
     if (files.length === 0) {

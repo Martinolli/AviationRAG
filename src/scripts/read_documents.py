@@ -38,6 +38,7 @@ logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%
 BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 
 # Define paths
+DOCUMENTS_DIR = os.path.join(BASE_DIR, 'data', 'documents')
 TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
 TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
 PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
@@ -160,14 +161,26 @@ def extract_text_from_pdf_with_pdfplumber(pdf_path):
 
 def extract_keywords(documents, top_n=10):
     texts = [doc['text'] for doc in documents]
-    vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
-    tfidf_matrix = vectorizer.fit_transform(texts)
     
-    feature_names = vectorizer.get_feature_names_out()
-    for idx, doc in enumerate(documents):
-        tfidf_scores = tfidf_matrix[idx].toarray()[0]
-        sorted_indices = tfidf_scores.argsort()[::-1]
-        doc['keywords'] = [feature_names[i] for i in sorted_indices[:top_n]]
+    # Debug: Check if we have any texts
+    logging.debug(f"Number of documents: {len(texts)}")
+    if len(texts) == 0:
+        logging.error("No texts found in documents")
+        return
+
+    # Debug: Check the content of the first few texts
+    for i, text in enumerate(texts[:5]):
+        logging.debug(f"Text {i} (first 100 chars): {text[:100]}")
+        logging.debug(f"Text {i} length: {len(text)}")
+
+    vectorizer = TfidfVectorizer(stop_words='english', max_features=1000)
+    
+    try:
+        tfidf_matrix = vectorizer.fit_transform(texts)
+    except ValueError as e:
+        logging.error(f"ValueError in TfidfVectorizer: {e}")
+        logging.error("Vocabulary: " + str(vectorizer.vocabulary_))
+        return
 
 def extract_metadata(file_path):
     """
@@ -325,29 +338,40 @@ def update_existing_documents(documents):
     return documents
 
 def main():
-    documents = None
-    if os.path.exists(PKL_FILENAME):
-        with open(PKL_FILENAME, 'rb') as file:
-            documents = pickle.load(file)
-        documents = update_existing_documents(documents)
+    try:
+        documents = None
+        if os.path.exists(PKL_FILENAME):
+            with open(PKL_FILENAME, 'rb') as file:
+                documents = pickle.load(file)
+            documents = update_existing_documents(documents)
 
-    if documents is None:
-        print("Reading documents from directory...")
-        documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
-    else:
-        print("Appending new documents to the existing list...")
-        documents = read_documents_from_directory(BASE_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
+        if documents is None:
+            print("Reading documents from directory...")
+            documents = read_documents_from_directory(DOCUMENTS_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
+        else:
+            print("Appending new documents to the existing list...")
+            documents = read_documents_from_directory(DOCUMENTS_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
 
-    # Apply keyword extraction
-    extract_keywords(documents)
+        # Debug: Check documents before keyword extraction
+            logging.debug(f"Number of documents before keyword extraction: {len(documents)}")
+            for i, doc in enumerate(documents[:5]):
+                logging.debug(f"Document {i} text length: {len(doc['text'])}")
 
-    # Save the updated list
-    with open(PKL_FILENAME, 'wb') as file:
-        pickle.dump(documents, file)
 
-    print(f"Total documents: {len(documents)}")
+        # Apply keyword extraction
+        extract_keywords(documents)
+
+        # Save the updated list
+        with open(PKL_FILENAME, 'wb') as file:
+            pickle.dump(documents, file)
+
+        print(f"Total documents: {len(documents)}")
+    except Exception as e:
+        logging.exception("An error occurred in main:")
+        print(f"An error occurred: {e}")
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     logging.info("Starting document processing script")
     main()
     logging.info("Document processing script completed")
