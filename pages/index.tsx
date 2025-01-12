@@ -3,8 +3,16 @@ import styles from '../styles/Home.module.css';
 
 export default function Home() {
   const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
-
+  interface QueryResponse {
+    response: string;
+    results: {
+      chunk_id: string;
+      similarity: number;
+      text: string;
+    }[];
+  }
+  const [response, setResponse] = useState<QueryResponse | null>(null);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -16,13 +24,15 @@ export default function Home() {
         body: JSON.stringify({ query }),
       });
       const data = await res.json();
-      setResponse(data.response);
+      setResponse(data);
+      console.log("Backend response in frontend:", data); // Log the backend response
+      setResponse(data); // Assign the entire backend response
+      console.log("Frontend state:", data); // Log the frontend state after updating
     } catch (error) {
       console.error('Error:', error);
-      setResponse('An error occurred while processing your request.');
+      setResponse(null); // Reset response state on error
     }
   };
-
   return (
     <div className={styles.container}>
       <main className={styles.main}>
@@ -38,11 +48,23 @@ export default function Home() {
           />
           <button type="submit" className={styles.button}>Submit</button>
         </form>
-        {response && (
+        {response && response.results && response.results.length > 0 ? (
           <div className={styles.response}>
-            <h2>Response:</h2>
-            <p>{response}</p>
+            <h2>Generated Response:</h2>
+            <p>{response.response}</p>
+            <h3>Retrieved Context:</h3>
+            <ul>
+              {response.results.map((result, index) => (
+                <li key={index}>
+                  <strong>Similarity:</strong> {result.similarity.toFixed(2)}
+                  <br />
+                  {result.text}
+                </li>
+              ))}
+            </ul>
           </div>
+        ) : (
+          <p>No results to display. Please submit a query.</p>
         )}
       </main>
     </div>
