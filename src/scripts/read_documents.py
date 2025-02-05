@@ -299,14 +299,18 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens_without_stopwords]
 
         if text_expanded_dir:
-            output_file_path = os.path.join(text_expanded_dir, f'{filename}.txt')
+            # Remove .docx extension before adding .txt
+            clean_filename = filename.replace('.docx', '')
+            output_file_path = os.path.join(text_expanded_dir, f'{clean_filename}.txt')
             with open(output_file_path, 'w', encoding='utf-8') as out_file:
                 out_file.write(raw_text)
             logging.info(f"Expanded text saved to: {output_file_path}")
             print(f"Expanded text saved to: {output_file_path}")
                
         if text_output_dir:
-            output_file_path = os.path.join(text_output_dir, f'{filename}.txt')
+            # Remove .docx extension before adding .txt
+            clean_filename = filename.replace('.docx', '')
+            output_file_path = os.path.join(text_output_dir, f'{clean_filename}.txt')
             logging.info(f"Processed text saved to: {output_file_path}")
             with open(output_file_path, 'w', encoding='utf-8') as out_file:
                 out_file.write(preprocessed_text)
@@ -315,6 +319,10 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         logging.info(f"Finished processing all documents in {directory_path}")
         metadata = extract_metadata(file_path)
         document_category = classify_document(preprocessed_text)
+
+        # Remove 'category' field if it already exists
+        if 'category' in metadata:
+            del metadata['category']
 
         new_documents.append({
             'filename': filename,
