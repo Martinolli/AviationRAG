@@ -127,7 +127,7 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarit
 
 def generate_response(context, query, full_context, model):
     """Generate a response using OpenAI."""
-    max_context_length = 3000  # Adjust this value based on your needs
+    max_context_length = 4000  # Adjust this value based on your needs
     max_retries = 3
     base_delay = 1
 
@@ -159,8 +159,8 @@ def generate_response(context, query, full_context, model):
                 response = client.chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
-                    temperature=0.6,
-                    max_tokens=750  # Reduced from 150 to 100
+                    temperature=0.7,
+                    max_tokens=2000  # Reduced from 150 to 100
                 )
                 return response.choices[0].message.content.strip()
             else:
@@ -212,7 +212,7 @@ def chat_loop():
             top_results = filter_and_rank_embeddings(embeddings, similarities, top_n=dynamic_top_n)
 
             unique_texts = set()
-            combined_context = combined_context = create_weighted_context(top_results)
+            combined_context = create_weighted_context(top_results)
             for result in top_results:
                 if result['text'] not in unique_texts:
                     unique_texts.add(result['text'])
