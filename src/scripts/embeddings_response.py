@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import os
 import time
 import random
+from nltk.corpus import wordnet
+import logging
 
 # Load environment variables
 load_dotenv()
@@ -12,19 +14,72 @@ load_dotenv()
 # Set up the OpenAI API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def safe_openai_call(api_function, max_retries=3, base_delay=2):
+    """Wrapper to handle OpenAI API calls safely with retries."""
+    for attempt in range(max_retries):
+        try:
+            return api_function()
+        except Exception as e:
+            if attempt < max_retries - 1:
+                delay = base_delay * (2 ** attempt)
+                logging.warning(f"OpenAI API error: {e}. Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                logging.error(f"Failed after {max_retries} attempts: {e}")
+                return None
+
+def store_chat_history(chat_history):
+    with open("chat_history.log", "a") as file:
+        for query, response in chat_history:
+            file.write(f"Human: {query}\nAI: {response}\n")
+
+def generate_chat_summary(chat_history):
+    # Extract the most common queries and responses from the chat history
+    # You can use a library like NLTK or spaCy to perform this task
+    # For simplicity, let's assume we're using a simple dictionary to store the queries and responses
+    summary_dict = {}
+
+    for query, response in chat_history:
+        if query in summary_dict:
+            summary_dict[query].append(response)
+        else:
+            summary_dict[query] = [response]
+
+    # Generate a summary of the conversation based on the summary_dict
+    summary = ""
+    for query, responses in summary_dict.items():
+        summary += f"{query}: {', '.join(responses)}\n"
+
+    return summary
+
 def expand_query(query):
-    prompt = f"Expand the following query with relevant aviation terms: {query}"
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.6,
-            max_tokens=750
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        print(f"Error expanding query: {e}")
-        return query
+    """
+    Expand the user query using aviation-specific terminology and synonyms.
+    """
+    synonyms = set()
+    for word in query.split():
+        for syn in wordnet.synsets(word):
+            for lemma in syn.lemmas():
+                synonyms.add(lemma.name().replace('_', ' '))  # Add synonyms
+
+    prompt = f"""
+    Given the aviation-related query below, expand it using technical aviation terms and related synonyms.
+
+    Query: {query}
+    Expanded terms: {', '.join(synonyms)}
+    
+    Final Expanded Query:
+    """
+    response = safe_openai_call(lambda: client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.6,
+        max_tokens=1000
+    ))
+
+    return response.choices[0].message.content.strip() if response else query
 
 def get_user_feedback():
     while True:
@@ -127,7 +182,7 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarit
 
 def generate_response(context, query, full_context, model):
     """Generate a response using OpenAI."""
-    max_context_length = 4000  # Adjust this value based on your needs
+    max_context_length = 2000  # Adjust this value based on your needs
     max_retries = 3
     base_delay = 1
 
@@ -152,6 +207,8 @@ def generate_response(context, query, full_context, model):
     Human: {query}
     AI: Let me provide a detailed and informative answer:
     """
+    # Calculate max tokens dynamically
+    max_tokens = min(1000, 4000 - len(truncated_full_context.split()))
 
     for attempt in range(max_retries):
         try:
@@ -160,7 +217,7 @@ def generate_response(context, query, full_context, model):
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
                     temperature=0.7,
-                    max_tokens=2000  # Reduced from 150 to 100
+                    max_tokens=max_tokens  # Reduced from 150 to 100
                 )
                 return response.choices[0].message.content.strip()
             else:
@@ -239,6 +296,17 @@ def chat_loop():
 
         except Exception as e:
             print(f"Error: {e}")
+
+        # Generate a summary of the conversation
+        summary = generate_chat_summary(chat_history)
+
+        # Store chat history in a log file
+        chat_history.append((QUERY_TEXT, response))
+        if len(chat_history) > max_history:  # Keep only the last 5 exchanges
+            chat_history = chat_history[-max_history:]
+
+        store_chat_history(chat_history)
+        print(summary)
 
 if __name__ == "__main__":
     chat_loop()
