@@ -8,6 +8,8 @@ import random
 from nltk.corpus import wordnet
 import logging
 import datetime
+import subprocess
+import uuid
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +18,61 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def store_chat_in_db(session_id, user_query, ai_response):
+    """
+    Calls the Node.js script to store chat in AstraDB.
+    """
+    # Define the correct path to store_chat.js inside src/scripts/
+    # Define the correct path to store_chat.js
+    script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
+
+    chat_data = {
+        "action": "store",
+        "session_id": session_id,
+        "user_query": user_query,
+        "ai_response": ai_response
+    }
+
+    # Call the JavaScript file with the correct path
+    try:
+        subprocess.run(
+            ["node", script_path, json.dumps(chat_data)], 
+            check=True
+        )
+        print("Chat stored successfully in AstraDB!")
+    except subprocess.CalledProcessError as e:
+        print(f"Error storing chat: {e}")
+
+def retrieve_chat_from_db(session_id, limit=5):
+    """
+    Calls the Node.js script to retrieve chat history from AstraDB.
+    """
+    script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
+
+    chat_data = {
+        "action": "retrieve",
+        "session_id": session_id,
+        "limit": limit
+    }
+
+    try:
+        result = subprocess.run(
+            ["node", script_path, json.dumps(chat_data)], 
+            capture_output=True, text=True, check=True
+        )
+        output = result.stdout.strip()
+        error_output = result.stderr.strip()
+
+        if error_output:
+            print(f"Node.js Error Output: {error_output}")
+    
+        return json.loads(output) if output else []
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error retrieving chat: {e}")
+        return []
+
 
 def safe_openai_call(api_function, max_retries=3, base_delay=2):
     """
@@ -266,12 +323,19 @@ def chat_loop():
     chat_history = []
     max_history = 5
 
+    # Generate a unique session_id for the conversation
+    session_id = str(uuid.uuid4())
+
     try:
         print("Loading embeddings...")
         embeddings = load_embeddings(EMBEDDINGS_FILE)
     except Exception as e:
         print(f"Error loading embeddings: {e}")
         return
+    
+    # Retrieve past conversation history for the session
+    past_exchanges = retrieve_chat_from_db(session_id)
+    chat_history = [f"User: {ex['user_query']}\nAI: {ex['ai_response']}" for ex in past_exchanges]
 
     while True:
         QUERY_TEXT = input("\nUser: ")
@@ -298,9 +362,16 @@ def chat_loop():
                     unique_texts.add(result['text'])
                     combined_context += f"{result['text']}\n"
 
-            # Include chat history in the context
+            # Retrieve past chat history
+            past_exchanges = retrieve_chat_from_db(session_id)
+            chat_history = [f"User: {ex['user']}\nAI: {ex['ai']}" for ex in past_exchanges]
+
+            # Include past chat history in the context
             chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
+
+            # Combine everything into the final context
             full_context = f"{chat_context}\n\n{combined_context}"
+
 
             print("Generating response...")
             response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
@@ -329,7 +400,8 @@ def chat_loop():
             chat_history = chat_history[-max_history:]
 
         store_chat_history(chat_history)
-        print(summary)
-
+        store_chat_in_db(session_id, QUERY_TEXT, response)
+        
+        
 if __name__ == "__main__":
     chat_loop()
