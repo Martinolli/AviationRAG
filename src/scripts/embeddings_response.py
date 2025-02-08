@@ -7,6 +7,7 @@ import time
 import random
 from nltk.corpus import wordnet
 import logging
+import datetime
 
 # Load environment variables
 load_dotenv()
@@ -17,13 +18,23 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def safe_openai_call(api_function, max_retries=3, base_delay=2):
-    """Wrapper to handle OpenAI API calls safely with retries."""
+    """
+    Wrapper to handle OpenAI API calls safely with retries.
+    
+    Args:
+        api_function (function): The OpenAI API call function.
+        max_retries (int): Maximum retry attempts.
+        base_delay (int): Initial delay in seconds.
+
+    Returns:
+        Response from OpenAI API or None if failure persists.
+    """
     for attempt in range(max_retries):
         try:
             return api_function()
         except Exception as e:
             if attempt < max_retries - 1:
-                delay = base_delay * (2 ** attempt)
+                delay = base_delay * (2 ** attempt)  # Exponential backoff
                 logging.warning(f"OpenAI API error: {e}. Retrying in {delay} seconds...")
                 time.sleep(delay)
             else:
@@ -31,9 +42,15 @@ def safe_openai_call(api_function, max_retries=3, base_delay=2):
                 return None
 
 def store_chat_history(chat_history):
-    with open("chat_history.log", "a") as file:
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+    log_filename = f"chat_history_{current_date}.log"
+    
+    with open(log_filename, "a") as file:
         for query, response in chat_history:
-            file.write(f"Human: {query}\nAI: {response}\n")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            file.write(f"[{timestamp}] Human: {query}\n")
+            file.write(f"[{timestamp}] AI: {response}\n\n")
+
 
 def generate_chat_summary(chat_history):
     # Extract the most common queries and responses from the chat history
@@ -196,7 +213,8 @@ def generate_response(context, query, full_context, model):
         truncated_full_context = truncated_full_context[-max_context_length:]
     
     prompt = f"""
-    You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples where relevant. Use the context and history below to answer the user's question:
+    You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples
+    where relevant. Use the context and history below to answer the user's question:
 
     Chat History and Full Context:
     {truncated_full_context}
@@ -205,7 +223,12 @@ def generate_response(context, query, full_context, model):
     {context}
 
     Human: {query}
+
     AI: Let me provide a detailed and informative answer:
+    Format your response in the most appropriate structure:
+    - If it's about regulations, provide a **list of key FAA or ICAO guidelines**.
+    - If it's about an accident, provide a **summary of investigation insights**.
+    - If it's about a technical issue, provide **a structured breakdown** with root causes.
     """
     # Calculate max tokens dynamically
     max_tokens = min(1000, 4000 - len(truncated_full_context.split()))

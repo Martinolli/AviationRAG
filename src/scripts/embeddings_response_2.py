@@ -198,9 +198,11 @@ def generate_structured_response(context, query, model="gpt-3.5-turbo"):
     {query}
 
     Format your response in the most appropriate structure:
-    - If it's about regulations, provide a **list of key FAA or ICAO guidelines**.
-    - If it's about an accident, provide a **summary of investigation insights**.
-    - If it's about a technical issue, provide **a structured breakdown** with root causes.
+    - Provide information about Regulation Authorities guidelines if available.
+    - When possible use aircraft accident examples to emphasize insights.
+    - Provide a detailed explanation when necessary.
+    - Establish organizational approach to explain issues in a structured manner.
+    - If it's about a technical issue, provide a structured breakdown with root causes.
 
     Response:
     """
