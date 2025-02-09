@@ -8,6 +8,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+// Log environment variables for debugging
+console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
+console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
+console.log('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
+console.log('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
+
 // Initialize the Cassandra client
 const client = new Client({
     cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
@@ -23,8 +29,8 @@ const chatData = JSON.parse(process.argv[2]);
 
 // Ensure session_id is a string and sanitize user inputs
 const session_id = String(chatData.session_id).trim();  
-const user_query = chatData.user_query.replace(/[\r\n]+/g, ' ').trim();  
-const ai_response = chatData.ai_response.replace(/[\r\n]+/g, ' ').trim();
+const user_query = chatData.user_query ? chatData.user_query.replace(/[\r\n]+/g, ' ').trim() : '';  
+const ai_response = chatData.ai_response ? chatData.ai_response.replace(/[\r\n]+/g, ' ').trim() : '';
 
 async function storeChat() {
     try {
@@ -38,15 +44,16 @@ async function storeChat() {
         if (typeof session_id !== 'string' || session_id.length === 0) {
             throw new Error('Invalid session_id');
         }
-        if (typeof user_query !== 'string' || user_query.length === 0) {
-            throw new Error('Invalid user_query');
-        }
-        if (typeof ai_response !== 'string' || ai_response.length === 0) {
-            throw new Error('Invalid ai_response');
-        }
 
         if (chatData.action === "store") {
-            // store chate message
+            if (typeof user_query !== 'string' || user_query.length === 0) {
+                throw new Error('Invalid user_query');
+            }
+            if (typeof ai_response !== 'string' || ai_response.length === 0) {
+                throw new Error('Invalid ai_response');
+            }
+
+            // store chat message
             console.log("Storing chat message...");
             const query = `
                 INSERT INTO aviation_conversation_history (session_id, timestamp, user_query, ai_response)
@@ -60,7 +67,7 @@ async function storeChat() {
             console.log("Chat stored successfully!");
             
         } else if (chatData.action === "retrieve") {
-            //retrieve chat messages
+            // retrieve chat messages
             console.log("Retrieving chat messages...");
 
             const query = `
@@ -78,7 +85,8 @@ async function storeChat() {
             console.log(JSON.stringify(result.rows));  // Output JSON for Python to parse
 
         } else {
-            console.error("Error in store_chat.js:", error);
+            console.error("Invalid action specified in chatData");
+            process.exit(1);  // Exit with non-zero status
         }
 
     } catch (error) {
@@ -86,6 +94,7 @@ async function storeChat() {
         if (error.info) console.error("Error info:", error.info);
         if (error.code) console.error("Error code:", error.code);
         if (error.query) console.error("Failed query:", error.query);
+        process.exit(1);  // Ensure the script exits with a non-zero status
     } finally {
         await client.shutdown();
     }
