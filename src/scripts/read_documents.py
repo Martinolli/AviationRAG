@@ -35,10 +35,6 @@ warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
 STOP_WORDS = set(stopwords.words('english'))
 import docx
 
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, filename='read_documents.log', format='%(asctime)s - %(levelname)s - %(message)s')
-
 # Define base directory
 BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 
