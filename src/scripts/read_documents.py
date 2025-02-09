@@ -14,18 +14,23 @@ import wordninja
 from sklearn.feature_extraction.text import TfidfVectorizer
 import PyPDF2
 import logging
+
 # Load spaCy's English model
 nlp = spacy.load('en_core_web_sm')
 nlp.max_length = 2000000  # or any other suitable value
+
 # Download required NLTK data
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
+
 # Initialize spellchecker
 spell = SpellChecker()
+
 # Suppress specific warnings
 import warnings
 warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
+
 # Global stopwords
 STOP_WORDS = set(stopwords.words('english'))
 import docx
@@ -42,6 +47,7 @@ DOCUMENTS_DIR = os.path.join(BASE_DIR, 'data', 'documents')
 TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
 TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
 PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
+LOG_DIR = os.path.join(BASE_DIR, 'logs')  # Define the path to the logs folder
 
 # Ensure directories exist
 for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
@@ -51,6 +57,9 @@ for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENA
     else:
         logging.info(f"Directory already exists: {directory}")
 
+# Configure logging
+log_file_path = os.path.join(LOG_DIR, 'read_documents.log')
+logging.basicConfig(level=logging.INFO, filename=log_file_path, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Create custom pipeline component for aviation NER
 @spacy.Language.component("aviation_ner")

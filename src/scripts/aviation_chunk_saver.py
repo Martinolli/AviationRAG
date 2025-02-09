@@ -13,9 +13,11 @@ nltk.download('punkt')
 base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 pkl_file = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
 chunk_output_dir = os.path.join(base_dir, 'data', 'processed', 'chunked_documents')
+log_dir = os.path.join(base_dir, 'logs')  # Define the path to the logs folder
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, filename='chunking.log',
+log_file_path = os.path.join(log_dir, 'chunking.log')
+logging.basicConfig(level=logging.INFO, filename=log_file_path,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Directory to save chunked JSON files
