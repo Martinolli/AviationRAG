@@ -24,7 +24,7 @@ def store_chat_in_db(session_id, user_query, ai_response):
     Calls the Node.js script to store chat in AstraDB.
     """
     # Define the correct path to store_chat.js inside src/scripts/
-    # Define the correct path to store_chat.js
+    
     script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
 
     chat_data = {
@@ -374,7 +374,7 @@ def chat_loop():
 
 
             print("Generating response...")
-            response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
+            response = generate_response(combined_context, expanded_query, full_context, MODEL)
 
             print("\nAviationAI:", response)
 
@@ -384,7 +384,7 @@ def chat_loop():
             # Here you could implement logic to refine the response or adjust parameters
 
             # Update chat history
-            chat_history.append((QUERY_TEXT, response))
+            chat_history.append((expanded_query, response))
             if len(chat_history) > max_history:  # Keep only the last 5 exchanges
                 chat_history = chat_history[-max_history:]
 
@@ -395,7 +395,7 @@ def chat_loop():
         summary = generate_chat_summary(chat_history)
 
         # Store chat history in a log file
-        chat_history.append((QUERY_TEXT, response))
+        chat_history.append((expanded_query, response))
         if len(chat_history) > max_history:  # Keep only the last 5 exchanges
             chat_history = chat_history[-max_history:]
 
