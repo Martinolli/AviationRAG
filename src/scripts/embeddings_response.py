@@ -320,9 +320,6 @@ def chat_loop():
     print("Welcome to the AviationAI Chat System!")
     print("Type 'exit' to end the conversation.")
 
-    chat_history = []
-    max_history = 5
-
     # Generate a unique session_id for the conversation
     session_id = str(uuid.uuid4())
 
@@ -336,6 +333,8 @@ def chat_loop():
     # Retrieve past conversation history for the session
     past_exchanges = retrieve_chat_from_db(session_id)
     chat_history = [f"User: {ex['user_query']}\nAI: {ex['ai_response']}" for ex in past_exchanges]
+
+    max_history = 5  # Maximum number of chat exchanges to keep in history
 
     while True:
         QUERY_TEXT = input("\nUser: ")
@@ -361,10 +360,6 @@ def chat_loop():
                 if result['text'] not in unique_texts:
                     unique_texts.add(result['text'])
                     combined_context += f"{result['text']}\n"
-
-            # Retrieve past chat history
-            past_exchanges = retrieve_chat_from_db(session_id)
-            chat_history = [f"User: {ex['user']}\nAI: {ex['ai']}" for ex in past_exchanges]
 
             # Include past chat history in the context
             chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
