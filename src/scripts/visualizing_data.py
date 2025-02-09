@@ -64,11 +64,19 @@ sns.set(style="whitegrid")
 
 # 1. Plot number of tokens per document
 doc_lengths = [len(doc['tokens']) for doc in documents]
+
+# If the number of documents is too large, sample a subset
+if len(doc_lengths) > 100:
+    sampled_indices = np.random.choice(len(doc_lengths), 100, replace=False)
+    doc_lengths = [doc_lengths[i] for i in sampled_indices]
+
 plt.figure(figsize=(12, 6))
-sns.barplot(x=range(len(doc_lengths)), y=doc_lengths)
+sns.lineplot(x=range(len(doc_lengths)), y=doc_lengths)
 plt.title('Number of Tokens per Document')
 plt.xlabel('Document Index')
 plt.ylabel('Number of Tokens')
+plt.xticks(rotation=45)
+plt.tight_layout()
 plt.savefig('pictures/token_counts.png')
 plt.close()
 
@@ -230,7 +238,6 @@ def calculate_sentiment_score(text):
 def lexical_diversity(text):
     return (len(set(text)) / len(text))  * 100
 
-
 # Add sentiment scores to df_aviation_corpus
 df_aviation_corpus['Sentiment_Negative'] = sentiment_df['Negative']
 df_aviation_corpus['Sentiment_Neutral'] = sentiment_df['Neutral']
@@ -245,6 +252,47 @@ df_aviation_corpus['lexicon_diversity'] = df_aviation_corpus['tokens'].apply(lex
 
 # Verify the new columns
 print(df_aviation_corpus.head())
+
+# Plot Lexical Diversity
+# Boxplot
+plt.figure(figsize=(12, 6))
+sns.boxplot(data=df_aviation_corpus, y='lexicon_diversity')
+plt.title('Boxplot of Lexical Diversity')
+plt.ylabel('Lexical Diversity')
+plt.tight_layout()
+plt.savefig('pictures/lexical_diversity_boxplot.png')
+plt.close()
+
+# Bar Plot (Average Lexical Diversity by Category)
+plt.figure(figsize=(12, 6))
+avg_lexical_diversity = df_aviation_corpus.groupby('category')['lexicon_diversity'].mean().reset_index()
+sns.barplot(data=avg_lexical_diversity, x='category', y='lexicon_diversity')
+plt.title('Average Lexical Diversity by Category')
+plt.xlabel('Category')
+plt.ylabel('Average Lexical Diversity')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('pictures/avg_lexical_diversity_by_category.png')
+plt.close()
+
+# Violin Plot
+plt.figure(figsize=(12, 6))
+sns.violinplot(data=df_aviation_corpus, y='lexicon_diversity')
+plt.title('Violin Plot of Lexical Diversity')
+plt.ylabel('Lexical Diversity')
+plt.tight_layout()
+plt.savefig('pictures/lexical_diversity_violin.png')
+plt.close()
+
+# Histogram
+plt.figure(figsize=(12, 6))
+sns.histplot(df_aviation_corpus['lexicon_diversity'], bins=20, kde=True)
+plt.title('Histogram of Lexical Diversity')
+plt.xlabel('Lexical Diversity')
+plt.ylabel('Frequency')
+plt.tight_layout()
+plt.savefig('pictures/lexical_diversity_histogram.png')
+plt.close()
 
 # If you want to save the updated dataframe
 df_aviation_corpus.to_pickle('data/processed/updated_aviation_corpus.pkl')
@@ -264,4 +312,3 @@ print(df_aviation_corpus.head())
 print('Aviation Corpus: Filename, Texts Lengths, Frequent Words, Readability, Sentiment Scores, and Lexicon Diversity.')
 
 print(df_aviation_corpus[['filename', 'texts_lengths', 'frequent_words', 'readability_score', 'sentiment_score','lexicon_diversity']].head())
-
