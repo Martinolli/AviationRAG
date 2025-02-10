@@ -45,6 +45,11 @@ TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextEx
 PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
 LOG_DIR = os.path.join(BASE_DIR, 'logs')  # Define the path to the logs folder
 
+# Ensure log directory exists
+if not os.path.exists(LOG_DIR):
+    os.makedirs(LOG_DIR)
+    print(f"Created log directory: {LOG_DIR}")
+
 # Ensure directories exist
 for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
     if not os.path.exists(directory):
