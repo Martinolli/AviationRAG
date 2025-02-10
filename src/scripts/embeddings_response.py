@@ -256,7 +256,7 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarit
 
 def generate_response(context, query, full_context, model):
     """Generate a response using OpenAI."""
-    max_context_length = 2000  # Adjust this value based on your needs
+    max_context_length = 6000  # Adjust this value based on your needs
     max_retries = 3
     base_delay = 1
 
