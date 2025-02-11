@@ -42,27 +42,6 @@ const logger = winston.createLogger({
 
 logger.info(`Logging to: ${logFilePath}`);  // Add this for debugging
 
-function logChatDetails(session_id, user_query, ai_response) {
-    const chatLogFileName = `store_chat_${format(new Date(), 'yyyy-MM-dd')}.log`;
-    const chatLogFilePath = path.join(logDir, chatLogFileName);
-
-    const chatLogger = winston.createLogger({
-        level: 'info',
-        format: winston.format.printf(({ message }) => message),
-        transports: [
-            new winston.transports.File({ 
-                filename: chatLogFilePath,
-                maxsize: 5242880, // 5MB
-                maxFiles: 5,
-                tailable: true
-            })
-        ]
-    });
-
-    const logMessage = `Session ID: ${session_id}\nUser Query: ${user_query}\nAI Response: ${ai_response}\n---\n`;
-    chatLogger.info(logMessage);
-}
-
 // Log environment variables for debugging
 logger.info('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
 logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
@@ -93,7 +72,7 @@ async function storeChat() {
         logger.info('Connected to Astra DB successfully!');
         
         // Log the data we're trying to insert
-        logger.info('Attempting to insert data:', { session_id, user_query, ai_response });
+        logger.info(`Storing chat message for session: ${session_id}`);
 
         // Additional validation
         if (typeof session_id !== 'string' || session_id.length === 0) {
@@ -122,25 +101,29 @@ async function storeChat() {
             logger.info("Chat stored successfully!");
 
             // Log chat details to separate file
-            logChatDetails(session_id, user_query, ai_response);
+            logger.info(`Stored chat for session: ${session_id}`);
             
         } else if (chatData.action === "retrieve") {
             // retrieve chat messages
             logger.info("Retrieving chat messages...");
 
+            const limitValue = chatData.limit || 5;
+
             const query = `
                 SELECT session_id, timestamp, user_query, ai_response
                 FROM aviation_conversation_history
-                WHERE session_id = :session_id
+                WHERE session_id = ?
                 ORDER BY timestamp DESC
-                LIMIT :limit;
+                LIMIT ${limitValue};
             `;
 
-            const params = { session_id: chatData.session_id, limit: chatData.limit || 5 };
+            const params = [chatData.session_id];
+
             const result = await client.execute(query, params, { prepare: true });
 
-            logger.info("Chat history retrieved:", result.rows);
-            logger.info(JSON.stringify(result.rows));  // Output JSON for Python to parse
+            logger.info(`Retrieved ${result.rows.length} chat messages for session: ${session_id}`);
+            console.error(`Chat retrieval successful. Returning ${result.rows.length} messages.`);
+            console.log(JSON.stringify({ success: true, data: result.rows }));  // Ensures structured JSON output
 
         } else {
             logging.error("Invalid action specified in chatData");
@@ -148,10 +131,11 @@ async function storeChat() {
         }
 
     } catch (error) {
-        logging.error("Error retrieving chat:", error);
-        if (error.info) logging.error("Error info:", error.info);
-        if (error.code) logging.error("Error code:", error.code);
-        if (error.query) logging.error("Failed query:", error.query);
+        logger.error("Error retrieving chat:", error);
+        if (error.info) logger.error("Error info:", error.info);
+        if (error.code) logger.error("Error code:", error.code);
+        if (error.query) logger.error("Failed query:", error.query);
+
         process.exit(1);  // Ensure the script exits with a non-zero status
     } finally {
         await client.shutdown();

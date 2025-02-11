@@ -70,12 +70,16 @@ def retrieve_chat_from_db(session_id, limit=5):
             capture_output=True, text=True, check=True
         )
         output = result.stdout.strip()
-        error_output = result.stderr.strip()
-
-        if error_output:
-            logging.error(f"Node.js Error Output: {error_output}")
-    
-        return json.loads(output) if output else []
+        try:
+            parsed_output = json.loads(output)
+            if "success" in parsed_output and parsed_output["success"]:
+                return parsed_output["data"]
+            else:
+                logging.error(f"Chat retrieval failed. Raw output: {output}")
+                return []
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON parsing error: {e}. Raw output: {output}")
+            return []
 
     except subprocess.CalledProcessError as e:
         logging.error(f"Error retrieving chat: {e}")
