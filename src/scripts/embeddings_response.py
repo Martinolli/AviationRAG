@@ -14,10 +14,18 @@ import uuid
 # Load environment variables
 load_dotenv()
 
+# Define absolute paths
+base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
+log_dir = os.path.join(base_dir, 'logs')  # Define the path to the logs folder
+
+# Set up logging
+log_file_path = os.path.join(log_dir, 'chat_system.log')
+logging.basicConfig(filename=log_file_path, level=logging.INFO,
+                   format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 # Set up the OpenAI API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def store_chat_in_db(session_id, user_query, ai_response):
     """
@@ -42,7 +50,7 @@ def store_chat_in_db(session_id, user_query, ai_response):
         )
         print("Chat stored successfully in AstraDB!")
     except subprocess.CalledProcessError as e:
-        print(f"Error storing chat: {e}")
+        logging.error(f"Error storing chat: {e}")
 
 def retrieve_chat_from_db(session_id, limit=5):
     """
@@ -65,12 +73,12 @@ def retrieve_chat_from_db(session_id, limit=5):
         error_output = result.stderr.strip()
 
         if error_output:
-            print(f"Node.js Error Output: {error_output}")
+            logging.error(f"Node.js Error Output: {error_output}")
     
         return json.loads(output) if output else []
 
     except subprocess.CalledProcessError as e:
-        print(f"Error retrieving chat: {e}")
+        logging.error(f"Error retrieving chat: {e}")
         return []
 
 
@@ -171,7 +179,7 @@ def get_embedding(text):
         )
         return response.data[0].embedding
     except Exception as e:
-        print(f"Error generating embedding: {e}")
+        logging.error(f"Error generating embedding: {e}")
         return None
 
 def get_dynamic_top_n(similarities, max_n=15, threshold=0.6):
@@ -234,7 +242,7 @@ def compute_cosine_similarity(vec1, vec2):
         return dot_product / (magnitude1 * magnitude2)
     
     except Exception as e:
-        print(f"Error in compute_cosine_similarity: {e}")
+        logging.error(f"Error in compute_cosine_similarity: {e}")
         return 0.0  # Return 0 similarity in case of any error
 
 def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarity=0.5):
@@ -305,7 +313,7 @@ def generate_response(context, query, full_context, model):
         except Exception as e:
             if attempt < max_retries - 1:
                 delay = (base_delay * 2 ** attempt) + (random.randint(0, 1000) / 1000.0)
-                print(f"Error generating response: {e}. Retrying in {delay:.2f} seconds...")
+                logging.error(f"Error generating response: {e}. Retrying in {delay:.2f} seconds...")
                 time.sleep(delay)
             else:
                 print(f"Error generating response after {max_retries} attempts: {e}")
@@ -327,7 +335,7 @@ def chat_loop():
         print("Loading embeddings...")
         embeddings = load_embeddings(EMBEDDINGS_FILE)
     except Exception as e:
-        print(f"Error loading embeddings: {e}")
+        logging.error(f"Error loading embeddings: {e}")
         return
     
     # Retrieve past conversation history for the session
@@ -384,7 +392,7 @@ def chat_loop():
                 chat_history = chat_history[-max_history:]
 
         except Exception as e:
-            print(f"Error: {e}")
+            logging.error(f"Error: {e}")
 
         # Generate a summary of the conversation
         summary = generate_chat_summary(chat_history)
@@ -395,7 +403,7 @@ def chat_loop():
             chat_history = chat_history[-max_history:]
 
         store_chat_history(chat_history)
-        store_chat_in_db(session_id, QUERY_TEXT, response)
+        store_chat_in_db(session_id, expanded_query, response)
         
         
 if __name__ == "__main__":
