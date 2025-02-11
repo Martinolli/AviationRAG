@@ -122,8 +122,11 @@ async function storeChat() {
             const result = await client.execute(query, params, { prepare: true });
 
             logger.info(`Retrieved ${result.rows.length} chat messages for session: ${session_id}`);
-            console.error(`Chat retrieval successful. Returning ${result.rows.length} messages.`);
-            console.log(JSON.stringify({ success: true, data: result.rows }));  // Ensures structured JSON output
+            const responsePayload = { success: true, data: result.rows };
+            console.log(JSON.stringify(responsePayload)); // Ensure clean JSON output
+
+            return responsePayload;
+
 
         } else {
             logging.error("Invalid action specified in chatData");

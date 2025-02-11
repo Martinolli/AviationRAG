@@ -70,12 +70,21 @@ def retrieve_chat_from_db(session_id, limit=5):
             capture_output=True, text=True, check=True
         )
         output = result.stdout.strip()
+
+        # Log raw output for debugging
+        logging.info(f"Raw output from store_chat.js: {output}")
+
         try:
+            # Extract the JSON structure only
+            first_brace = output.find("{")
+            if first_brace != -1:
+                output = output[first_brace:]  # Removes any unexpected characters before JSON
+
             parsed_output = json.loads(output)
-            if "success" in parsed_output and parsed_output["success"]:
+            if parsed_output.get("success", False):
                 return parsed_output["data"]
             else:
-                logging.error(f"Chat retrieval failed. Raw output: {output}")
+                logging.error(f"Chat retrieval failed. Raw output: {parsed_output}")
                 return []
         except json.JSONDecodeError as e:
             logging.error(f"JSON parsing error: {e}. Raw output: {output}")
