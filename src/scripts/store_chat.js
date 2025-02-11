@@ -2,17 +2,72 @@ import { Client } from 'cassandra-driver';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import winston from 'winston';
+import {format} from 'date-fns';
+import fs from 'fs';
+
 
 // Resolve environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+// Set up logging
+const logDir = path.resolve(__dirname, '../../logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+
+const logFileName = `store_chat_${format(new Date(), 'yyyy-MM-dd')}.log`;
+const logFilePath = path.join(logDir, logFileName);
+
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.printf(({ timestamp, level, message }) => {
+        return `${timestamp} [${level}]: ${message}`;
+      })
+    ),
+    transports: [
+      new winston.transports.Console(),
+      new winston.transports.File({ 
+        filename: logFilePath,
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+        tailable: true
+      })
+    ]
+  });
+
+logger.info(`Logging to: ${logFilePath}`);  // Add this for debugging
+
+function logChatDetails(session_id, user_query, ai_response) {
+    const chatLogFileName = `store_chat_${format(new Date(), 'yyyy-MM-dd')}.log`;
+    const chatLogFilePath = path.join(logDir, chatLogFileName);
+
+    const chatLogger = winston.createLogger({
+        level: 'info',
+        format: winston.format.printf(({ message }) => message),
+        transports: [
+            new winston.transports.File({ 
+                filename: chatLogFilePath,
+                maxsize: 5242880, // 5MB
+                maxFiles: 5,
+                tailable: true
+            })
+        ]
+    });
+
+    const logMessage = `Session ID: ${session_id}\nUser Query: ${user_query}\nAI Response: ${ai_response}\n---\n`;
+    chatLogger.info(logMessage);
+}
+
 // Log environment variables for debugging
-console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
-console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
-console.log('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
-console.log('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
+logger.info('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
+logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
+logger.info('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
+logger.info('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
 
 // Initialize the Cassandra client
 const client = new Client({
@@ -35,10 +90,10 @@ const ai_response = chatData.ai_response ? chatData.ai_response.replace(/[\r\n]+
 async function storeChat() {
     try {
         await client.connect();
-        console.log('Connected to Astra DB successfully!');
+        logger.info('Connected to Astra DB successfully!');
         
         // Log the data we're trying to insert
-        console.log('Attempting to insert data:', { session_id, user_query, ai_response });
+        logger.info('Attempting to insert data:', { session_id, user_query, ai_response });
 
         // Additional validation
         if (typeof session_id !== 'string' || session_id.length === 0) {
@@ -54,7 +109,7 @@ async function storeChat() {
             }
 
             // store chat message
-            console.log("Storing chat message...");
+            logger.info("Storing chat message...");
             const query = `
                 INSERT INTO aviation_conversation_history (session_id, timestamp, user_query, ai_response)
                 VALUES (:session_id, toTimestamp(now()), :user_query, :ai_response)
@@ -64,11 +119,14 @@ async function storeChat() {
 
             await client.execute(query, params, { prepare: true });
 
-            console.log("Chat stored successfully!");
+            logger.info("Chat stored successfully!");
+
+            // Log chat details to separate file
+            logChatDetails(session_id, user_query, ai_response);
             
         } else if (chatData.action === "retrieve") {
             // retrieve chat messages
-            console.log("Retrieving chat messages...");
+            logger.info("Retrieving chat messages...");
 
             const query = `
                 SELECT session_id, timestamp, user_query, ai_response
@@ -81,19 +139,19 @@ async function storeChat() {
             const params = { session_id: chatData.session_id, limit: chatData.limit || 5 };
             const result = await client.execute(query, params, { prepare: true });
 
-            console.log("Chat history retrieved:", result.rows);
-            console.log(JSON.stringify(result.rows));  // Output JSON for Python to parse
+            logger.info("Chat history retrieved:", result.rows);
+            logger.info(JSON.stringify(result.rows));  // Output JSON for Python to parse
 
         } else {
-            console.error("Invalid action specified in chatData");
+            logging.error("Invalid action specified in chatData");
             process.exit(1);  // Exit with non-zero status
         }
 
     } catch (error) {
-        console.error("Error retrieving chat:", error);
-        if (error.info) console.error("Error info:", error.info);
-        if (error.code) console.error("Error code:", error.code);
-        if (error.query) console.error("Failed query:", error.query);
+        logging.error("Error retrieving chat:", error);
+        if (error.info) logging.error("Error info:", error.info);
+        if (error.code) logging.error("Error code:", error.code);
+        if (error.query) logging.error("Failed query:", error.query);
         process.exit(1);  // Ensure the script exits with a non-zero status
     } finally {
         await client.shutdown();
