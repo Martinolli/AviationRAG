@@ -17,6 +17,11 @@ load_dotenv()
 # Define absolute paths
 base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 log_dir = os.path.join(base_dir, 'logs')  # Define the path to the logs folder
+chat_dir = os.path.join(base_dir, 'chat')  # Define the path to the chat folder
+
+# Ensure the chat directory exists
+if not os.path.exists(chat_dir):
+    os.makedirs(chat_dir)
 
 # Set up logging
 log_file_path = os.path.join(log_dir, 'chat_system.log')
@@ -121,7 +126,7 @@ def safe_openai_call(api_function, max_retries=3, base_delay=2):
 
 def store_chat_history(chat_history):
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    log_filename = f"chat_history_{current_date}.log"
+    log_filename = os.path.join(chat_dir, f"chat_history_{current_date}.log")
     
     with open(log_filename, "a") as file:
         for query, response in chat_history:
@@ -417,7 +422,7 @@ def chat_loop():
 
         store_chat_history(chat_history)
         store_chat_in_db(session_id, expanded_query, response)
-        
+        print("\nConversation Summary:", summary)
         
 if __name__ == "__main__":
     chat_loop()
