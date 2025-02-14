@@ -173,10 +173,10 @@ def expand_query(query):
     Final Expanded Query:
     """
     response = safe_openai_call(lambda: client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.5,
-        max_tokens=1000
+        max_tokens=600
     ))
 
     return response.choices[0].message.content.strip() if response else query
@@ -312,6 +312,7 @@ def generate_response(context, query, full_context, model):
     - If it's about regulations, provide a **list of key FAA or ICAO guidelines**.
     - If it's about an accident, provide a **summary of investigation insights**.
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
+    - If it's about quality system, provide a **comparison with quality requirements applicable to aviation**.
     """
     # Calculate max tokens dynamically
     max_tokens = min(1000, 4000 - len(truncated_full_context.split()))
