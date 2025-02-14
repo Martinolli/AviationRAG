@@ -173,9 +173,9 @@ def expand_query(query):
     Final Expanded Query:
     """
     response = safe_openai_call(lambda: client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.6,
+        temperature=0.5,
         max_tokens=1000
     ))
 
@@ -422,7 +422,6 @@ def chat_loop():
 
         store_chat_history(chat_history)
         store_chat_in_db(session_id, expanded_query, response)
-        print("\nConversation Summary:", summary)
         
 if __name__ == "__main__":
     chat_loop()
