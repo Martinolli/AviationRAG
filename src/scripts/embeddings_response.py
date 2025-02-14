@@ -309,7 +309,7 @@ def generate_response(context, query, full_context, model):
 
     AI: Let me provide a detailed and informative answer:
     Format your response in the most appropriate structure:
-    - If it's about regulations, provide a **list of key FAA or ICAO guidelines**.
+    - If it's about regulations, provide a **list of key FAA or ICAO guidelines if available**.
     - If it's about an accident, provide a **summary of investigation insights**.
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
     - If it's about quality system, provide a **comparison with quality requirements applicable to aviation**.
