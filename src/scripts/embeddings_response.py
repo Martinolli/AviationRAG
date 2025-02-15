@@ -173,9 +173,9 @@ def expand_query(query):
     Final Expanded Query:
     """
     response = safe_openai_call(lambda: client.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.5,
+        temperature=0.6,
         max_tokens=600
     ))
 
@@ -282,7 +282,7 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarit
 
 def generate_response(context, query, full_context, model):
     """Generate a response using OpenAI."""
-    max_context_length = 6000  # Adjust this value based on your needs
+    max_context_length = 8000  # Adjust this value based on your needs
     max_retries = 3
     base_delay = 1
 
