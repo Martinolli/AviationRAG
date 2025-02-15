@@ -58,7 +58,7 @@ def generate_response(context, query):
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.7
         )
@@ -77,8 +77,8 @@ def truncate_text(text, max_chars=300):
 def main():
 
     # Streamlit UI setup
-    st.set_page_config(page_title="Aviation RAG Query Interface", layout="wide")
-    st.title("Aviation RAG Query Interface")
+    st.set_page_config(page_title="Aviation AI Interface", layout="wide")
+    st.title("Aviation AI Interface")
 
     # Session state for query history and results
     if 'query_history' not in st.session_state:
@@ -88,7 +88,7 @@ def main():
         st.session_state['query_results'] = []
 
     # User query input
-    query = st.text_input("Enter your query:", placeholder="e.g., Describe latent failures in aviation accidents")
+    query = st.text_input("Enter your question:", placeholder="e.g., Describe latent failures in aviation accidents")
 
     # Query submission
     if st.button("Submit Query"):
@@ -113,7 +113,7 @@ def main():
                         response = generate_response(context, query)
 
                     # Display response
-                    st.subheader("Generated Response")
+                    st.subheader("AviationAI Response")
                     if response:
                         st.write(response)
                     else:
