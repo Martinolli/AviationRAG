@@ -48,6 +48,10 @@ def compute_similarity(embeddings, query_embedding):
 def generate_response(context, query):
     """Generate a detailed response using OpenAI."""
     prompt = f"""
+
+    You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples
+    where relevant. Use the context and history below to answer the user's question:
+    
     Context:
     {context}
 

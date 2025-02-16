@@ -247,11 +247,72 @@ def extract_metadata(file_path):
 
 def classify_document(text):
     keywords = {
-        'safety': ['safety', 'hazard', 'risk', 'incident', 'accident','system','hazard','emergency'],
-        'maintenance': ['maintenance', 'repair', 'overhaul', 'inspection'],
-        'operations': ['flight', 'takeoff', 'landing', 'crew', 'pilot','aircraft', 'airplane'],
-        'regulations': ['regulation', 'compliance', 'standard', 'rule', 'law'],
-        'quality': ['quality', 'performance', 'service', 'customer', 'satisfaction','design'],
+        'safety': [
+            'safety', 'hazard', 'risk', 'incident', 'accident', 'system', 'emergency', 'prevention',
+            'safety management', 'safety culture', 'safety audit', 'safety inspection', 'safety compliance', 'safety training'
+        ],
+        'maintenance': [
+            'maintenance', 'repair', 'overhaul', 'inspection', 'servicing',
+            'maintenance schedule', 'maintenance manual', 
+            'maintenance log', 'maintenance record', 'maintenance check', 'maintenance procedure',
+            'maintenance crew', 'maintenance facility'
+        ],
+        'operations': [
+            'flight', 'takeoff', 'landing', 'crew', 'pilot', 'aircraft', 'airplane',
+            'operations manual', 'flight operations',
+            'flight plan', 'flight schedule', 'flight crew', 'flight deck',
+            'flight control', 'air traffic control', 'ground operations'
+        ],
+        'regulations': [
+            'regulation', 'compliance', 'standard', 'rule', 'law', 'FAA',
+            'ICAO', 'EASA', 'aviation regulation', 'aviation law',
+            'aviation compliance', 'aviation standard', 'aviation rule',
+            'regulatory requirement', 'regulatory compliance'
+        ],
+        'quality': [
+            'quality', 'performance', 'service', 'customer', 'satisfaction',
+            'design', 'quality assurance', 'quality control',
+            'quality management', 'quality audit', 'quality inspection',
+            'quality standard', 'quality improvement', 'quality system', 'quality policy'
+        ],
+        'accident_reports': [
+            'accident', 'crash', 'collision', 'investigation', 'report',
+            'NTSB', 'FAA', 'safety board', 'incident', 'fatality',
+            'injury', 'damage', 'wreckage', 'black box', 'flight recorder',
+            'accident analysis', 'accident summary', 'accident investigation',
+            'accident report', 'accident findings', 'accident cause', 'accident prevention'
+        ],
+        'training_education': [
+            'training', 'education', 'certification', 'course', 'syllabus',
+            'training program', 'instructor', 'trainee', 'aviation school',
+            'flight school', 'training manual'
+        ],
+        'weather_environment': [
+            'weather', 'environment', 'climate', 'turbulence', 'storm',
+            'wind', 'visibility', 'meteorology', 'weather report',
+            'weather forecast', 'environmental impact'
+        ],
+        'technology_innovation': [
+            'technology', 'innovation', 'avionics', 'automation', 'AI',
+            'artificial intelligence', 'drone', 'UAV', 'unmanned aerial vehicle',
+            'new technology', 'technological advancement'
+        ],
+        'security': [
+            'security', 'threat', 'terrorism', 'hijacking', 'security measures',
+            'airport security', 'security protocol', 'security breach', 'security incident', 'cybersecurity'
+        ],
+        'finance_economics': [
+            'finance', 'economics', 'cost', 'budget', 'funding', 'investment',
+            'economic impact', 'financial report', 'financial analysis', 'revenue', 'expense', 'profit', 'loss'
+        ],
+        'human_factors': [
+            'human factors', 'ergonomics', 'fatigue', 'stress', 'workload',
+            'human performance', 'crew resource management', 'CRM', 'human error', 'human-machine interaction'
+        ],
+        'emergency_response': [
+            'emergency', 'response', 'rescue', 'evacuation', 'emergency procedures',
+            'emergency landing', 'emergency services', 'first aid', 'crisis management', 'disaster response'
+        ],
     }
     
     text_lower = text.lower()
