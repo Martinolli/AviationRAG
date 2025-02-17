@@ -312,7 +312,6 @@ def generate_response(context, query, full_context, model):
     - If it's about regulations, provide a **list of key FAA or ICAO guidelines if available**.
     - If it's about an accident, provide a **summary of investigation insights**.
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
-    - If it's about quality system, provide a **comparison with quality requirements applicable to aviation**.
     """
     # Calculate max tokens dynamically
     max_tokens = min(1000, 4000 - len(truncated_full_context.split()))
