@@ -248,13 +248,16 @@ def extract_metadata(file_path):
 def classify_document(text):
     keywords = {
         'safety': [
-            'safety', 'hazard', 'risk', 'incident', 'accident', 'system', 'emergency', 'prevention',
-            'safety management', 'safety culture', 'safety audit', 'safety inspection', 'safety compliance', 'safety training'
+            'safety', 'hazard', 'risk', 'incident', 'accident',
+             'system', 'emergency', 'prevention',
+            'safety management', 'safety culture', 'safety audit',
+            'safety inspection', 'safety compliance', 'safety training'
         ],
         'maintenance': [
             'maintenance', 'repair', 'overhaul', 'inspection', 'servicing',
             'maintenance schedule', 'maintenance manual', 
-            'maintenance log', 'maintenance record', 'maintenance check', 'maintenance procedure',
+            'maintenance log', 'maintenance record',
+            'maintenance check', 'maintenance procedure',
             'maintenance crew', 'maintenance facility'
         ],
         'operations': [
@@ -298,20 +301,28 @@ def classify_document(text):
             'new technology', 'technological advancement'
         ],
         'security': [
-            'security', 'threat', 'terrorism', 'hijacking', 'security measures',
-            'airport security', 'security protocol', 'security breach', 'security incident', 'cybersecurity'
+            'security', 'threat', 'terrorism',
+            'hijacking', 'security measures',
+            'airport security', 'security protocol',
+            'security breach', 'security incident', 'cybersecurity'
         ],
         'finance_economics': [
-            'finance', 'economics', 'cost', 'budget', 'funding', 'investment',
-            'economic impact', 'financial report', 'financial analysis', 'revenue', 'expense', 'profit', 'loss'
+            'finance', 'economics', 'cost', 'budget',
+            'funding', 'investment',
+            'economic impact', 'financial report',
+            'financial analysis', 'revenue', 'expense', 'profit', 'loss'
         ],
         'human_factors': [
-            'human factors', 'ergonomics', 'fatigue', 'stress', 'workload',
-            'human performance', 'crew resource management', 'CRM', 'human error', 'human-machine interaction'
+            'human factors', 'ergonomics', 'fatigue',
+            'stress', 'workload',
+            'human performance', 'crew resource management',
+            'CRM', 'human error', 'human-machine interaction'
         ],
         'emergency_response': [
-            'emergency', 'response', 'rescue', 'evacuation', 'emergency procedures',
-            'emergency landing', 'emergency services', 'first aid', 'crisis management', 'disaster response'
+            'emergency', 'response', 'rescue',
+            'evacuation', 'emergency procedures',
+            'emergency landing', 'emergency services',
+            'first aid', 'crisis management', 'disaster response'
         ],
     }
     
