@@ -175,8 +175,8 @@ def expand_query(query):
     response = safe_openai_call(lambda: client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.6,
-        max_tokens=600
+        temperature=0.5,
+        max_tokens=300
     ))
 
     return response.choices[0].message.content.strip() if response else query
