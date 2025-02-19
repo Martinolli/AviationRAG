@@ -1,0 +1,12 @@
+Scripts Sequence:
+
+1 - read_documents.py
+2 - aviation_chunck_saver.py
+3 - extract_pkl_to_json.py
+4 - check_pkl_content.py
+5 - generate_embeddings.js
+6 - check_embeddings.py
+7 - store_embeddings_astra.js
+8 - check_astradb_content.js
+9 - check_astradb_consistency.js
+10 - visualizing_data.py
