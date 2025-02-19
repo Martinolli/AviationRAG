@@ -173,10 +173,10 @@ def expand_query(query):
     Final Expanded Query:
     """
     response = safe_openai_call(lambda: client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}],
-        temperature=0.5,
-        max_tokens=300
+        temperature=0.7,
+        max_tokens=500
     ))
 
     return response.choices[0].message.content.strip() if response else query
@@ -371,7 +371,7 @@ def chat_loop():
         try:
             print("Generating query embedding...")
             expanded_query = expand_query(QUERY_TEXT)
-            query_embedding = get_embedding(expanded_query)
+            query_embedding = get_embedding(QUERY_TEXT)
             if query_embedding is None:
                 raise ValueError("Failed to generate query embedding")
 
@@ -395,7 +395,7 @@ def chat_loop():
 
 
             print("Generating response...")
-            response = generate_response(combined_context, expanded_query, full_context, MODEL)
+            response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
 
             print("\nAviationAI:", response)
 
@@ -405,7 +405,7 @@ def chat_loop():
             # Here you could implement logic to refine the response or adjust parameters
 
             # Update chat history
-            chat_history.append((expanded_query, response))
+            chat_history.append((QUERY_TEXT, response))
             if len(chat_history) > max_history:  # Keep only the last 5 exchanges
                 chat_history = chat_history[-max_history:]
 
@@ -416,12 +416,12 @@ def chat_loop():
         summary = generate_chat_summary(chat_history)
 
         # Store chat history in a log file
-        chat_history.append((expanded_query, response))
+        chat_history.append((QUERY_TEXT, response))
         if len(chat_history) > max_history:  # Keep only the last 5 exchanges
             chat_history = chat_history[-max_history:]
 
         store_chat_history(chat_history)
-        store_chat_in_db(session_id, expanded_query, response)
+        store_chat_in_db(session_id, QUERY_TEXT, response)
         
 if __name__ == "__main__":
     chat_loop()
