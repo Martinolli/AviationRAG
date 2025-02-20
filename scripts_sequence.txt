@@ -10,3 +10,8 @@ Scripts Sequence:
 8 - check_astradb_content.js
 9 - check_astradb_consistency.js
 10 - visualizing_data.py
+
+
+To run the page the command line is:
+    npm run dev
+
