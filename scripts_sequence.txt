@@ -1,7 +1,7 @@
 Scripts Sequence:
 
 1 - read_documents.py
-2 - aviation_chunck_saver.py
+2 - aviation_chunk_saver.py
 3 - extract_pkl_to_json.py
 4 - check_pkl_content.py
 5 - generate_embeddings.js
