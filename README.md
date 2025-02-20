@@ -4,17 +4,17 @@ AviationRAG is a Retrieval-Augmented Generation system designed for the aviation
 
 ## Disclaimer
 
-This project, AviationRAG (Retrieval-Augmented Generation for Aviation), is designed as an experimental research tool. It is not intended as the main toll for aviation decision-making processes. The information provided by this system should not be considered a substitute for official aviation documentation, regulations, or expert consultation.
+This project, AviationRAG (Retrieval-Augmented Generation for Aviation), is an experimental research tool  It is not intended for use in real-world aviation operations or decision-making processes. The information provided by this system should not be considered as professional advice or a substitute for official aviation documentation, regulations, or expert consultation.
 
 Users should be aware that:
 
 1. The accuracy and completeness of the information cannot be guaranteed.
 2. The system's responses are based on the data it has been trained on and may not reflect the most current aviation standards or practices.
-3. This tool should not be used for critical aviation-related tasks or decisions.
+3. This tool should not be used for any critical aviation-related tasks or decisions.
 
-By using this system, you acknowledge and agree that AviationRAG's creators and contributors are not liable for any consequences resulting from the use or misuse of this tool or the information it provides.
+By using this system, you acknowledge and agree that the creators and contributors of AviationRAG are not liable for any consequences resulting from the use or misuse of this tool or the information it provides.
 
-Always refer to official aviation authorities, documentation, and certified professionals for authoritative information and guidance.
+Always refer to official aviation authorities, documentation, and certified professionals for authoritative information and guidance in aviation matters.
 
 ## Features
 
@@ -35,7 +35,6 @@ Always refer to official aviation authorities, documentation, and certified prof
 - [Contributing](#contributing)
 - [License](#license)
 - [Dependencies](#dependencies)
-- [Metrics](#metrics)
 
 ## Introduction
 
@@ -95,8 +94,7 @@ This project implements a Retrieval-Augmented Generation (RAG) system, allowing 
 
 ### RAG System Explanation
 
-Retrieval-Augmented Generation (RAG) combines the power of large language models with a knowledge base
-to generate more accurate and contextually relevant responses. In our system:
+Retrieval-Augmented Generation (RAG) combines the power of large language models with a knowledge base to generate more accurate and contextually relevant responses. In our system:
 
 1. User queries are processed to find relevant information in the aviation corpus.
 2. Retrieved information is used to augment the context provided to the LLM.
@@ -104,29 +102,7 @@ to generate more accurate and contextually relevant responses. In our system:
 
 ### System Architecture
 
-The flow starts with the selection of primary documents to be processed, changing documents to
-the “DOCX” extension, cleaning the documents, removing tables, figures, headers, and other
-features, storing the documents in the data/documents folder, processing the documents, to
-create store them as part of aviation_corpus.pkl file. The next step is to process the aviation
-corpus into chunks, with chunks the data is processed to create the embeddings for each chunk
-and stored in the AstraDB database. The system then moves on to query processing, where user
-queries are received and interpreted. Once the query is processed, the system efficiently performs
-a vector search in the AstraDB, converting the query into a vector representation.
-The vector search swiftly identifies relevant data points that match the user's query
-based on similarity measures for quick information retrieval. After identifying relevant
-vectors, context retrieval takes place. The system gathers data that provides a comprehensive
-understanding of the topic, ensuring that the response generated later is well-informed and
-contextually relevant. With the context in hand, the next phase is LLM processing; the large
-language model is utilized to analyze the retrieved context and formulate a coherent response.
-The LLM leverages its training on vast datasets to understand nuances and generate human-like text,
-ensuring that the response is accurate and engaging. Finally, the response generation step takes place.
-The processed information and insights from the LLM are synthesized into a clear and concise answer
-to the user's query. The response is then formatted and delivered to the user,
-completing the query processing cycle.
-The complete process is shown below, two Figures.
-
-![Figure_1](md_figures/step_1.png "Preparing/Processing Documents")
-![Figure_2](md_figures/step_2.png "Query Processing Response Generation")
+[Consider adding a simple diagram here showing the flow from user input to response generation]
 
 1. User Input → 2. Query Processing → 3. Vector Search in Astra DB → 4. Context Retrieval → 5. LLM Processing → 6. Response Generation
 
@@ -830,1043 +806,20 @@ store the embeddings in the AstraDB: aviation_rag_db/aviation_data/aviation_docu
         }
 
         insertEmbeddings();
- ```
+```
 
 #### Supportive Routines
 
------
 The following routines were created to:
 
-.Manage the flow since from "read" a document and create the chunks to verify the similarities and check the files contents
-
-.Check the AstraDB content
-
-.Create the AstraDB table
-
-.Connect AstraDB database
-
-.Store the embedding into the AstraDB
-
-. User Interface
-
-##### config.py
-
-```python
-    
-    from pathlib import Path
-
-    BASE_DIR = Path(__file__).resolve().parent
-    PROCESSED_DIR = BASE_DIR / "data" / "processed"
-    CHUNKED_DIR = PROCESSED_DIR / "chunked_documents"
-    TEXT_OUTPUT_DIR = PROCESSED_DIR / "ProcessedText"
-    TEXT_EXPANDED_DIR = PROCESSED_DIR / "ProcessedTextExpanded"
-    PKL_FILENAME = BASE_DIR / "data" / "raw" / "aviation_corpus.pkl"
-    EMBEDDINGS_FILE = BASE_DIR / "data" / "embeddings" / "aviation_embeddings.json"
-
-```
-
-##### aviationrag_interface.py
-
-```python
-
-    import streamlit as st
-    import json
-    import pandas as pd
-    from openai import OpenAI
-    import os
-    from dotenv import load_dotenv
-
-    load_dotenv()
-
-    # Set up OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    # Load embeddings
-    @st.cache_data(ttl=3600, show_spinner=False)
-    def load_embeddings(embeddings_file):
-        with open(embeddings_file, "r", encoding="utf-8") as file:
-            return json.load(file)
-
-    def get_query_embedding(query, model="text-embedding-ada-002"):
-        """Generate embedding for user query."""
-        response = client.embeddings.create(input=[query], model=model)
-        return response.data[0].embedding
-
-    def cosine_similarity(vec1, vec2):
-        """Compute cosine similarity between two vectors."""
-        return sum(a * b for a, b in zip(vec1, vec2)) / (sum(a ** 2 for a in vec1) ** 0.5 * sum(b ** 2 for b in vec2) ** 0.5)
-
-    # Retrieve top results
-    def retrieve_top_chunks(query_embedding, embeddings_data, top_n=5):
-        results = []
-        for chunk in embeddings_data:
-            similarity = cosine_similarity(query_embedding, chunk["embedding"])
-            results.append({
-                "Filename": chunk["filename"],
-                "Chunk ID": chunk["chunk_id"],
-                "Similarity": similarity,
-                "Text": chunk["text"]
-            })
-        return sorted(results, key=lambda x: x["Similarity"], reverse=True)[:top_n]
-
-    # Streamlit UI
-    def main():
-        st.title("AviationRAG: Query Interface")
-        
-        # Load embeddings
-        embeddings_file = "data/embeddings/aviation_embeddings.json"
-        embeddings_data = load_embeddings(embeddings_file)
-        
-        # User input
-        query = st.text_input("Enter your query:", "")
-        
-        if st.button("Submit Query"):
-            if query:
-                st.info("Generating query embedding...")
-                query_embedding = get_query_embedding(query)
-                
-                st.info("Retrieving top chunks...")
-                top_chunks = retrieve_top_chunks(query_embedding, embeddings_data)
-                
-                # Display results
-                st.subheader("Top Results:")
-                for chunk in top_chunks:
-                    st.markdown(f"**Filename:** {chunk['Filename']}")
-                    st.markdown(f"**Chunk ID:** {chunk['Chunk ID']}")
-                    st.markdown(f"**Similarity:** {chunk['Similarity']:.4f}")
-                    st.markdown(f"**Text:** {chunk['Text']}")
-                    st.markdown("---")
-                    
-                st.success("Response generated successfully!")
-            else:
-                st.warning("Please enter a query.")
-
-    if __name__ == "__main__":
-        main()
-
-```
-
-##### check_pkl_content.py
-
-```python
-
-    import pickle
-    import os
-    from pathlib import Path
-
-    def check_pkl_content():
-        # Get the project root directory
-        project_root = Path(__file__).resolve().parent.parent.parent
-        
-        # Define the path to the aviation_corpus.pkl file
-        pkl_path = project_root / 'data' / 'raw' / 'aviation_corpus.pkl'
-        
-        if not pkl_path.exists():
-            print(f"Error: The file {pkl_path} does not exist.")
-            return
-        
-        try:
-            with open(pkl_path, 'rb') as file:
-                corpus = pickle.load(file)
-            
-            print(f"Successfully loaded aviation_corpus.pkl")
-            print(f"Number of documents: {len(corpus)}")
-            
-            # Print details of the first few documents
-            for i, doc in enumerate(corpus[:]):
-                print(f"\nDocument {i + 1}:")
-                print(f"Filename: {doc.get('filename', 'N/A')}")
-                print(f"Text length: {len(doc.get('text', ''))}")
-                print(f"Number of tokens: {len(doc.get('tokens', []))}")
-                print(f"Number of entities: {len(doc.get('entities', []))}")
-                print(f"Number of personal names: {len(doc.get('personal_names', []))}")
-                print(f"Category: {doc.get('category', 'N/A')}")
-                print(f"Number of Pos-Tags: {len(doc.get('pos_tags', []))}")
-        
-        except Exception as e:
-            print(f"An error occurred while reading the file: {e}")
-
-    if __name__ == "__main__":
-        check_pkl_content()
-```
-
-##### embeddings_similarity.py
-
-```python
-
-    import json
-    import os
-    from sklearn.metrics.pairwise import cosine_similarity
-    import numpy as np
-    from openai import OpenAI
-    from dotenv import load_dotenv
-
-    # Load environment variables
-    load_dotenv()
-
-    # Set up the OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    def get_embedding(text, model="text-embedding-ada-002"):
-        """Generate embedding using OpenAI's updated client."""
-        try:
-            response = client.embeddings.create(
-                input=[text],  # OpenAI API requires input as a single string or list
-                model=model
-            )
-            # Extract the embedding
-            return response.data[0].embedding
-        except Exception as e:
-            print(f"Error generating embedding: {e}")
-            return None
-
-    # Load embeddings from a JSON file
-    def load_embeddings(file_path):
-        """
-        Load embeddings from a JSON file.
-
-        Args:
-            file_path (str): Path to the JSON file containing embeddings.
-
-        Returns:
-            list: List of embeddings with metadata.
-        """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
-
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-        
-        return data
-
-    # Compute cosine similarity between a query and a list of embeddings
-    def compute_cosine_similarity(query_embedding, embeddings):
-        """
-        Compute cosine similarity between a query embedding and a list of embeddings.
-
-        Args:
-            query_embedding (list): The embedding for the query.
-            embeddings (list): List of embeddings to compare against.
-
-        Returns:
-            list: List of cosine similarity scores.
-        """
-        query_vector = np.array(query_embedding).reshape(1, -1)
-        embedding_vectors = np.array([item['embedding'] for item in embeddings])
-
-        similarities = cosine_similarity(query_vector, embedding_vectors)[0]
-        return similarities
-
-    # Filter and rank embeddings by similarity
-    def filter_and_rank_embeddings(embeddings, similarities, top_n=10, filename_filter=None):
-        """
-        Filter and rank embeddings based on similarity scores.
-
-        Args:
-            embeddings (list): List of embeddings with metadata.
-            similarities (list): Corresponding similarity scores.
-            top_n (int): Number of top results to return.
-            filename_filter (str): Filter results by filename (optional).
-
-        Returns:
-            list: Top N ranked embeddings with metadata and similarity scores.
-        """
-        results = [
-            {
-                'chunk_id': emb['chunk_id'],
-                'filename': emb['filename'],
-                'text': emb['text'],
-                'similarity': sim
-            }
-            for emb, sim in zip(embeddings, similarities)
-            if filename_filter is None or filename_filter in emb['filename']
-        ]
-
-        results = sorted(results, key=lambda x: x['similarity'], reverse=True)
-        return results[:top_n]
-
-    # Main function to test similarity
-    if __name__ == "__main__":
-        # Path to the JSON file containing embeddings
-        EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-
-        # Query and parameters
-        QUERY_TEXT = input("Enter your query text: ")
-        TOP_N = 10
-        FILENAME_FILTER = None  # Optional: filter results by filename
-
-        try:
-            # Generate embedding for the query
-            print("Generating query embedding...")
-            QUERY_EMBEDDING = get_embedding(QUERY_TEXT)
-            if QUERY_EMBEDDING is None:
-                raise ValueError("Failed to generate query embedding")
-
-            # Load embeddings
-            print("Loading embeddings...")
-            embeddings = load_embeddings(EMBEDDINGS_FILE)
-
-            # Compute similarities
-            print("Computing similarities...")
-            similarities = compute_cosine_similarity(QUERY_EMBEDDING, embeddings)
-
-            # Filter and rank results
-            print("Filtering and ranking results...")
-            top_results = filter_and_rank_embeddings(
-                embeddings, similarities, top_n=TOP_N, filename_filter=FILENAME_FILTER
-            )
-
-            # Display results
-            print("Top results:")
-            for result in top_results:
-                print(f"Chunk ID: {result['chunk_id']}")
-                print(f"Filename: {result['filename']}")
-                print(f"Similarity: {result['similarity']:.4f}")
-                print(f"Text: {result['text'][:200]}...\n")  # Display first 200 characters
-
-        except Exception as e:
-            print(f"Error: {e}")
-```
-
-##### embeddings_similarity_verification.py
-
-```python
-
-    import json
-    import os
-    from sklearn.metrics.pairwise import cosine_similarity
-    import numpy as np
-    from openai import OpenAI
-    from dotenv import load_dotenv
-
-    # Load environment variables
-    load_dotenv()
-
-    # Set up the OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    def get_embedding(text, model="text-embedding-ada-002"):
-        """
-        Generate embedding using OpenAI's updated client.
-
-        Args:
-            text (str): The input text to generate an embedding for.
-            model (str): The embedding model to use.
-
-        Returns:
-            list: The generated embedding.
-        """
-        try:
-            response = client.embeddings.create(
-                input=[text],
-                model=model
-            )
-            return response.data[0].embedding
-        except Exception as e:
-            print(f"Error generating embedding: {e}")
-            return None
-
-    def load_embeddings(file_path, batch_size=1000):
-        """
-        Load embeddings from a JSON file in batches to improve performance.
-
-        Args:
-            file_path (str): Path to the JSON file containing embeddings.
-            batch_size (int): Number of embeddings to load at a time.
-
-        Returns:
-            generator: Generator yielding embeddings in batches.
-        """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"File not found: {file_path}")
-
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
-
-        for i in range(0, len(data), batch_size):
-            yield data[i:i + batch_size]
-
-    def compute_cosine_similarity(query_embedding, embeddings):
-        """
-        Compute cosine similarity between a query embedding and a list of embeddings.
-
-        Args:
-            query_embedding (list): The embedding for the query.
-            embeddings (list): List of embeddings to compare against.
-
-        Returns:
-            list: List of cosine similarity scores.
-        """
-        query_vector = np.array(query_embedding).reshape(1, -1)
-        embedding_vectors = np.array([item['embedding'] for item in embeddings])
-
-        return cosine_similarity(query_vector, embedding_vectors)[0]
-
-    def filter_and_rank_embeddings(embeddings, similarities, top_n=10):
-        """
-        Filter and rank embeddings based on similarity scores.
-
-        Args:
-            embeddings (list): List of embeddings with metadata.
-            similarities (list): Corresponding similarity scores.
-            top_n (int): Number of top results to return.
-
-        Returns:
-            list: Top N ranked embeddings with metadata and similarity scores.
-        """
-        results = [
-            {
-                'chunk_id': emb['chunk_id'],
-                'filename': emb['filename'],
-                'text': emb['text'],
-                'similarity': sim
-            }
-            for emb, sim in zip(embeddings, similarities)
-        ]
-
-        # Sort results by similarity
-        results = sorted(results, key=lambda x: x['similarity'], reverse=True)
-        return results[:top_n]
-
-    def generate_response(context, query, model):
-        """
-        Generate a response using OpenAI.
-
-        Args:
-            context (str): The context string generated from retrieved chunks.
-            query (str): The user query.
-            model (str): The model to use for generating a response.
-
-        Returns:
-            str: The generated response from OpenAI.
-        """
-        prompt = f"""
-        Context:
-        {context}
-
-        Question:
-        {query}
-
-        Provide a detailed response based on the context above.
-        """
-        try:
-            if model in ["gpt-3.5-turbo", "gpt-4"]:
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7
-                )
-                return response.choices[0].message.content.strip()
-            elif model == "text-davinci-003":
-                response = client.completions.create(
-                    model=model,
-                    prompt=prompt,
-                    temperature=0.7,
-                    max_tokens=500
-                )
-                return response.choices[0].text.strip()
-            else:
-                raise ValueError(f"Unsupported model: {model}")
-        except Exception as e:
-            print(f"Error generating response: {e}")
-            return None
-
-    if __name__ == "__main__":
-        EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-
-        QUERY_TEXT = input("Enter your query text: ")
-        print("Choose a model: 1. gpt-3.5-turbo  2. gpt-4  3. text-davinci-003")
-        MODEL_SELECTION = input("Enter model number (1/2/3): ")
-        MODEL_MAP = {"1": "gpt-3.5-turbo", "2": "gpt-4", "3": "text-davinci-003"}
-        MODEL = MODEL_MAP.get(MODEL_SELECTION, "gpt-3.5-turbo")
-
-        TOP_N = 10
-
-        try:
-            print("Generating query embedding...")
-            query_embedding = get_embedding(QUERY_TEXT)
-            if query_embedding is None:
-                raise ValueError("Failed to generate query embedding")
-
-            print("Loading embeddings...")
-            top_results = []
-            for batch in load_embeddings(EMBEDDINGS_FILE):
-                # Compute similarities for this batch
-                print(f"Processing batch of {len(batch)} embeddings...")
-                similarities = compute_cosine_similarity(query_embedding, batch)
-
-                # Filter and rank top results
-                top_results.extend(filter_and_rank_embeddings(batch, similarities, top_n=TOP_N))
-
-            # Combine context from top N results
-            unique_texts = set()
-            combined_context = ""
-            for result in sorted(top_results, key=lambda x: x['similarity'], reverse=True)[:TOP_N]:
-                if result['text'] not in unique_texts:  # Prevent duplicate context
-                    unique_texts.add(result['text'])
-                    combined_context += f"{result['text']}\n"
-
-            print("Generating response...")
-            response = generate_response(combined_context, QUERY_TEXT, MODEL)
-
-            print("\nGenerated Response:")
-            print(response)
-
-        except Exception as e:
-            print(f"Error: {e}")
-```
-
-##### streamlit_app.py
-
-```python
-
-    import streamlit as st
-    import json
-    import os
-    from openai import OpenAI
-    from sklearn.metrics.pairwise import cosine_similarity
-    from dotenv import load_dotenv
-
-    # Initialize OpenAI API
-    load_dotenv()
-
-    # Set up the OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    # Load embeddings
-    def load_embeddings(filepath):
-        with open(filepath, 'r') as file:
-            return json.load(file)
-
-    def get_embedding(text, model="text-embedding-ada-002"):
-        """
-        Generate embedding using OpenAI's updated client.
-
-        Args:
-            text (str): The input text to generate an embedding for.
-            model (str): The embedding model to use.
-
-        Returns:
-            list: The generated embedding.
-        """
-        try:
-            response = client.embeddings.create(
-                input=[text],
-                model=model
-            )
-            # Extract the embedding correctly
-            return response.data[0].embedding
-        except Exception as e:
-            print(f"Error generating embedding: {e}")
-            return None
-
-    # Compute similarities
-    def compute_similarities(query_embedding, embeddings):
-        similarities = []
-        for embedding in embeddings:
-            similarity = cosine_similarity([query_embedding], [embedding['embedding']])[0][0]
-            similarities.append((embedding, similarity))
-        return sorted(similarities, key=lambda x: x[1], reverse=True)
-
-    # Generate OpenAI response
-    def generate_response(context, query, model="gpt-4", temperature=0.7):
-        prompt = f"The user asked: {query}\n\nHere is the context:\n{context}\n\nProvide a detailed response:"
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-            )
-            return response.choices[0].message.content
-        except Exception as e:
-            return f"Error generating response: {e}"
-
-    # Streamlit app
-    def main():
-        st.title("Aviation Knowledge Assistant")
-        st.write("Explore aviation knowledge with conversational intelligence powered by embeddings and OpenAI.")
-
-        # Sidebar options
-        st.sidebar.header("Settings")
-        model = st.sidebar.selectbox("Select OpenAI Model", ["gpt-3.5-turbo", "gpt-4"], index=1)
-        temperature = st.sidebar.slider("Response Temperature", 0.0, 1.0, 0.7)
-
-        # Load embeddings
-        embeddings_file = st.sidebar.file_uploader("Upload Embeddings JSON", type="json")
-        if embeddings_file is not None:
-            embeddings = json.load(embeddings_file)
-            st.sidebar.success("Embeddings loaded successfully!")
-
-        # Conversation history
-        if "history" not in st.session_state:
-            st.session_state.history = []
-
-        # User input
-        user_query = st.text_input("Enter your query", key="query")
-        if st.button("Submit Query") and user_query and embeddings_file:
-            # Generate embedding for user query
-            query_embedding = get_embedding(user_query)
-            
-            if query_embedding:
-                # Compute similarities
-                similarities = compute_similarities(query_embedding, embeddings)
-                top_contexts = [sim[0]['text'] for sim in similarities[:5]]
-
-                # Create context for response
-                context = " ".join(top_contexts)
-
-                # Generate response
-                response = generate_response(context, user_query, model=model, temperature=temperature)
-                st.session_state.history.append({"query": user_query, "response": response})
-
-                # Display response and context
-                st.subheader("Response")
-                st.write(response)
-                
-                st.subheader("Top Relevant Contexts")
-                for idx, context in enumerate(top_contexts, start=1):
-                    st.write(f"**Context {idx}:** {context}")
-            else:
-                st.error("Failed to generate embedding for the query.")
-
-        # Display conversation history
-        if st.session_state.history:
-            st.subheader("Conversation History")
-            for idx, item in enumerate(st.session_state.history, start=1):
-                st.write(f"**Query {idx}:** {item['query']}")
-                st.write(f"**Response {idx}:** {item['response']}")
-
-    # Run the app
-    if __name__ == "__main__":
-        main()
-```
-
-##### streamlit_dynamic_query.py
-
-```python
-
-    import streamlit as st
-    import json
-    import os
-    from sklearn.metrics.pairwise import cosine_similarity
-    from openai import OpenAI
-    from dotenv import load_dotenv
-
-    # Load environment variables
-    load_dotenv()
-
-    # Set up the OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    # Load embeddings (modify as needed for your embeddings file path)
-    EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-
-    def load_embeddings():
-        """Load embeddings from the JSON file."""
-        try:
-            with open(EMBEDDINGS_FILE, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            st.error(f"Embeddings file not found at {EMBEDDINGS_FILE}.")
-            return None
-
-    def get_embedding(text, model="text-embedding-ada-002"):
-        """Generate embedding using OpenAI's API."""
-        try:
-            response = client.embeddings.create(input=[text], model=model)
-            return response.data[0].embedding
-        except Exception as e:
-            st.error(f"Error generating embedding: {e}")
-            return None
-
-    def compute_similarity(embeddings, query_embedding):
-        """Compute cosine similarity between query embedding and all document embeddings."""
-        results = []
-        for embedding in embeddings:
-            similarity = cosine_similarity([query_embedding], [embedding['embedding']])[0][0]
-            results.append({
-                'chunk_id': embedding['chunk_id'],
-                'filename': embedding['filename'],
-                'text': embedding['text'],
-                'similarity': similarity
-            })
-        return sorted(results, key=lambda x: x['similarity'], reverse=True)
-
-    def generate_response(context, query):
-        """Generate a detailed response using OpenAI."""
-        prompt = f"""
-        Context:
-        {context}
-
-        Question:
-        {query}
-
-        Provide a detailed and accurate response based on the context above.
-        """
-        try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            st.error(f"Error generating response: {e}")
-            return None
-
-    def truncate_text(text, max_chars=300):
-        """Truncate text to a specified number of characters."""
-        if len(text) > max_chars:
-            return text[:max_chars] + "..."
-        return text
-
-
-    def main():
-
-        # Streamlit UI setup
-        st.set_page_config(page_title="Aviation RAG Query Interface", layout="wide")
-        st.title("Aviation RAG Query Interface")
-
-        # Session state for query history and results
-        if 'query_history' not in st.session_state:
-            st.session_state['query_history'] = []
-
-        if 'query_results' not in st.session_state:
-            st.session_state['query_results'] = []
-
-        # User query input
-        query = st.text_input("Enter your query:", placeholder="e.g., Describe latent failures in aviation accidents")
-
-        # Query submission
-        if st.button("Submit Query"):
-            if query:
-                st.session_state.query_history.append(query)
-
-                with st.spinner("Generating query embedding..."):
-                    query_embedding = get_embedding(query)
-
-                if query_embedding:
-                    with st.spinner("Loading embeddings..."):
-                        embeddings = load_embeddings()
-
-                    if embeddings:
-                        with st.spinner("Computing similarities..."):
-                            results = compute_similarity(embeddings, query_embedding)
-                            st.session_state.query_results = results
-
-                        # Combine context and generate response
-                        context = "\n".join([result['text'] for result in results[:5]])
-                        with st.spinner("Generating response..."):
-                            response = generate_response(context, query)
-
-                        # Display response
-                        st.subheader("Generated Response")
-                        if response:
-                            st.write(response)
-                        else:
-                            st.error("Failed to generate a response.")
-
-                        # Display results
-                        st.subheader("Top Results")
-                        for result in results[:5]:
-                            st.markdown(f"**Chunk ID**: {result['chunk_id']}")
-                            st.markdown(f"**Filename**: {result['filename']}")
-                            st.markdown(f"**Similarity**: {result['similarity']:.4f}")
-                            st.markdown(f"**Text**: {truncate_text(result['text'], max_chars=300)}")  # Truncated text
-                            st.markdown("---")
-                    else:
-                        st.error("Failed to load embeddings.")
-                else:
-                    st.error("Failed to generate embedding for the query.")
-
-        # Display query history
-        if st.session_state['query_history']:
-            st.sidebar.title("Query History")
-            for i, past_query in enumerate(st.session_state['query_history'], 1):
-                st.sidebar.write(f"{i}. {past_query}")
-
-        # Display results history
-        if st.session_state['query_results']:
-            st.sidebar.title("Last Results")
-            for result in st.session_state['query_results'][:3]:
-                st.sidebar.write(f"Chunk ID: {result['chunk_id']} - {result['similarity']:.4f}")
-
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("**Version 1.0 | Streamlit Interface**")
-
-    if __name__ == "__main__":
-        main()
-```
-
-##### stremalit_embeddings.py
-
-```python
-
-    import streamlit as st
-    import json
-    import os
-    import numpy as np
-    from sklearn.metrics.pairwise import cosine_similarity
-    import nltk
-    from nltk.probability import FreqDist
-    from nltk.text import Text
-    from sklearn.manifold import TSNE
-    import matplotlib.pyplot as plt
-    from openai import OpenAI
-    from dotenv import load_dotenv
-    import pickle
-    import pandas as pd
-
-    # Load environment variables
-    load_dotenv()
-
-    # Set up the OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-
-    def get_embedding(text, model="text-embedding-ada-002"):
-        """Generate embedding using OpenAI's updated client."""
-        try:
-            response = client.embeddings.create(
-                input=[text],  # OpenAI API requires input as a single string or list
-                model=model
-            )
-            return response.data[0].embedding
-        except Exception as e:
-            print(f"Error generating embedding: {e}")
-            return None
-
-    # Load embeddings
-    @st.cache_data
-    def load_embeddings():
-        with open('data/embeddings/aviation_embeddings.json', 'r') as f:
-            embeddings = json.load(f)
-        return embeddings
-
-    # Load corpus
-    @st.cache_data
-    def load_corpus():
-        with open('data/raw/aviation_corpus.pkl', 'rb') as f:
-            corpus = pickle.load(f)
-        return corpus
-
-    # Similarity search
-    def similarity_search(embeddings, query_embedding):
-        embeddings_array = np.array([item['embedding'] for item in embeddings])
-        similarities = cosine_similarity([query_embedding], embeddings_array).flatten()
-        for i, item in enumerate(embeddings):
-            item['similarity'] = similarities[i]
-        sorted_results = sorted(embeddings, key=lambda x: x['similarity'], reverse=True)
-        return sorted_results[:10]
-
-    # Display frequency distribution
-    def plot_frequency_distribution(corpus_tokens):
-        fdist = FreqDist(corpus_tokens)
-        top_words = fdist.most_common(20)
-        words, counts = zip(*top_words)
-        plt.figure(figsize=(10, 6))
-        plt.bar(words, counts)
-        plt.title('Top 20 Words in Corpus')
-        plt.xticks(rotation=70)
-        st.pyplot(plt)
-
-    # Generate concordance
-    def generate_concordance(corpus_tokens, word):
-        text = Text(corpus_tokens)
-        concordance_results = text.concordance_list(word, width=80)
-        return concordance_results
-
-    def main():
-        st.title("Aviation RAG Analysis Tool")
-
-        # Sidebar info
-        st.sidebar.header("Corpus Insights")
-        corpus = load_corpus()
-        all_tokens = [token for doc in corpus for token in doc['tokens']]
-        st.sidebar.write(f"Total Documents: {len(corpus)}")
-        st.sidebar.write(f"Total Tokens: {len(all_tokens)}")
-
-        # Query input
-        query_text = st.text_input("Enter your query text:")
-        if query_text:
-            # Generate query embedding (mock embedding for example purposes)
-            st.info("Generating query embedding...")
-            query_embedding = get_embedding(query_text)
-            if query_embedding is None:
-                st.error("Failed to generate query embedding.")
-                return
-            
-            # Load embeddings
-            embeddings = load_embeddings()
-
-            # Similarity search
-            results = similarity_search(embeddings, query_embedding)
-            st.subheader("Top Similarity Results")
-            for result in results:
-                st.write(f"Chunk ID: {result['chunk_id']}")
-                st.write(f"Filename: {result['filename']}")
-                st.write(f"Similarity: {result['similarity']:.4f}")
-                st.write(f"Text Snippet: {result['text'][:200]}...")
-
-            # Similarity visualization
-            st.subheader("Similarity Scores Visualization")
-            if results:
-                df = pd.DataFrame({
-                    'Chunk ID': [res['chunk_id'] for res in results],
-                    'Similarity': [res['similarity'] for res in results]
-                })
-                st.bar_chart(df.set_index('Chunk ID'))
-
-        # Corpus analysis
-        st.subheader("Corpus Analysis")
-        analysis_type = st.radio("Choose analysis type:", ("Frequency Distribution", "Concordance"))
-        if analysis_type == "Frequency Distribution":
-            st.write("### Frequency Distribution")
-            plot_frequency_distribution(all_tokens)
-        elif analysis_type == "Concordance":
-            word = st.text_input("Enter a word for concordance analysis:")
-            if word:
-                concordance_results = generate_concordance(all_tokens, word)
-                st.write(f"Concordance for '{word}':")
-                for entry in concordance_results:
-                    st.text(f"... {entry.left_print} {entry.query} {entry.right_print} ...")
-
-    if __name__ == "__main__":
-        main()
-```
-
-##### streamlit_embeddings_app.py
-
-```python
-
-    import streamlit as st
-    import json
-    import os
-    import numpy as np
-    from sklearn.metrics.pairwise import cosine_similarity
-    import nltk
-    from nltk.probability import FreqDist
-    from nltk.text import Text
-    from sklearn.manifold import TSNE
-    import matplotlib.pyplot as plt
-    from openai import OpenAI
-    from dotenv import load_dotenv
-    import pickle
-
-    # Load environment variables
-    load_dotenv()
-
-    # Set up the OpenAI API key
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-    def get_embedding(text, model="text-embedding-ada-002"):
-        """Generate embedding using OpenAI's updated client."""
-        try:
-            response = client.embeddings.create(
-                input=[text],  # OpenAI API requires input as a single string or list
-                model=model
-            )
-            return response.data[0].embedding
-        except Exception as e:
-            print(f"Error generating embedding: {e}")
-            return None
-
-    # Load embeddings
-    def load_embeddings(embeddings_file):
-        with open(embeddings_file, 'r', encoding='utf-8') as f:
-            embeddings_data = json.load(f)
-        return embeddings_data
-
-    # Calculate similarities
-    def similarity_search(embeddings, query_embedding, top_n=5):
-        embeddings_array = np.array([np.array(chunk["embedding"]) for chunk in embeddings])
-        similarities = cosine_similarity([query_embedding], embeddings_array).flatten()
-        top_indices = similarities.argsort()[-top_n:][::-1]
-        return [(embeddings[i], similarities[i]) for i in top_indices]
-
-    # Generate frequency distribution plot
-    def plot_frequency_distribution(tokens):
-        fdist = FreqDist(tokens)
-        top_words = fdist.most_common(10)
-
-        words, counts = zip(*top_words)
-        plt.figure(figsize=(10, 6))
-        plt.bar(words, counts)
-        plt.title("Top 10 Words by Frequency")
-        plt.xlabel("Words")
-        plt.ylabel("Frequency")
-        st.pyplot(plt)
-
-    # Generate concordance
-    def display_concordance(corpus_tokens, word, window=50):
-        """Display concordance for a word from embeddings data."""
-        st.markdown(f"### Concordance for '{word}'")
-        text_obj = nltk.Text(corpus_tokens)
-        concordance_results = text_obj.concordance_list(word, width=window)
-        
-        if concordance_results:
-            for result in concordance_results:
-                st.write("... " + result.line.strip() + " ...")
-        else:
-            st.write(f"No concordance found for '{word}'.")
-
-
-    # Main Streamlit application
-    def main():
-        st.title("AviationRAG: Embedding and Textual Analysis Tool")
-
-        # File paths
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-        EMBEDDINGS_FILE = os.path.join(BASE_DIR, '..', '..', 'data', 'embeddings', 'aviation_embeddings.json')
-        PKL_FILENAME = os.path.join(BASE_DIR, '..', '..', 'data', 'raw', 'aviation_corpus.pkl')
-
-        # Load data
-        st.sidebar.header("Data Loading")
-        embeddings = load_embeddings(EMBEDDINGS_FILE)
-        st.sidebar.success("Embeddings Loaded")
-
-        with open(PKL_FILENAME, 'rb') as file:
-            corpus_data = pickle.load(file)
-            corpus_tokens = [token for doc in corpus_data for token in doc.get("tokens", [])]
-        st.sidebar.success("Corpus Loaded")
-
-        # Query input
-        query = st.text_input("Enter your query text:")
-
-        if query:
-            # Generate query embedding
-            st.info("Generating query embedding...")
-            query_embedding = get_embedding(query)
-            if query_embedding is None:
-                st.error("Failed to generate query embedding.")
-                return
-            
-            # Embedding similarity search
-            st.subheader("Embedding Similarity Results")
-            try:
-                results = similarity_search(embeddings, query_embedding)
-                for result, similarity in results:
-                    st.write(f"Chunk ID: {result['chunk_id']}\nFilename: {result['filename']}\nSimilarity: {similarity:.4f}\nText: {result['text'][:200]}...")
-            except Exception as e:
-                st.error(f"Error computing similarities: {e}")
-
-            # Frequency Distribution
-            st.subheader("Word Frequency Distribution")
-            plot_frequency_distribution(corpus_tokens)
-
-            # Concordance
-            st.subheader("Concordance")
-            display_concordance(corpus_tokens, query)
-
-    if __name__ == '__main__':
-        main()
-```
-
------
+Manage the flow since from "read" a document and create the chunks to verify the similarities and check the files contents
+Check the AstraDB content
+Create the AstraDB table
+Connect AstraDB database
 
 ## Project Structure
 
-```python
+   ```python
 
     AviationRAG/
         |
@@ -1910,24 +863,18 @@ The following routines were created to:
         |      |           |
         |      |           |________aviation_corpus.json
         |      |           |________aviation_corpus.json.dvc
-        |      |           |________combined_data.csv (aviation_corpus_data with metrics)
-        |      |           |________combined_data.pkl (aviation_corpus_data with metrics)
-        |      |           |
-        |      |           |___processed/ProcessedText/
-        |      |           |                         |______processed texts from PDF and DOCX files (TXT files)
-        |      |           |
-        |      |           |___processed/ProcessedTestExpanded/
-        |      |                                             |______texts from PDF and DOCX files (TXT files)
+        |      |
+        |      |___processed/ProcessedText/
+        |      |                          |______processed texts from PDF and DOCX files (TXT files)
+        |      |
+        |      |___processed/ProcessedTestExapanded/
+        |      |                                  |______texts from PDF and DOCX files (TXT files)
         |      |
         |      |___raw/
         |            |___aviation_corpus.pkl
         |
         |_____logs/
         |        |___aviation_rag_manager.log 
-        |
-        |
-        |_____md_figures/
-        |              |____"png" figures to compose README.md file
         |
         |
         |_____models/
@@ -1938,12 +885,9 @@ The following routines were created to:
         |
         |
         |
-        |_____pictures/
-        |            |_____"png" figures from metrics
-        |
-        |
         |_____public/
         |          |_____index.html
+        |
         |
         |
         |_____src/
@@ -1992,16 +936,6 @@ The following routines were created to:
         |      |
         |      |__________read_documents.py - create the corpus from documents processed
         |      |
-        |      |__________streamlit_app.py - create a streamlit interface - 1 
-        |      |
-        |      |__________streamlit_dynamic_query.py - create a streamlit interface - 2
-        |      |
-        |      |__________streamlit_embeddings_app.py - create a streamlit interface - 3
-        |      |
-        |      |__________streamlit_embeddings.py - create a streamlit interface - 4
-        |      |
-        |      |__________visualizing_data.py - generate metrics from aviation_corpus.pkl file
-        |      |
         |      |__________utils/
         |
         |
@@ -2019,10 +953,8 @@ The following routines were created to:
         |
         |_____package.json
         |
-        |_____package-lock.json
-        |
         |_____processed_files.json
-        | 
+        |
         |_____README.md
         |
         |_____update_data.bat
@@ -2042,7 +974,7 @@ The following routines were created to:
 
     # Install dependencies
     npm install
- ```
+```
 
 ## Usage
 
@@ -2051,25 +983,22 @@ The following routines were created to:
 -----
 Below there is a pseudo-algorithm description
 
-Preparing documents to be processed
-
-- Verify type of documents, "PDF" "TXT"
-- Check for figures, tables
-- Check for columns
-- Filter the documents to be processed
-- Choose the documents
-- Store the documents into the data/documents Folder
-
-Documents stored in the data/documents Folder
-
-Run the script read_documents.py
-
-- Processes the documents to generate the corpus data
-- Create the aviation_corpus.pkl file
-- Storing aviation_corpus in the data/raw Folder
-- Corpus content (dictionary)
-
-{'filename': filename,
+```txt
+    1.  Preparing documents to be processed
+        - Verify type of documents, PDF – TXT
+        - Check for figures, tables
+        - Check for columns
+        - Filter the documents to be processed
+        - Choose the documents 
+        - Store the documents into the data/documents Folder
+    2.  Documents stored in the data/documents Folder
+    3.  Run the script read_documents.py
+        - Processes the documents to generate the corpus data
+        - Create the aviation_corpus.pkl file
+        - Storing aviation_corpus in the data/raw Folder
+            - Corpus content (dictionary)
+                
+                {'filename': filename,
                 'text': preprocessed_text,
                 'tokens': lemmatized_tokens,
                 'personal_names': personal_names,
@@ -2077,93 +1006,28 @@ Run the script read_documents.py
                 'pos_tags': pos_tags,
                 'metadata': metadata,
                 'category': document_category}
-
-Generating the chunks from the aviation_corpus.pkl
-
-- Run the script aviation_chunk_saver.py
-- Create the chunks for each document processed with read_document.py, stored in the aviation_corpus.pkl
-- Storing the chunks in the data/processed/chunked_documents Folder
-
-Generating the aviation_corpus.json file
-
-- Run the script extract_pkl_to_json.py
-- Storing the aviation_corpus.json in the data/processed Folder
-
-Generate the embeddings
-
-- Run the script generate_embeddings.js
-- Read the chunks files from data/processed/chunked_documents
-- Processing each new document and generate a embedding
-- Storing the embeddings in the data/embeddings/aviation_embeddings.json
-
-Storing the embeddings in the AstraDB
-
-- Run the script store_embeddings_astra.js
-- The embeddings are stored in the AstraDB
-
-Next Steps
+                
+    4.  Generating the chunks from the aviation_corpus.pkl
+        - Run the script aviation_chunk_saver.py
+        - Create the chunks for each document processed with read_document.py, stored in the aviation_corpus.pkl
+        - Storing the chunks in the data/processed/chunked_documents Folder
+    5.  Generating the aviation_corpus.json file
+        - Run the script extract_pkl_to_json.py
+        - Storing the aviation_corpus.json in the data/processed Folder
+    6.  Generate the embeddings
+        - Run the script generate_embeddings.js
+        - Read the chunks files from data/processed/chunked_documents
+        - Processing each new document and generate a embedding
+        - Storing the embeddings in the data/embeddings/aviation_embeddings.json
+    7.  Storing the embeddings in the AstraDB
+        - Run the script store_embeddings_astra.js
+        - The embeddings are stored in the AstraDB
+    8.
+```
 
 -----
 
 ## Scripts Description
-
------
-
-### read_documents.py
-
-1. Initialization and Setup
-
-    Load Required Libraries: Imports libraries for text processing, NER, and metadata extraction(spaCy, nltk, PyPDF2, spellchecker, etc.).
-    Download NLTK Resources: Downloads necessary NLTK datasets like stopwords, tokenizer, and lemmatizer.
-    Configure Logging: Logs are saved to read_documents.log for tracking the script's execution.
-    Directory Setup: Creates directories for processed text, expanded text, and raw data storage if they do not already exist.
-    NER Component: Adds a custom aviation_ner component to the spaCy pipeline for domain-specific entity recognition.
-
-2. Utility Functions
-
-    Aviation-Specific NER: Matches patterns like AIRCRAFT_MODEL or AIRLINE and adds them to document entities.
-    Abbreviation Expansion: Reads abbreviations from abbreviations.csv and expands them in the text.
-    Connected Words Splitting: Uses improved logic to split unusually long words and clean nonsensical strings.
-    Text Cleaning: Removes stopwords, lemmatizes tokens, and preprocesses the text to lowercase and structured sentences.
-    Metadata Extraction: Extracts metadata from file headers for supported formats (e.g., PDF metadata).
-    Keyword Classification: Classifies documents based on keywords into categories like "safety" or "operations."
-
-3. Document Processing
-
-    Text Extraction: Reads text from PDFs (using pdfplumber) and DOCX files.
-    Text Cleaning Pipeline:
-    Expands abbreviations.
-    Splits connected words.
-    Filters nonsensical strings.
-    Tokenizes and lemmatizes words while removing stopwords.
-    Entity Extraction: Extracts personal names, entities, and POS tags from text.
-    Save Preprocessed Text:
-    Saves expanded text to ProcessedTextExpanded.
-    Saves cleaned and structured text to ProcessedText.
-
-4. Document Categorization
-
-    Document Classification: Uses keyword matching to classify the document into predefined categories such as "safety" or "maintenance."
-
-5. Data Management
-
-    Existing Data Update: Updates metadata and categories for existing documents.
-    Keyword Extraction: Uses TF-IDF to extract key terms from documents for quick reference.
-    Save to PKL: Saves the final processed documents to a serialized .pkl file for future use.
-
-6. Script Execution
-
-    Reads all documents from the directory specified in BASE_DIR.
-    Applies the text extraction and cleaning pipeline to each file.
-    Updates or appends data to the list of documents if aviation_corpus.pkl exists.
-    Outputs the total number of processed documents and their locations.
-
-7. Usage:
-
-    Tnis srcipt can be used standalone or under aviation_rag_manager script.
-    To run this script we can use "python read_documents.py" on the command line.
-
------
 
 ## Contributing
 
@@ -2177,51 +1041,3 @@ Next Steps
 - Astra DB
 - LangChain
 - [List other major dependencies]
-
-## Metrics
-
-The charts below were generated using the script visualizing_data.py
-
-- Figure 1 - Shows the Average Names per Category from Documents
-
-![Figure_1](pictures/avg_names_per_category.png "Average Names per Category")
-
-- Figure 2 - Shows the Category Distribtuion from Documents
-
-![figure_2](pictures/category_distribution.png "Category Distribution")
-
-- Figure 3  - Shows the Compound Score Distribution
-
-![Figure_3](pictures/compound_score_distribution.png "Compound Score Distribution")
-
-- Figure 4 - Shows the Documents Length Distribution
-
-![Figure_4](pictures/doc_length_distribution.png "Documents Length Distribution")
-
-- Figure 5 - Show the Positive vs Negative Scores Scatter
-
-![Figure_5](pictures/positive_vs_negative_scatter.png "Positive Vs Negative Scatter")
-
-- Figure 6 - Shows the Sentiment Scores
-
-[Figure_6](pictures/sentiment_scores_boxplot.png "Sentiment Scores")
-
-- Figure 7 - Shows the Sentiment Scores Heatmap
-
-[Figure_7](pictures/sentiment_scores_heatmap.png "Sentiment Scores Heatmap")
-
-- Figure 8 - Shows the Sentiment Scores in Violin Format
-
-[Figure_8](pictures/sentiment_scores_violin.png "Sentiment Scores Violin")
-
-- Figure 9 - Shows the Toknes Count
-
-[Figure_9](pictures/token_counts.png "Tokens Counts")
-
-- Figure 10 - Shows the Word Category by Heatmap
-
-[Figure_10](pictures/word_category_heatmap.png "Word Category Heatmap")
-
-- Figure 11 - Shows the Word Cloud View
-
-[Figure_11](pictures/wordcloud.png "Word Cloud")
