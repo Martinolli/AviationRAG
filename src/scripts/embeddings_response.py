@@ -347,8 +347,20 @@ def chat_loop():
     print("Welcome to the AviationAI Chat System!")
     print("Type 'exit' to end the conversation.")
 
-    # Generate a unique session_id for the conversation
-    session_id = str(uuid.uuid4())
+    # Check if there’s an active session (previous exchanges exist)
+    past_exchanges = None
+    existing_session_file = os.path.join(chat_dir, "last_session_id.txt")
+
+    if os.path.exists(existing_session_file):
+        with open(existing_session_file, "r") as file:
+            session_id = file.read().strip()
+        past_exchanges = retrieve_chat_from_db(session_id)
+
+    # If no previous session exists, generate a new session_id
+    if not past_exchanges:
+        session_id = str(uuid.uuid4())
+        with open(existing_session_file, "w") as file:
+            file.write(session_id)  # Save new session for future use
 
     try:
         print("Loading embeddings...")
