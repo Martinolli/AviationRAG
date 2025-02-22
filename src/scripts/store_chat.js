@@ -105,13 +105,13 @@ async function storeChat() {
             
         } else if (chatData.action === "retrieve") {
             // retrieve chat messages
-            logger.info("Retrieving chat messages...");
+            logger.info(`Retrieving chat messages for session_id: ${chatData.session_id}`);
 
             const limitValue = chatData.limit || 5;
 
             const query = `
                 SELECT session_id, timestamp, user_query, ai_response
-                FROM aviation_conversation_history
+                FROM aviation_data.aviation_conversation_history
                 WHERE session_id = ?
                 ORDER BY timestamp DESC
                 LIMIT ${limitValue};
@@ -123,8 +123,16 @@ async function storeChat() {
 
             logger.info(`Retrieved ${result.rows.length} chat messages for session: ${session_id}`);
             const responsePayload = { success: true, data: result.rows };
-            console.log(JSON.stringify(responsePayload)); // Ensure clean JSON output
 
+            const formattedData = result.rows.map(row => ({
+                session_id: row.session_id,
+                timestamp: row.timestamp,
+                user_query: row.user_query,
+                ai_response: row.ai_response
+            }));
+            
+            console.log(JSON.stringify({ success: true, messages: formattedData }));
+            
             return responsePayload;
 
 

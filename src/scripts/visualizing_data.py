@@ -77,7 +77,7 @@ plt.xlabel('Document Index')
 plt.ylabel('Number of Tokens')
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.savefig('pictures/token_counts.png')
+plt.savefig('assets/pictures/token_counts.png')
 plt.close()
 
 # 2. Plot distribution of document categories
@@ -90,7 +90,7 @@ plt.xlabel('Category')
 plt.ylabel('Number of Documents')
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.savefig('pictures/category_distribution.png')
+plt.savefig('assets/pictures/category_distribution.png')
 plt.close()
 
 # 3. Create and save WordCloud of most common words
@@ -101,7 +101,7 @@ plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
 plt.title('Word Cloud of Most Common Words')
 plt.tight_layout(pad=0)
-plt.savefig('pictures/wordcloud.png')
+plt.savefig('assets/pictures/wordcloud.png')
 plt.close()
 
 # 4. Plot distribution of document lengths
@@ -110,7 +110,7 @@ sns.histplot(doc_lengths, bins=20, kde=True)
 plt.title('Distribution of Document Lengths')
 plt.xlabel('Number of Tokens')
 plt.ylabel('Number of Documents')
-plt.savefig('pictures/doc_length_distribution.png')
+plt.savefig('assets/pictures/doc_length_distribution.png')
 plt.close()
 
 # 5. Plot average number of personal names per document category
@@ -130,7 +130,7 @@ plt.xlabel('Category')
 plt.ylabel('Average Number of Names')
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.savefig('pictures/avg_names_per_category.png')
+plt.savefig('assets/pictures/avg_names_per_category.png')
 plt.close()
 
 # 6. Heatmap of top 20 words across categories
@@ -155,7 +155,7 @@ plt.xlabel('Words')
 plt.ylabel('Categories')
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
-plt.savefig('pictures/word_category_heatmap.png')
+plt.savefig('assets/pictures/word_category_heatmap.png')
 plt.close()
 
 from nltk.sentiment import SentimentIntensityAnalyzer
@@ -182,7 +182,7 @@ sns.histplot(data=sentiment_df, x='Compound', kde=True)
 plt.title('Distribution of Compound Sentiment Scores')
 plt.xlabel('Compound Score')
 plt.ylabel('Count')
-plt.savefig('pictures/compound_score_distribution.png')
+plt.savefig('assets/pictures/compound_score_distribution.png')
 plt.close()
 
 # 2. Boxplot of Sentiment Scores
@@ -190,14 +190,14 @@ plt.figure(figsize=(12, 6))
 sns.boxplot(data=sentiment_df[['Negative', 'Neutral', 'Positive']])
 plt.title('Boxplot of Sentiment Scores')
 plt.ylabel('Score')
-plt.savefig('pictures/sentiment_scores_boxplot.png')
+plt.savefig('assets/pictures/sentiment_scores_boxplot.png')
 plt.close()
 
 # 3. Heatmap of Sentiment Scores
 plt.figure(figsize=(10, 8))
 sns.heatmap(sentiment_df[['Negative', 'Neutral', 'Positive', 'Compound']].corr(), annot=True, cmap='coolwarm')
 plt.title('Correlation Heatmap of Sentiment Scores')
-plt.savefig('pictures/sentiment_scores_heatmap.png')
+plt.savefig('assets/pictures/sentiment_scores_heatmap.png')
 plt.close()
 
 # 4. Violin Plot of Sentiment Scores
@@ -205,7 +205,7 @@ plt.figure(figsize=(12, 6))
 sns.violinplot(data=sentiment_df[['Negative', 'Neutral', 'Positive']])
 plt.title('Violin Plot of Sentiment Scores')
 plt.ylabel('Score')
-plt.savefig('pictures/sentiment_scores_violin.png')
+plt.savefig('assets/pictures/sentiment_scores_violin.png')
 plt.close()
 
 # 5. Scatter Plot of Positive vs. Negative Scores
@@ -214,7 +214,7 @@ sns.scatterplot(data=sentiment_df, x='Negative', y='Positive', hue='Compound', p
 plt.title('Scatter Plot of Positive vs. Negative Scores')
 plt.xlabel('Negative Score')
 plt.ylabel('Positive Score')
-plt.savefig('pictures/positive_vs_negative_scatter.png')
+plt.savefig('assets/pictures/positive_vs_negative_scatter.png')
 plt.close()
 
 # Fucntion to calculate the most frequent words
@@ -260,7 +260,7 @@ sns.boxplot(data=df_aviation_corpus, y='lexicon_diversity')
 plt.title('Boxplot of Lexical Diversity')
 plt.ylabel('Lexical Diversity')
 plt.tight_layout()
-plt.savefig('pictures/lexical_diversity_boxplot.png')
+plt.savefig('assets/pictures/lexical_diversity_boxplot.png')
 plt.close()
 
 # Bar Plot (Average Lexical Diversity by Category)
@@ -272,7 +272,7 @@ plt.xlabel('Category')
 plt.ylabel('Average Lexical Diversity')
 plt.xticks(rotation=45)
 plt.tight_layout()
-plt.savefig('pictures/avg_lexical_diversity_by_category.png')
+plt.savefig('assets/pictures/avg_lexical_diversity_by_category.png')
 plt.close()
 
 # Violin Plot
@@ -281,7 +281,7 @@ sns.violinplot(data=df_aviation_corpus, y='lexicon_diversity')
 plt.title('Violin Plot of Lexical Diversity')
 plt.ylabel('Lexical Diversity')
 plt.tight_layout()
-plt.savefig('pictures/lexical_diversity_violin.png')
+plt.savefig('assets/pictures/lexical_diversity_violin.png')
 plt.close()
 
 # Histogram
@@ -291,7 +291,7 @@ plt.title('Histogram of Lexical Diversity')
 plt.xlabel('Lexical Diversity')
 plt.ylabel('Frequency')
 plt.tight_layout()
-plt.savefig('pictures/lexical_diversity_histogram.png')
+plt.savefig('assets/pictures/lexical_diversity_histogram.png')
 plt.close()
 
 # If you want to save the updated dataframe
