@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
 import os
+import openai
 
 # Load environment variables
 load_dotenv()
@@ -29,3 +30,10 @@ try:
     print("Response contents:", response)
 except Exception as e:
     print(f"Error: {e}")
+
+try:
+    models = openai.Model.list()
+    available_models = [model["id"] for model in models["data"]]
+    print("Available Models:", available_models)
+except Exception as e:
+    print("Error checking OpenAI models:", e)
