@@ -18,10 +18,14 @@ load_dotenv()
 base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 log_dir = os.path.join(base_dir, 'logs')  # Define the path to the logs folder
 chat_dir = os.path.join(base_dir, 'chat')  # Define the path to the chat folder
+chat_id = os.path.join(base_dir, 'chat_id')  # Define the path to the chat folder
 
 # Ensure the chat directory exists
 if not os.path.exists(chat_dir):
     os.makedirs(chat_dir)
+
+if not os.path.exists(chat_id):
+    os.makedirs(chat_id)
 
 # Set up logging
 log_file_path = os.path.join(log_dir, 'chat_system.log')
@@ -348,20 +352,32 @@ def chat_loop():
     print("Type 'exit' to end the conversation.")
 
     # Check if there’s an active session (previous exchanges exist)
-    past_exchanges = None
-    existing_session_file = os.path.join(chat_dir, "last_session_id.txt")
+    existing_session_file = os.path.join(chat_id, "last_session_id.txt")
 
     if os.path.exists(existing_session_file):
         with open(existing_session_file, "r") as file:
-            session_id = file.read().strip()
-        past_exchanges = retrieve_chat_from_db(session_id)
-
-    # If no previous session exists, generate a new session_id
-    if not past_exchanges:
+            session_ids = file.read()
+        if session_ids:
+            last_session_id = session_ids[-1].strip()
+            print("Found an existing session.")
+            continue_previous = input("Do you want to continue the previous chat? (y/n): ").lower() == 'y'
+            if continue_previous:
+                session_id = last_session_id
+                past_exchanges = retrieve_chat_from_db(session_id)
+            else:
+                session_id = str(uuid.uuid4())
+                past_exchanges = []
+        else:
+            session_id = str(uuid.uuid4())
+            past_exchanges = []
+    else:
         session_id = str(uuid.uuid4())
-        with open(existing_session_file, "w") as file:
-            file.write(session_id)  # Save new session for future use
-
+        past_exchanges = []
+    
+    # Save the current session_id for future use
+    with open(existing_session_file, "a") as file:
+        file.write(f"{session_id}\n")
+    
     try:
         print("Loading embeddings...")
         embeddings = load_embeddings(EMBEDDINGS_FILE)
@@ -370,9 +386,7 @@ def chat_loop():
         return
     
     # Retrieve past conversation history for the session
-    past_exchanges = retrieve_chat_from_db(session_id)
     chat_history = [f"User: {ex['user_query']}\nAI: {ex['ai_response']}" for ex in past_exchanges]
-
     max_history = 5  # Maximum number of chat exchanges to keep in history
 
     while True:
