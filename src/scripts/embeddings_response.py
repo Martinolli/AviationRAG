@@ -148,7 +148,7 @@ def store_chat_history(chat_history):
                 continue
 
             f.write(f"User: {query}\nAI: {response}\n\n")
-
+            
 def expand_query(query):
     """
     Expand the user query using aviation-specific terminology and synonyms.
@@ -405,6 +405,7 @@ def chat_loop():
             chat_history.append((ex["user_query"], ex["ai_response"]))  # Store as (query, response) tuple
         else:
             logging.error(f"⚠️ Unexpected chat history format: {ex}")
+
     max_history = 5  # Maximum number of chat exchanges to keep in history
 
     while True:
@@ -480,11 +481,7 @@ def chat_loop():
             # Here you could implement logic to refine the response or adjust parameters
 
              # Update chat history
-            if isinstance(response, str) and isinstance(QUERY_TEXT, str):
-                chat_history.append((QUERY_TEXT, response))  # Ensure only (query, response) tuples are stored
-            else:
-                logging.error(f"⚠️ Invalid response format: {response}")
-
+            chat_history.append((QUERY_TEXT, response))
             if len(chat_history) > max_history:  # Keep only the last 5 exchanges
                 chat_history = chat_history[-max_history:]
 
@@ -493,6 +490,7 @@ def chat_loop():
             print("\nAviationAI:", response)
 
         # Store chat history in a log file
+
         store_chat_history(chat_history)
         store_chat_in_db(session_id, QUERY_TEXT, response)
         
