@@ -10,7 +10,6 @@ import logging
 import datetime
 import subprocess
 import uuid
-import openai
 
 # Load environment variables
 load_dotenv()
@@ -293,8 +292,7 @@ def generate_response(context, query, full_context, model):
     base_delay = 1
 
     # Implement a sliding window for chat history
-    max_past_messages = 3  # Keep only the last 3 exchanges
-    chat_history = full_context.split("\n\n")[-max_past_messages:]
+    chat_history = full_context.split("\n\n")[-5:]  # Keep last 5 exchanges
     truncated_full_context = "\n\n".join(chat_history)
 
 
@@ -321,28 +319,34 @@ def generate_response(context, query, full_context, model):
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
     """
     # Calculate max tokens dynamically
-    max_tokens = min(500, 3000 - len(truncated_full_context.split()))
+    max_tokens = min(500, 4000 - len(truncated_full_context.split()))
 
     for attempt in range(max_retries):
         try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
-                max_tokens=max_tokens  # Reduced from 150 to 100
-            )
-            return response.choices[0].message.content.strip()
-            
-        except openai.error.RateLimitError as e:
-            wait_time = 30  # Wait 30 seconds before retrying
-            print(f"Rate limit exceeded. Retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
-            
+            if model in ["gpt-3.5-turbo", "gpt-4"]:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.7,
+                    max_tokens=max_tokens  # Reduced from 150 to 100
+                )
+                return response.choices[0].message.content.strip()
+            else:
+                raise ValueError(f"Unsupported model: {model}")
+        except Exception as e:
+            if attempt < max_retries - 1:
+                delay = (base_delay * 2 ** attempt) + (random.randint(0, 1000) / 1000.0)
+                logging.error(f"Error generating response: {e}. Retrying in {delay:.2f} seconds...")
+                time.sleep(delay)
+            else:
+                print(f"Error generating response after {max_retries} attempts: {e}")
+                return "I apologize, but I'm having trouble generating a response at the moment. Please try again later."
+
     return None
 
 def chat_loop():
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-    MODEL = "gpt-3.5-turbo"  # gpt-3.5-turbo or gpt-4. You can change this to "gpt-4" if available
+    MODEL = "gpt-3.5-turbo"  #gpt-3.5-turbo/gpt-4 You can change this to "gpt-4" if available
     
     print("Welcome to the AviationAI Chat System!")
     print("Type 'exit' to end the conversation.")
@@ -352,7 +356,7 @@ def chat_loop():
 
     if os.path.exists(existing_session_file):
         with open(existing_session_file, "r") as file:
-            session_ids = file.read()
+            session_ids = file.readlines()
         if session_ids:
             last_session_id = session_ids[-1].strip()
             print("Found an existing session.")
@@ -445,8 +449,6 @@ def chat_loop():
 
         store_chat_history(chat_history)
         store_chat_in_db(session_id, QUERY_TEXT, response)
-        print("\nSummary:")
-        print(summary)
-
+        
 if __name__ == "__main__":
     chat_loop()

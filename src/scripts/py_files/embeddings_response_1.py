@@ -1,5 +1,6 @@
 import json
 from openai import OpenAI
+from openai import OpenAIError
 import numpy as np
 from dotenv import load_dotenv
 import os
@@ -10,6 +11,7 @@ import logging
 import datetime
 import subprocess
 import uuid
+import openai
 
 # Load environment variables
 load_dotenv()
@@ -66,6 +68,10 @@ def retrieve_chat_from_db(session_id, limit=5):
     Calls the Node.js script to retrieve chat history from AstraDB.
     """
     script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
+
+    if not session_id.strip():
+        print("⚠️ Warning: `session_id` is empty! Generating a new one...")
+        session_id = str(uuid.uuid4())  # Assign a new session if empty
 
     chat_data = {
         "action": "retrieve",
@@ -292,7 +298,8 @@ def generate_response(context, query, full_context, model):
     base_delay = 1
 
     # Implement a sliding window for chat history
-    chat_history = full_context.split("\n\n")[-5:]  # Keep last 5 exchanges
+    max_past_messages = 3  # Keep only the last 3 exchanges
+    chat_history = full_context.split("\n\n")[-max_past_messages:]
     truncated_full_context = "\n\n".join(chat_history)
 
 
@@ -319,34 +326,34 @@ def generate_response(context, query, full_context, model):
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
     """
     # Calculate max tokens dynamically
-    max_tokens = min(500, 4000 - len(truncated_full_context.split()))
+    max_tokens = min(500, 3000 - len(truncated_full_context.split()))
+
+    from openai import OpenAIError  # Import correct error class
 
     for attempt in range(max_retries):
         try:
-            if model in ["gpt-3.5-turbo", "gpt-4"]:
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7,
-                    max_tokens=max_tokens  # Reduced from 150 to 100
-                )
-                return response.choices[0].message.content.strip()
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=max_tokens
+            )
+            return response.choices[0].message.content.strip()
+        
+        except OpenAIError as e:
+            if "429 Too Many Requests" in str(e):
+                wait_time = 10 * (attempt + 1)  # Exponential backoff (10s, 20s, 30s...)
+                print(f"⚠️ OpenAI rate limit exceeded. Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
             else:
-                raise ValueError(f"Unsupported model: {model}")
-        except Exception as e:
-            if attempt < max_retries - 1:
-                delay = (base_delay * 2 ** attempt) + (random.randint(0, 1000) / 1000.0)
-                logging.error(f"Error generating response: {e}. Retrying in {delay:.2f} seconds...")
-                time.sleep(delay)
-            else:
-                print(f"Error generating response after {max_retries} attempts: {e}")
-                return "I apologize, but I'm having trouble generating a response at the moment. Please try again later."
+                print(f"❌ OpenAI API Error: {e}")
+                break  # Exit if it's another error
 
     return None
 
 def chat_loop():
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-    MODEL = "gpt-3.5-turbo"  #gpt-3.5-turbo/gpt-4 You can change this to "gpt-4" if available
+    MODEL = "gpt-4"  # gpt-3.5-turbo or gpt-4. You can change this to "gpt-4" if available
     
     print("Welcome to the AviationAI Chat System!")
     print("Type 'exit' to end the conversation.")
@@ -356,7 +363,7 @@ def chat_loop():
 
     if os.path.exists(existing_session_file):
         with open(existing_session_file, "r") as file:
-            session_ids = file.readlines()
+            session_ids = file.read()
         if session_ids:
             last_session_id = session_ids[-1].strip()
             print("Found an existing session.")
@@ -422,7 +429,15 @@ def chat_loop():
 
 
             print("Generating response...")
-            response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
+            response = None  # Ensure response always exists
+            try:
+                response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
+                print("\nAviationAI:", response)
+            except Exception as e:
+                logging.error(f"Error generating response: {e}")
+                response = "I'm sorry, but I couldn't generate a response due to an internal error."
+                print("\nAviationAI:", response)
+
 
             print("\nAviationAI:", response)
 
@@ -432,7 +447,8 @@ def chat_loop():
             # Here you could implement logic to refine the response or adjust parameters
 
             # Update chat history
-            chat_history.append((QUERY_TEXT, response))
+            if response: # Ensure response is not None before adding to chat history
+                chat_history.append((QUERY_TEXT, response))
             if len(chat_history) > max_history:  # Keep only the last 5 exchanges
                 chat_history = chat_history[-max_history:]
 
@@ -449,6 +465,8 @@ def chat_loop():
 
         store_chat_history(chat_history)
         store_chat_in_db(session_id, QUERY_TEXT, response)
-        
+        print("\nSummary:")
+        print(summary)
+
 if __name__ == "__main__":
     chat_loop()
