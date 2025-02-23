@@ -1,5 +1,6 @@
 import json
 from openai import OpenAI
+from openai import OpenAIError
 import numpy as np
 from dotenv import load_dotenv
 import os
@@ -10,6 +11,7 @@ import logging
 import datetime
 import subprocess
 import uuid
+import openai
 
 # Load environment variables
 load_dotenv()
@@ -44,12 +46,17 @@ def store_chat_in_db(session_id, user_query, ai_response):
     
     script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
 
+    if not ai_response or len(ai_response) < 10:
+        logging.error("⚠️ Invalid AI response detected! Storing default message.")
+        ai_response = "AI response was incomplete or not available."
+
     chat_data = {
         "action": "store",
         "session_id": session_id,
         "user_query": user_query,
         "ai_response": ai_response
     }
+
 
     # Call the JavaScript file with the correct path
     try:
@@ -66,6 +73,10 @@ def retrieve_chat_from_db(session_id, limit=5):
     Calls the Node.js script to retrieve chat history from AstraDB.
     """
     script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
+
+    if not session_id.strip():
+        print("⚠️ Warning: `session_id` is empty! Generating a new one...")
+        session_id = str(uuid.uuid4())  # Assign a new session if empty
 
     chat_data = {
         "action": "retrieve",
@@ -196,14 +207,25 @@ def get_user_feedback():
 def get_embedding(text):
     """Generate embedding for the given text."""
     try:
+        if not text.strip():
+            logging.error("⚠️ Empty text received for embedding generation!")
+            return None  # Prevent sending empty text
+
         response = client.embeddings.create(
             input=[text],
             model="text-embedding-ada-002"
         )
-        return response.data[0].embedding
+
+        embedding_vector = response.data[0].embedding
+        if not embedding_vector or len(embedding_vector) < 10:  # Ensure valid embedding
+            logging.error("⚠️ Invalid or empty embedding generated!")
+            return None
+
+        return embedding_vector
     except Exception as e:
         logging.error(f"Error generating embedding: {e}")
         return None
+
 
 def get_dynamic_top_n(similarities, max_n=15, threshold=0.6):
     sorted_similarities = sorted(similarities, reverse=True)
@@ -220,17 +242,31 @@ def create_weighted_context(top_results):
         combined_context += f"{weight:.2f} * {result['text']}\n"
     return combined_context
 
+def load_embeddings(file_path, batch_size=1000):
+    """Load embeddings from a JSON file and validate format."""
+    if not os.path.exists(file_path):
+        logging.error(f"🚨 Embeddings file not found: {file_path}")
+        return []
 
-def load_embeddings(file_path):
-    """Load embeddings from a JSON file."""
-    with open(file_path, 'r') as f:
-        data = json.load(f)
-    
-    # Ensure the loaded data is a list of dictionaries
-    if isinstance(data, list) and all(isinstance(item, dict) for item in data):
-        return data
-    else:
-        raise ValueError("Loaded data is not in the expected format (list of dictionaries)")
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        
+        for i in range(0, len(data), batch_size):
+            yield data[i:i + batch_size]
+
+        if not isinstance(data, list):
+            logging.error(f"🚨 Invalid embeddings format! Expected list, got {type(data)}.")
+            return []
+
+        valid_data = [emb for emb in data if isinstance(emb, dict) and 'embedding' in emb]
+        if not valid_data:
+            logging.error(f"⚠️ No valid embeddings found in file: {file_path}")
+        return valid_data
+
+    except json.JSONDecodeError as e:
+        logging.error(f"🚨 Error loading embeddings JSON: {e}")
+        return []
 
 def compute_cosine_similarity(vec1, vec2):
     """
@@ -287,13 +323,14 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarit
 
 def generate_response(context, query, full_context, model):
     """Generate a response using OpenAI."""
-    max_context_length = 3000  # Adjust this value based on your needs
+    max_context_length = 1000  # Adjust this value based on your needs
     max_retries = 3
     base_delay = 1
 
     # Implement a sliding window for chat history
-    chat_history = full_context.split("\n\n")[-5:]  # Keep last 5 exchanges
-    truncated_full_context = "\n\n".join(chat_history)
+    max_past_messages = 3  # Keep only the last 3 exchanges
+    chat_history = full_context.split("\n\n")[-max_past_messages:]
+    truncated_full_context = "\n\n".join(chat_history[-3:])  # Keep only the last 3 exchanges
 
 
     # Truncate the context if it's too long
@@ -303,6 +340,7 @@ def generate_response(context, query, full_context, model):
     prompt = f"""
     You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples
     where relevant. Use the context and history below to answer the user's question:
+    
 
     Chat History and Full Context:
     {truncated_full_context}
@@ -319,34 +357,33 @@ def generate_response(context, query, full_context, model):
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
     """
     # Calculate max tokens dynamically
-    max_tokens = min(500, 4000 - len(truncated_full_context.split()))
+    max_tokens = min(500, 2000 - len(truncated_full_context.split()))
+
+    import random
 
     for attempt in range(max_retries):
         try:
-            if model in ["gpt-3.5-turbo", "gpt-4"]:
-                response = client.chat.completions.create(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    temperature=0.7,
-                    max_tokens=max_tokens  # Reduced from 150 to 100
-                )
-                return response.choices[0].message.content.strip()
+            response = client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.7,
+                max_tokens=max_tokens
+            )
+            return response.choices[0].message.content.strip()
+        
+        except OpenAIError as e:
+            if "429 Too Many Requests" in str(e):
+                wait_time = (10 * (attempt + 1)) + random.uniform(1, 5)  # Adds random delay to prevent API bans
+                print(f"⚠️ OpenAI rate limit exceeded. Retrying in {wait_time:.2f} seconds...")
+                time.sleep(wait_time)
             else:
-                raise ValueError(f"Unsupported model: {model}")
-        except Exception as e:
-            if attempt < max_retries - 1:
-                delay = (base_delay * 2 ** attempt) + (random.randint(0, 1000) / 1000.0)
-                logging.error(f"Error generating response: {e}. Retrying in {delay:.2f} seconds...")
-                time.sleep(delay)
-            else:
-                print(f"Error generating response after {max_retries} attempts: {e}")
-                return "I apologize, but I'm having trouble generating a response at the moment. Please try again later."
+                logging.error(f"❌ OpenAI API Error: {e}")
+                return None  # Exit on other API errors
 
-    return None
 
 def chat_loop():
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-    MODEL = "gpt-3.5-turbo"  #gpt-3.5-turbo/gpt-4 You can change this to "gpt-4" if available
+    MODEL = "gpt-4"  #gpt-3.5-turbo/gpt-4 You can change this to "gpt-4" if available
     
     print("Welcome to the AviationAI Chat System!")
     print("Type 'exit' to end the conversation.")
@@ -403,7 +440,28 @@ def chat_loop():
                 raise ValueError("Failed to generate query embedding")
 
             print("Processing embeddings...")
-            similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in embeddings if isinstance(emb, dict) and 'embedding' in emb]
+            top_results = []
+            for batch in load_embeddings(EMBEDDINGS_FILE):  # Load embeddings in batches
+                valid_embeddings = [emb for emb in batch if isinstance(emb, dict) and 'embedding' in emb and len(emb['embedding']) > 10]
+
+            if not valid_embeddings:
+                logging.error(f"⚠️ No valid embeddings found! Skipping batch. Check 'aviation_embeddings.json'.")
+                print(f"⚠️ No valid embeddings found! Check 'aviation_embeddings.json' for issues.")
+                continue  # Skip empty batches
+
+            print(f"✅ Processing {len(valid_embeddings)} embeddings in batch...")
+
+
+            similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in valid_embeddings]
+            top_results.extend(filter_and_rank_embeddings(valid_embeddings, similarities, top_n=10))  # Reduce to top 10
+
+
+            if not valid_embeddings:
+                logging.error("⚠️ No valid embeddings found! GPT-4 may generate poor responses.")
+                return "I'm sorry, but I couldn't generate a response due to missing data."
+
+            similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in valid_embeddings]
+
             dynamic_top_n = get_dynamic_top_n(similarities)
             top_results = filter_and_rank_embeddings(embeddings, similarities, top_n=dynamic_top_n)
 
@@ -422,9 +480,14 @@ def chat_loop():
 
 
             print("Generating response...")
-            response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
-
-            print("\nAviationAI:", response)
+            response = None  # Ensure response always exists
+            try:
+                response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
+                print("\nAviationAI:", response)
+            except Exception as e:
+                logging.error(f"Error generating response: {e}")
+                response = "I'm sorry, but I couldn't generate a response due to an internal error."
+                print("\nAviationAI:", response)
 
             is_helpful = get_user_feedback()
             if not is_helpful:
@@ -432,7 +495,8 @@ def chat_loop():
             # Here you could implement logic to refine the response or adjust parameters
 
             # Update chat history
-            chat_history.append((QUERY_TEXT, response))
+            if response: # Ensure response is not None before adding to chat history
+                chat_history.append((QUERY_TEXT, response))
             if len(chat_history) > max_history:  # Keep only the last 5 exchanges
                 chat_history = chat_history[-max_history:]
 

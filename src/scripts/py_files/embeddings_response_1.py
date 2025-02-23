@@ -302,7 +302,6 @@ def generate_response(context, query, full_context, model):
     chat_history = full_context.split("\n\n")[-max_past_messages:]
     truncated_full_context = "\n\n".join(chat_history)
 
-
     # Truncate the context if it's too long
     if len(truncated_full_context) > max_context_length:
         truncated_full_context = truncated_full_context[-max_context_length:]
@@ -328,8 +327,6 @@ def generate_response(context, query, full_context, model):
     # Calculate max tokens dynamically
     max_tokens = min(500, 3000 - len(truncated_full_context.split()))
 
-    from openai import OpenAIError  # Import correct error class
-
     for attempt in range(max_retries):
         try:
             response = client.chat.completions.create(
@@ -353,7 +350,7 @@ def generate_response(context, query, full_context, model):
 
 def chat_loop():
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-    MODEL = "gpt-4"  # gpt-3.5-turbo or gpt-4. You can change this to "gpt-4" if available
+    MODEL = "gpt-3.5-turbo"  # gpt-3.5-turbo or gpt-4. You can change this to "gpt-4" if available
     
     print("Welcome to the AviationAI Chat System!")
     print("Type 'exit' to end the conversation.")
@@ -437,7 +434,6 @@ def chat_loop():
                 logging.error(f"Error generating response: {e}")
                 response = "I'm sorry, but I couldn't generate a response due to an internal error."
                 print("\nAviationAI:", response)
-
 
             print("\nAviationAI:", response)
 
