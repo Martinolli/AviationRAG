@@ -136,34 +136,18 @@ def safe_openai_call(api_function, max_retries=3, base_delay=2):
                 return None
 
 def store_chat_history(chat_history):
-    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
-    log_filename = os.path.join(chat_dir, f"chat_history_{current_date}.log")
-    
-    with open(log_filename, "a") as file:
-        for query, response in chat_history:
-            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            file.write(f"[{timestamp}] Human: {query}\n")
-            file.write(f"[{timestamp}] AI: {response}\n\n")
+    with open("chat_history.txt", "w") as f:
+        for entry in chat_history:
+            if isinstance(entry, tuple) and len(entry) == 2:
+                query, response = entry
+            elif isinstance(entry, str):  # Handle incorrectly formatted entries
+                logging.error(f"⚠️ Skipping invalid chat history entry: {entry}")
+                continue
+            else:
+                logging.error(f"⚠️ Unexpected chat history format: {entry}")
+                continue
 
-
-def generate_chat_summary(chat_history):
-    # Extract the most common queries and responses from the chat history
-    # You can use a library like NLTK or spaCy to perform this task
-    # For simplicity, let's assume we're using a simple dictionary to store the queries and responses
-    summary_dict = {}
-
-    for query, response in chat_history:
-        if query in summary_dict:
-            summary_dict[query].append(response)
-        else:
-            summary_dict[query] = [response]
-
-    # Generate a summary of the conversation based on the summary_dict
-    summary = ""
-    for query, responses in summary_dict.items():
-        summary += f"{query}: {', '.join(responses)}\n"
-
-    return summary
+            f.write(f"User: {query}\nAI: {response}\n\n")
 
 def expand_query(query):
     """
@@ -320,13 +304,11 @@ def generate_response(context, query, full_context, model):
     """Generate a response using OpenAI."""
     max_context_length = 3000  # Adjust this value based on your needs
     max_retries = 3
-    base_delay = 1
-
+    
     # Implement a sliding window for chat history
     max_past_messages = 3  # Keep only the last 3 exchanges
     chat_history = full_context.split("\n\n")[-max_past_messages:]
     truncated_full_context = "\n\n".join(chat_history[-3:])  # Keep only the last 3 exchanges
-
 
     # Truncate the context if it's too long
     if len(truncated_full_context) > max_context_length:
@@ -336,7 +318,6 @@ def generate_response(context, query, full_context, model):
     You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples
     where relevant. Use the context and history below to answer the user's question:
     
-
     Chat History and Full Context:
     {truncated_full_context}
 
@@ -418,7 +399,12 @@ def chat_loop():
         return
     
     # Retrieve past conversation history for the session
-    chat_history = [f"User: {ex['user_query']}\nAI: {ex['ai_response']}" for ex in past_exchanges]
+    chat_history = []
+    for ex in past_exchanges:
+        if isinstance(ex, dict) and "user_query" in ex and "ai_response" in ex:
+            chat_history.append((ex["user_query"], ex["ai_response"]))  # Store as (query, response) tuple
+        else:
+            logging.error(f"⚠️ Unexpected chat history format: {ex}")
     max_history = 5  # Maximum number of chat exchanges to keep in history
 
     while True:
@@ -426,6 +412,8 @@ def chat_loop():
         if QUERY_TEXT.lower() == 'exit':
             print("Thank you for using the AviationAI Chat System. Goodbye!")
             break
+        
+        response = "I'm sorry, but I couldn't generate a response due to an internal error."  # Default response
 
         try:
             print("Generating query embedding...")
@@ -477,8 +465,10 @@ def chat_loop():
             print("Generating response...")
             response = None  # Ensure response always exists
             try:
-                response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
-                print("\nAviationAI:", response)
+                generated_response = generate_response(combined_context, QUERY_TEXT, full_context, MODEL)
+                if generated_response:
+                    response = generated_response
+                    print("\nAviationAI:", response)
             except Exception as e:
                 logging.error(f"Error generating response: {e}")
                 response = "I'm sorry, but I couldn't generate a response due to an internal error."
@@ -489,23 +479,20 @@ def chat_loop():
                 print("I'm sorry the response wasn't helpful. Let me try to improve.")
             # Here you could implement logic to refine the response or adjust parameters
 
-            # Update chat history
-            if response: # Ensure response is not None before adding to chat history
-                chat_history.append((QUERY_TEXT, response))
+             # Update chat history
+            if isinstance(response, str) and isinstance(QUERY_TEXT, str):
+                chat_history.append((QUERY_TEXT, response))  # Ensure only (query, response) tuples are stored
+            else:
+                logging.error(f"⚠️ Invalid response format: {response}")
+
             if len(chat_history) > max_history:  # Keep only the last 5 exchanges
                 chat_history = chat_history[-max_history:]
 
         except Exception as e:
             logging.error(f"Error: {e}")
-
-        # Generate a summary of the conversation
-        summary = generate_chat_summary(chat_history)
+            print("\nAviationAI:", response)
 
         # Store chat history in a log file
-        chat_history.append((QUERY_TEXT, response))
-        if len(chat_history) > max_history:  # Keep only the last 5 exchanges
-            chat_history = chat_history[-max_history:]
-
         store_chat_history(chat_history)
         store_chat_in_db(session_id, QUERY_TEXT, response)
         
