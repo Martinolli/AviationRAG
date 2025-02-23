@@ -183,12 +183,19 @@ def get_user_feedback():
             return feedback == 'y'
         print("Please enter 'y' for yes or 'n' for no.")
 
+embedding_cache = {}  # In-memory cache for embeddings
+
 def get_embedding(text):
-    """Generate embedding for the given text."""
+    """Generate or retrieve cached embedding for the given text."""
+    global embedding_cache
+
+    if text in embedding_cache:
+        return embedding_cache[text]  # Return cached embedding
+
     try:
         if not text.strip():
             logging.error("⚠️ Empty text received for embedding generation!")
-            return None  # Prevent sending empty text
+            return None
 
         response = client.embeddings.create(
             input=[text],
@@ -196,14 +203,15 @@ def get_embedding(text):
         )
 
         embedding_vector = response.data[0].embedding
-        if not embedding_vector or len(embedding_vector) < 10:  # Ensure valid embedding
-            logging.error("⚠️ Invalid or empty embedding generated!")
-            return None
+        if embedding_vector and len(embedding_vector) > 10:
+            embedding_cache[text] = embedding_vector  # Store in cache
 
         return embedding_vector
+
     except Exception as e:
         logging.error(f"Error generating embedding: {e}")
         return None
+
 
 
 def get_dynamic_top_n(similarities, max_n=15, threshold=0.6):
@@ -221,8 +229,15 @@ def create_weighted_context(top_results):
         combined_context += f"{weight:.2f} * {result['text']}\n"
     return combined_context
 
+embeddings_cache = {}  # In-memory cache for embeddings
+
 def load_embeddings(file_path, batch_size=1000):
-    """Load embeddings from a JSON file and validate format."""
+    """Load embeddings from a JSON file and cache results."""
+    global embeddings_cache
+
+    if file_path in embeddings_cache:
+        return embeddings_cache[file_path]  # Return cached embeddings
+
     if not os.path.exists(file_path):
         logging.error(f"🚨 Embeddings file not found: {file_path}")
         return []
@@ -230,22 +245,18 @@ def load_embeddings(file_path, batch_size=1000):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-        
+
+        embeddings_cache[file_path] = data  # Store embeddings in cache
+
         for i in range(0, len(data), batch_size):
             yield data[i:i + batch_size]
 
-        if not isinstance(data, list):
-            logging.error(f"🚨 Invalid embeddings format! Expected list, got {type(data)}.")
-            return []
-
-        valid_data = [emb for emb in data if isinstance(emb, dict) and 'embedding' in emb]
-        if not valid_data:
-            logging.error(f"⚠️ No valid embeddings found in file: {file_path}")
-        return valid_data
+        return data
 
     except json.JSONDecodeError as e:
         logging.error(f"🚨 Error loading embeddings JSON: {e}")
         return []
+
 
 def compute_cosine_similarity(vec1, vec2):
     """
@@ -377,6 +388,8 @@ def chat_loop():
     session_id = None
 
     # List past sessions for user selection
+    past_exchanges = [] # Initialize before any condition
+
     if session_metadata:
         print("\n📌 Available Previous Sessions:")
         for i, (sid, title) in enumerate(session_metadata.items(), 1):
@@ -387,6 +400,7 @@ def chat_loop():
             if 1 <= choice <= len(session_metadata):
                 session_id = list(session_metadata.keys())[choice - 1]
                 print(f"✅ Continuing session: {session_metadata[session_id]}")
+                past_exchanges = retrieve_chat_from_db(session_id)  # Load chat history
             else:
                 session_id = str(uuid.uuid4())
                 print("🔄 Starting a new session...")
@@ -394,6 +408,7 @@ def chat_loop():
         except ValueError:
             print("⚠️ Invalid input, creating a new session.")
             session_id = str(uuid.uuid4())
+            past_exchanges = []  # Ensure it's always initialized
     else:
         session_id = str(uuid.uuid4())
         past_exchanges = []
