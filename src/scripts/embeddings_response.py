@@ -91,19 +91,15 @@ def retrieve_chat_from_db(session_id, limit=5):
         )
         output = result.stdout.strip()
 
+        # Extract only the JSON part from the output
+        first_brace = output.find("{")
+        if first_brace != -1:
+            output = output[first_brace:]  # Remove any extra log lines before JSON
+
         try:
             parsed_output = json.loads(output)
             if parsed_output.get("success", False):
-                messages = parsed_output.get("messager", [])
-
-                # If multiple messages exist, merge them into a single text block
-                if len(messages) > 1:
-                    combined_text = "\n\n".join(
-                        f"User: {msg['user_query']}\nAI: {msg['ai_response']}"
-                        for msg in messages
-                    )
-                    return[{"combined_test": combined_text}]
-                return messages
+                return parsed_output.get("messages", [])
             else:
                 logging.error(f"Chat retrieval failed. Parsed output: {parsed_output}")
                 return []
@@ -114,7 +110,6 @@ def retrieve_chat_from_db(session_id, limit=5):
     except subprocess.CalledProcessError as e:
         logging.error(f"Error retrieving chat: {e}")
         return []
-
 
 def safe_openai_call(api_function, max_retries=3, base_delay=2):
     """
