@@ -5,13 +5,11 @@ import numpy as np
 from dotenv import load_dotenv
 import os
 import time
-import random
 from nltk.corpus import wordnet
 import logging
-import datetime
 import subprocess
 import uuid
-import openai
+
 
 # Load environment variables
 load_dotenv()
@@ -56,8 +54,6 @@ def store_chat_in_db(session_id, user_query, ai_response):
         "user_query": user_query,
         "ai_response": ai_response
     }
-
-
     # Call the JavaScript file with the correct path
     try:
         subprocess.run(
@@ -211,8 +207,6 @@ def get_embedding(text):
     except Exception as e:
         logging.error(f"Error generating embedding: {e}")
         return None
-
-
 
 def get_dynamic_top_n(similarities, max_n=15, threshold=0.6):
     sorted_similarities = sorted(similarities, reverse=True)
