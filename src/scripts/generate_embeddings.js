@@ -10,7 +10,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const BATCH_SIZE = 10; // Adjust based on API limits and performance
+const BATCH_SIZE = 5; // Adjust based on API limits and performance
 const DELAY_MS = 1000;
 const MAX_RETRIES = 3;
 
