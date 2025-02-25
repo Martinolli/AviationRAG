@@ -20,3 +20,5 @@ extract_pkl_to_json(pkl_path, json_path)
 
 print(f"Data successfully extracted and saved to {json_path}")
 
+if __name__ == "__main__":
+    extract_pkl_to_json(pkl_path, json_path)

@@ -42,7 +42,7 @@ base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 corpus_path = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
 
 # Create the directory if it doesn't exist
-if not os.path.exists('pictures'):
+if not os.path.exists('assets/pictures'):
     os.makedirs('pictures')
 
 
