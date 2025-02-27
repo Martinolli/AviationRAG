@@ -288,7 +288,7 @@ def compute_cosine_similarity(vec1, vec2):
         logging.error(f"Error in compute_cosine_similarity: {e}")
         return 0.0  # Return 0 similarity in case of any error
 
-def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarity=0.5):
+def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarity=0.8):
     """Filter and rank embeddings based on similarity scores."""
     # Calculate the average similarity
     avg_similarity = np.mean(similarities)
@@ -307,7 +307,7 @@ def filter_and_rank_embeddings(embeddings, similarities, top_n=10, min_similarit
 
 def generate_response(context, query, full_context, model):
     """Generate a response using OpenAI."""
-    max_context_length = 3000  # Adjust this value based on your needs
+    max_context_length = 8000  # Adjust this value based on your needs
     max_retries = 3
     
     # Implement a sliding window for chat history
@@ -333,12 +333,12 @@ def generate_response(context, query, full_context, model):
 
     AI: Let me provide a detailed and informative answer:
     Format your response in the most appropriate structure:
-    - If it's about regulations, provide a **list of key FAA or ICAO guidelines if available**.
+    - If it's about regulations, provide a **list of key FAA, ICAO, EASA, or MIL-STDs guidelines if available**.
     - If it's about an accident, provide a **summary of investigation insights**.
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
     """
     # Calculate max tokens dynamically
-    max_tokens = min(500, 3000 - len(truncated_full_context.split()))
+    max_tokens = min(500, 4000 - len(truncated_full_context.split()))
 
     import random
 
@@ -347,7 +347,7 @@ def generate_response(context, query, full_context, model):
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.7,
+                temperature=0.6,
                 max_tokens=max_tokens
             )
             return response.choices[0].message.content.strip()
