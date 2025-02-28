@@ -67,3 +67,40 @@ If documents belong to the same category, add prefixes (e.g., "Regulation_", "Ac
 If files have multiple versions, add "v1", "v2", etc.
 If files come from different sources (e.g., FAA, EASA, ICAO), consider adding "FAA_", "ICAO_".
 
+File Name:
+
+YYYY-MM-DD_DocumentCategory_Title_Version
+
+2025-02-28_Regulation_14CFR_SafetyManagement_v1.txt
+2025-02-28_AccidentReport_AAIB_AgustaA109_v1.txt
+2025-02-28_Maintenance_FAA_InspectionManual_v2.txt
+
+
+AstraDB command to delete data:
+
+TRUNCATE aviation_data.aviation_documents;
+
+Verify if the table is empty:
+
+SELECT COUNT(*) FROM aviation_data.aviation_documents;
+
+Function to delete data from AstraDB locally
+
+const cassandra = require('cassandra-driver');
+const client = new cassandra.Client({
+    cloud: { secureConnectBundle: './path/to/your_secure_connect_bundle.zip' },
+    keyspace: 'aviation_data'
+});
+
+async function truncateTable() {
+    try {
+        await client.execute('TRUNCATE aviation_data.aviation_documents');
+        console.log('Table truncated successfully.');
+    } catch (err) {
+        console.error('Error truncating table:', err);
+    } finally {
+        await client.shutdown();
+    }
+}
+
+truncateTable();

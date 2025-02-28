@@ -19,11 +19,6 @@ import logging
 nlp = spacy.load('en_core_web_sm')
 nlp.max_length = 2000000  # or any other suitable value
 
-# Download required NLTK data
-nltk.download('punkt')
-nltk.download('stopwords')
-nltk.download('wordnet')
-
 # Initialize spellchecker
 spell = SpellChecker()
 
@@ -65,11 +60,21 @@ logging.info("Logging initialized successfully.")
 
 # Ensure directories exist
 for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-        logging.info(f"Created directory: {directory}")
-    else:
-        logging.info(f"Directory already exists: {directory}")
+    os.makedirs(directory, exist_ok=True)  # No need to log this for every run
+
+# Donwload NLTK data
+def download_nltk_data():
+    """Downloads required NLTK data only if not already installed."""
+    try:
+        nltk.data.find('tokenizers/punkt')
+        nltk.data.find('corpora/stopwords')
+        nltk.data.find('corpora/wordnet')
+    except LookupError:
+        nltk.download('punkt')
+        nltk.download('stopwords')
+        nltk.download('wordnet')
+
+download_nltk_data()
 
 # Create custom pipeline component for aviation NER
 @spacy.Language.component("aviation_ner")
@@ -106,14 +111,11 @@ def load_abbreviation_dict():
     try:
         with open('abbreviations.csv', mode='r') as infile:
             reader = csv.reader(infile)
-            for rows in reader:
-                if len(rows) < 2:
-                    continue
-                abbreviation_dict[rows[0].strip()] = rows[1].strip()
+            abbreviation_dict = {rows[0].strip(): rows[1].strip() for rows in reader if len(rows) >= 2}
     except FileNotFoundError:
-        print("Error: The file 'abbreviations.csv' was not found.")
+        logging.error("Error: The file 'abbreviations.csv' was not found.")
     except Exception as e:
-        print(f"An error occurred while loading the abbreviation dictionary: {e}")
+        logging.exception("An error occurred while loading the abbreviation dictionary.")
     return abbreviation_dict
 
 def split_connected_words_improved(text):
@@ -299,7 +301,7 @@ def extract_metadata(file_path):
                 metadata['tags'] = tags_match.group(1).strip()
             
         except Exception as e:
-            print(f"Error reading DOCX metadata: {e}")
+            logging.info(f"Error reading DOCX metadata: {e}")
     
     return metadata
 
@@ -467,7 +469,7 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             with open(output_file_path, 'w', encoding='utf-8') as out_file:
                 out_file.write(raw_text)
             logging.info(f"Expanded text saved to: {output_file_path}")
-            print(f"Expanded text saved to: {output_file_path}")
+            logging.info(f"Expanded text saved to: {output_file_path}")
                
         if text_output_dir:
             # Remove .docx extension before adding .txt
@@ -476,7 +478,7 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             logging.info(f"Processed text saved to: {output_file_path}")
             with open(output_file_path, 'w', encoding='utf-8') as out_file:
                 out_file.write(preprocessed_text)
-            print(f"Text saved to: {output_file_path}")
+            logging.info(f"Text saved to: {output_file_path}")
 
         logging.info(f"Finished processing all documents in {directory_path}")
         metadata = extract_metadata(file_path)
@@ -503,27 +505,18 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
 
     return existing_documents + new_documents
 
-def update_existing_documents(documents):
-    for doc in documents:
-        if 'metadata' not in doc:
-            doc['metadata'] = extract_metadata(os.path.join(BASE_DIR, doc['filename']))
-        if 'category' not in doc:
-            doc['category'] = classify_document(doc['text'])
-    return documents
-
 def main():
     try:
         documents = None
         if os.path.exists(PKL_FILENAME):
             with open(PKL_FILENAME, 'rb') as file:
                 documents = pickle.load(file)
-            documents = update_existing_documents(documents)
-
+            
         if documents is None:
-            print("Reading documents from directory...")
+            logging.info("Reading documents from directory...")
             documents = read_documents_from_directory(DOCUMENTS_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
         else:
-            print("Appending new documents to the existing list...")
+            logging.info("Appending new documents to the existing list...")
             documents = read_documents_from_directory(DOCUMENTS_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
 
         # Debug: Check documents before keyword extraction
@@ -535,14 +528,17 @@ def main():
         # Apply keyword extraction
         extract_keywords(documents)
 
+        # Download NLTK data
+        download_nltk_data()
+
         # Save the updated list
         with open(PKL_FILENAME, 'wb') as file:
             pickle.dump(documents, file)
 
-        print(f"Total documents: {len(documents)}")
+        logging.info(f"Total documents: {len(documents)}")
     except Exception as e:
         logging.exception("An error occurred in main:")
-        print(f"An error occurred: {e}")
+        logging.info(f"An error occurred: {e}")
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
