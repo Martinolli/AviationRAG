@@ -9,7 +9,7 @@ import pickle
 import sys
 from logging.handlers import RotatingFileHandler
 # Import project-specific modules
-from read_documents import read_documents_from_directory
+from AviationRAG.src.scripts.py_files.read_documents_2 import read_documents_from_directory
 from aviation_chunk_saver import save_documents_as_chunks
 # Load environment variables
 load_dotenv()

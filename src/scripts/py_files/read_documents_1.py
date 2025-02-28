@@ -72,6 +72,8 @@ def aviation_ner(doc):
         ("FLIGHT_NUMBER", r"\b[A-Z]{2,3}\s?[0-9]{1,4}\b"),
         ("AIRLINE", r"\b(American Airlines|Delta Air Lines|United Airlines|Southwest Airlines|Air France|Lufthansa|British Airways)\b"),
         ("AVIATION_ORG", r"\b(FAA|EASA|ICAO|IATA)\b"),
+        ("SECTION_NUMBER", r"\bSection\s[0-9]+(\.[0-9]+)*\b"),
+        ("LEVEL", r"\bLevel\s[A-Z0-9]+\b"),
     ]
     
     new_ents = []
@@ -110,86 +112,35 @@ def load_abbreviation_dict():
 def split_connected_words_improved(text):
     words = re.findall(r'\w+|\W+', text)
     split_words = []
-    
     for word in words:
-        # Preserve section references like "4.1.2"
-        if re.match(r'^\d+(\.\d+)+$', word):  # Section format "4.1.2"
-            split_words.append(word)
-            continue  # ✅ Keep the section reference intact
-
-        # Preserve "Level 1", "Part 91"
-        if re.match(r'^[A-Za-z]+\s\d+$', word):  
-            split_words.append(word)
-            continue  # ✅ Keep these references intact
-        
-        # Preserve aviation model numbers (e.g., "A320-214")
-        if re.match(r'^[A-Za-z]+\d+[-]?\d*$', word):
-            split_words.append(word)
-            continue  # ✅ Keep aviation identifiers intact
-        
-        # Process long alphanumeric words
         if len(word) > 15 and word.isalnum():
             split_parts = re.findall('[A-Z][a-z]*|[a-z]+|[0-9]+', word)
             split_words.extend(split_parts)
         else:
             split_words.append(word)
-
-    # Join and apply wordninja only to non-section words
     split_words = ' '.join(split_words)
     split_words = ' '.join(wordninja.split(split_words))
     return split_words
-    
+
 def filter_non_sense_strings(text):
     words = text.split()
     cleaned_words = []
-    
     for word in words:
-        # Keep section references like "4.1.2"
-        if re.match(r'^\d+(\.\d+)+$', word):
+        if (re.match(r'^[a-zA-Z0-9]+$', word) or re.match(r'^[a-zA-Z]+\s?[0-9]+$', word)) and len(set(word.lower())) > 3:
             cleaned_words.append(word)
-            continue  # ✅ Keep it, do not check further
-        
-        # Keep references like "Level 1"
-        if re.match(r'^[Ll]evel\s\d+$', word):
-            cleaned_words.append(word)
-            continue  # ✅ Keep it, do not check further
-        
-        # Keep regular words (at least 4 distinct letters)
-        if re.match(r'^[a-zA-Z]+$', word) and len(set(word.lower())) > 3:
-            cleaned_words.append(word)
-    
     return ' '.join(cleaned_words)
-
-def extract_section_references(text):
-    """Extract structured references like '4.1.2' and 'Level 1'."""
-    
-    section_pattern = re.findall(r'\b\d+(\.\d+)+\b', text)  # Matches "4.1.2"
-    level_pattern = re.findall(r'\b[Ll]evel\s\d+\b', text)  # Matches "Level 1"
-    part_pattern = re.findall(r'\b[Pp]art\s\d+\b', text)  # Matches "Part 121"
-
-    references = section_pattern + level_pattern + part_pattern
-
-    # Debugging output
-    if references:
-        logging.info(f"Extracted Section References: {references}")
-    else:
-        logging.warning(f"No section references found in text.")
-
-    return references if references else ["No References Found"]
 
 def preprocess_text_with_sentences(text):
     doc = nlp(text)
     sentences = []
-    
     for sent in doc.sents:
         cleaned_sentence = ' '.join(
-            token.lemma_.lower() for token in sent
-            if (token.is_alpha or token.like_num or re.match(r'^\d+(\.\d+)*$', token.text))  # Preserve numbers
-            and token.text.lower() not in STOP_WORDS
+            token.lemma_.lower() if token.is_alpha else token.text  # Preserve non-alphabetic tokens like numbers
+            for token in sent
+            if token.text.lower() not in STOP_WORDS
         )
         if cleaned_sentence:
             sentences.append(cleaned_sentence)
-    
     return ' '.join(sentences)
 
 def extract_personal_names(text):
@@ -199,12 +150,7 @@ def extract_personal_names(text):
 def extract_entities_and_pos_tags(text):
     doc = nlp(text)
     entities = [(ent.text, ent.label_) for ent in doc.ents]
-    # References as entities
-    section_references = extract_section_references(text)
-    for ref in section_references:
-        entities.append((ref, "SECTION_REF"))
     pos_tags = [(token.text, token.pos_) for token in doc]
-
     return entities, pos_tags
 
 def expand_abbreviations_in_text(text, abbreviation_dict):
@@ -425,36 +371,17 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             logging.warning(f"No text extracted from {filename}")
             continue
 
-        logging.info(f"Processing {filename}...")
-
         expanded_text = expand_abbreviations_in_text(text, abbreviation_dict)
-
         raw_text = expanded_text
-
         expanded_text = split_connected_words_improved(expanded_text)
-
-        # expanded_text = filter_non_sense_strings(expanded_text)
-
-        # 🔍 Debugging - Print the processed text before extracting references
-        logging.debug(f"Expanded text BEFORE extracting section references: {expanded_text[:500]}")
-        
-        section_references = extract_section_references(expanded_text)
-        
-        if not section_references:
-            logging.warning(f"No section references found in {filename}")
-        
+        expanded_text = filter_non_sense_strings(expanded_text)
         preprocessed_text = preprocess_text_with_sentences(expanded_text)
-
         personal_names = extract_personal_names(preprocessed_text)
-
         entities, pos_tags = extract_entities_and_pos_tags(preprocessed_text)
-
-        tokens = [token.text.lower() for token in nlp(preprocessed_text) 
-          if (token.is_alpha or token.like_num or re.match(r'^\d+(\.\d+)*$', token.text) or re.match(r'^[A-Za-z]+\s\d+$', token.text))]
-
-        tokens_without_stopwords = [token for token in tokens if token not in STOP_WORDS]
-
-        lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens_without_stopwords]
+        tokens = word_tokenize(preprocessed_text)
+        cleaned_tokens = [token.lower() for token in tokens if (token.isalpha() or token.isdigit() or any(c.isalpha() and c.isdigit() for c in token)) and len(token) > 2]
+        tokens_without_stopwords = [token for token in cleaned_tokens if token not in STOP_WORDS]
+        lemmatized_tokens = [lemmatizer.lemmatize(token) if token.isalpha() else token for token in tokens_without_stopwords]
 
         if text_expanded_dir:
             # Remove .docx extension before adding .txt
@@ -486,16 +413,12 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             'filename': filename,
             'text': preprocessed_text,
             'tokens': lemmatized_tokens,
-            'section_references': section_references,  # ✅ Ensure this is included
             'personal_names': personal_names,
             'entities': entities,
             'pos_tags': pos_tags,
             'metadata': metadata,
             'category': document_category
         })
-
-        # Debugging output
-        logging.info(f"Stored Section References for {filename}: {section_references}")
 
     return existing_documents + new_documents
 

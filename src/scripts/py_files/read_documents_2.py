@@ -45,23 +45,10 @@ TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextEx
 PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
 LOG_DIR = os.path.join(BASE_DIR, 'logs')  # Define the path to the logs folder
 
-log_file_path = os.path.join(LOG_DIR, 'read_documents.log')
-
-# Ensure the log directory exists
+# Ensure log directory exists
 if not os.path.exists(LOG_DIR):
     os.makedirs(LOG_DIR)
-
-# Configure logging properly
-logging.basicConfig(
-    level=logging.DEBUG,  # Change to DEBUG to capture everything
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(log_file_path, mode='w'),  # Ensure file is written
-        logging.StreamHandler()  # Print logs to console as well
-    ]
-)
-
-logging.info("Logging initialized successfully.")
+    print(f"Created log directory: {LOG_DIR}")
 
 # Ensure directories exist
 for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
@@ -70,6 +57,10 @@ for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENA
         logging.info(f"Created directory: {directory}")
     else:
         logging.info(f"Directory already exists: {directory}")
+
+# Configure logging
+log_file_path = os.path.join(LOG_DIR, 'read_documents.log')
+logging.basicConfig(level=logging.INFO, filename=log_file_path, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Create custom pipeline component for aviation NER
 @spacy.Language.component("aviation_ner")
@@ -119,78 +110,34 @@ def load_abbreviation_dict():
 def split_connected_words_improved(text):
     words = re.findall(r'\w+|\W+', text)
     split_words = []
-    
     for word in words:
-        # ✅ Keep section references like "4.1.2", "§ 5.1" intact
-        if re.match(r'^\d+(\.\d+)+$', word) or re.match(r'^§\s*\d+(\.\d+)*$', word):
-            split_words.append(word)
-            continue  
-
-        # ✅ Keep "Level 1", "Part 91"
-        if re.match(r'^[A-Za-z]+\s\d+$', word):  
-            split_words.append(word)
-            continue  
-
-        # ✅ Keep aviation model numbers (e.g., "A320-214") intact
-        if re.match(r'^[A-Za-z]+\d+[-]?\d*$', word):
-            split_words.append(word)
-            continue  
-
-        # ✅ Process long alphanumeric words but keep numbers
         if len(word) > 15 and word.isalnum():
             split_parts = re.findall('[A-Z][a-z]*|[a-z]+|[0-9]+', word)
             split_words.extend(split_parts)
         else:
             split_words.append(word)
+    split_words = ' '.join(split_words)
+    split_words = ' '.join(wordninja.split(split_words))
+    return split_words
 
-    # Apply wordninja ONLY to words, NOT numbers
-    processed_text = ' '.join(split_words)
-    processed_text = ' '.join(wordninja.split(processed_text))
-
-    return processed_text
-    
 def filter_non_sense_strings(text):
     words = text.split()
     cleaned_words = []
     for word in words:
-        # Keep numbers and section references like "5.1.2" or "Part 5"
-        if re.match(r'^[a-zA-Z0-9.\-]+$', word) and len(set(word.lower())) > 2:
+        if re.match(r'^[a-zA-Z]+$', word) and len(set(word.lower())) > 3:
             cleaned_words.append(word)
     return ' '.join(cleaned_words)
-
-def extract_section_references(text):
-    """Extract structured numerical references like '4.1.2' and 'Level 1'."""
-    import re
-
-    # Updated regex patterns
-    section_pattern = re.findall(r'\b\d+(\.\d+)+\b', text)  # Matches "4.1.2"
-    level_pattern = re.findall(r'\b[Ll]evel\s\d+\b', text)  # Matches "Level 1"
-    part_pattern = re.findall(r'\b[Pp]art\s\d+\b', text)  # Matches "Part 121"
-    paragraph_pattern = re.findall(r'^§\s*\d+(\.\d+)*$', text)  # Matches "§ 5.1"
-
-    references = section_pattern + level_pattern + part_pattern + paragraph_pattern
-
-    # Debugging output
-    if references:
-        logging.info(f"Extracted Section References: {references}")
-    else:
-        logging.warning(f"No section references found in text.")
-
-    return references if references else ["No References Found"]
 
 def preprocess_text_with_sentences(text):
     doc = nlp(text)
     sentences = []
-    
     for sent in doc.sents:
         cleaned_sentence = ' '.join(
             token.lemma_.lower() for token in sent
-            if (token.is_alpha or token.like_num or re.match(r'^\d+(\.\d+)*$', token.text))  # Preserve numbers
-            and token.text.lower() not in STOP_WORDS
+            if token.is_alpha and token.text.lower() not in STOP_WORDS
         )
         if cleaned_sentence:
             sentences.append(cleaned_sentence)
-    
     return ' '.join(sentences)
 
 def extract_personal_names(text):
@@ -200,12 +147,7 @@ def extract_personal_names(text):
 def extract_entities_and_pos_tags(text):
     doc = nlp(text)
     entities = [(ent.text, ent.label_) for ent in doc.ents]
-    # References as entities
-    section_references = extract_section_references(text)
-    for ref in section_references:
-        entities.append((ref, "SECTION_REF"))
     pos_tags = [(token.text, token.pos_) for token in doc]
-
     return entities, pos_tags
 
 def expand_abbreviations_in_text(text, abbreviation_dict):
@@ -426,38 +368,16 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             logging.warning(f"No text extracted from {filename}")
             continue
 
-        logging.info(f"Processing {filename}...")
-
         expanded_text = expand_abbreviations_in_text(text, abbreviation_dict)
-
         raw_text = expanded_text
-
-        # Debug BEFORE preprocessing
-        logging.debug(f"Raw expanded text BEFORE processing: {expanded_text[:500]}")
-
         expanded_text = split_connected_words_improved(expanded_text)
-        
         expanded_text = filter_non_sense_strings(expanded_text)
-
-        # Debug AFTER preprocessing
-        logging.debug(f"Expanded text AFTER preprocessing: {expanded_text[:500]}")
-
-        section_references = extract_section_references(expanded_text)
-
-        if not section_references:
-            logging.warning(f"No section references found in {filename}")
-        
         preprocessed_text = preprocess_text_with_sentences(expanded_text)
-
         personal_names = extract_personal_names(preprocessed_text)
-
         entities, pos_tags = extract_entities_and_pos_tags(preprocessed_text)
-
-        tokens = [token.text.lower() for token in nlp(preprocessed_text) 
-          if (token.is_alpha or token.like_num or re.match(r'^\d+(\.\d+)*$', token.text) or re.match(r'^[A-Za-z]+\s\d+$', token.text) or re.match(r'^§\s*\d+(\.\d+)*$', token.text))]
-
-        tokens_without_stopwords = [token for token in tokens if token not in STOP_WORDS]
-
+        tokens = word_tokenize(preprocessed_text)
+        cleaned_tokens = [token.lower() for token in tokens if token.isalpha() and len(token) > 2]
+        tokens_without_stopwords = [token for token in cleaned_tokens if token not in STOP_WORDS]
         lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens_without_stopwords]
 
         if text_expanded_dir:
@@ -490,16 +410,12 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             'filename': filename,
             'text': preprocessed_text,
             'tokens': lemmatized_tokens,
-            'section_references': section_references,  # ✅ Ensure this is included
             'personal_names': personal_names,
             'entities': entities,
             'pos_tags': pos_tags,
             'metadata': metadata,
             'category': document_category
         })
-
-        # Debugging output
-        logging.info(f"Stored Section References for {filename}: {section_references}")
 
     return existing_documents + new_documents
 

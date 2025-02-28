@@ -15,3 +15,55 @@ Scripts Sequence:
 To run the page the command line is:
     npm run dev
 
+Explanation of re.findall(r'\b[Pp]art\s\d+\b', text)
+📌 Breakdown of the Regular Expression Pattern:
+
+re.findall(r'\b[Pp]art\s\d+\b', text)
+
+Component	Explanation
+re.findall(...)	Extracts all matches of the pattern from text.
+r''	Raw string notation, ensuring that \ characters are treated as literal.
+\b	Word boundary, ensures it matches a whole word and not part of another word.
+[Pp]	Matches uppercase or lowercase 'P', allowing both "Part 91" and "part 121".
+art	Matches the exact word "art", ensuring the full word "Part" is captured.
+\s	Matches a space character (" "), ensuring "Part" is followed by a space.
+\d+	Matches one or more digits (0-9), capturing numbers like "91" or "121".
+\b	Word boundary again, ensuring "Part 121" is matched as a whole word, not part of "Part121XYZ".
+
+Expected Matches:
+
+Text Sample	Captured Match
+"Refer to Part 91 regulations."	"Part 91"
+"The requirements are in part 121."	"part 121"
+"Follow part 135 or part 145."	"part 135", "part 145"
+"This is not Part121."	❌ (No match, missing space)
+
+🚀 How to Use It? If you want to extract "Part 91", "part 121", etc., from a document, you can use:
+
+python
+Copy
+Edit
+
+part_references = re.findall(r'\b[Pp]art\s\d+\b', text)
+print(part_references)  
+
+['Part 91', 'part 121']
+
+2️⃣ File Naming Strategy – Is "14cfr_safety_management_system" Good?
+✅ Your current pattern is good because:
+
+It uses underscores (_) instead of spaces (✔ No whitespace issues).
+It is descriptive: "14cfr_safety_management_system" is clear.
+It follows a consistent format.
+🚀 Suggestions for Improvement You could enhance readability and maintainability by adding versioning or a standardized structure:
+
+Format	Example	Pros
+YYYY-MM-DD_document_title	2024-02-26_14cfr_safety_management_system	Keeps files in chronological order.
+Category_Title	Regulation_14CFR_Safety_Management_System	Groups similar documents together.
+docID_Title_v1	FAA_14CFR_Safety_Management_v1	Useful for tracking versions.
+💡 Best Practice:
+
+If documents belong to the same category, add prefixes (e.g., "Regulation_", "AccidentReport_").
+If files have multiple versions, add "v1", "v2", etc.
+If files come from different sources (e.g., FAA, EASA, ICAO), consider adding "FAA_", "ICAO_".
+
