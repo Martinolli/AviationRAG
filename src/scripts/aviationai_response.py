@@ -333,6 +333,7 @@ def generate_response(context, query, full_context, model):
 
     AI: Let me provide a detailed and informative answer:
     Format your response in the most appropriate structure:
+    - Include relevant facts, explanations, and examples where appropriate. 
     - If it's about regulations, provide a **list of key FAA, ICAO, EASA, or MIL-STDs guidelines if available**.
     - If it's about an accident, provide a **summary of investigation insights**.
     - If it's about a technical issue, provide **a structured breakdown** with root causes.
