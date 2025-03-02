@@ -18,7 +18,7 @@ load_dotenv()
 base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
 log_dir = os.path.join(base_dir, 'logs')  # Define the path to the logs folder
 chat_dir = os.path.join(base_dir, 'chat')  # Define the path to the chat folder
-chat_id = os.path.join(base_dir, 'chat_id')  # Define the path to the chat folder
+chat_id = os.path.join(base_dir, 'chat_id')  # Define the path to the chat_id folder
 
 # Ensure the chat directory exists
 if not os.path.exists(chat_dir):
@@ -134,7 +134,7 @@ def safe_openai_call(api_function, max_retries=3, base_delay=2):
                 return None
 
 def store_chat_history(chat_history):
-    with open("chat_history.txt", "w") as f:
+    with open("chat_history.txt", "a") as f:
         for entry in chat_history:
             if isinstance(entry, tuple) and len(entry) == 2:
                 query, response = entry
