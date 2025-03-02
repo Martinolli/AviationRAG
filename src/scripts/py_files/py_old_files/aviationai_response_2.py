@@ -435,6 +435,8 @@ def chat_loop():
             print("Thank you for using the AviationAI Chat System. Goodbye!")
             break
         
+        response = "I'm sorry, but I couldn't generate a response due to an internal error."  # Default response
+
         try:
             print("Generating query embedding...")
             expanded_query = expand_query(QUERY_TEXT)
@@ -447,6 +449,7 @@ def chat_loop():
             print("Processing embeddings...")
             top_results = []
 
+            # ✅ Fixed embedding retrieval logic inside the loop
             for batch in load_embeddings(EMBEDDINGS_FILE):  
                 valid_embeddings = [emb for emb in batch if isinstance(emb, dict) and 'embedding' in emb and len(emb['embedding']) > 10]
 
@@ -455,46 +458,63 @@ def chat_loop():
                     similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in valid_embeddings]
                     top_results.extend(filter_and_rank_embeddings(valid_embeddings, similarities, top_n=10))  
                 else:
-                    logging.warning("⚠️ No valid embeddings found in this batch. Skipping.")
+                    logging.error("⚠️ No valid embeddings found! Skipping batch.")
+                    continue  # Skip empty batches
+
+                if not top_results:
+                    logging.error(f"⚠️ No valid embeddings found for query: {expanded_query}")
+                    print(f"⚠️ No relevant data found for: {expanded_query}")
+                    response = "I'm sorry, but I couldn't generate a response due to missing data."
                     continue
 
-            if not top_results:
-                logging.error(f"⚠️ No valid embeddings found for query: {expanded_query}")
-                print(f"⚠️ No relevant data found for: {expanded_query}")
-                response = "I'm sorry, but I couldn't find any relevant information to answer your query."
+                print("\nAviationAI:", response)  # ✅ Ensure response is displayed
+                continue  # Skip this iteration instead of breaking the loop
+
             else:
                 dynamic_top_n = get_dynamic_top_n(similarities)
-                top_results = filter_and_rank_embeddings(top_results, similarities, top_n=dynamic_top_n)
+                top_results = filter_and_rank_embeddings(embeddings, similarities, top_n=dynamic_top_n)
 
+                unique_texts = set()
                 combined_context = create_weighted_context(top_results)
+                for result in top_results:
+                    if result['text'] not in unique_texts:
+                        unique_texts.add(result['text'])
+                        combined_context += f"{result['text']}\n"
+
+                # ✅ Include past chat history in the context
                 chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
+
+                # ✅ Combine everything into the final context
                 full_context = f"{chat_context}\n\n{combined_context}"
 
                 print("Generating response...")
+                # ✅ Debugging: Print if response function is called
                 logging.info("🛠️ Calling GPT-4 to generate response...")
                 response = generate_response(combined_context, expanded_query, full_context, MODEL)
 
                 if response and len(response) >= 10:
-                    logging.info(f"✅ GPT-4 Response Generated: {response[:50]}...")
+                    print("\nAviationAI:", response)  # ✅ Show response if valid
+                    logging.info(f"✅ GPT-4 Response Generated: {response[:50]}...")  # ✅ Log first 50 characters for debug
                 else:
                     logging.error("⚠️ GPT-4 returned an empty or invalid response!")
-                    response = "I'm sorry, but I couldn't generate a meaningful response. Please try rephrasing your query."
-
-            print("\nAviationAI:", response)
+                    response = "I'm sorry, but I couldn't generate a response due to an internal error."
+                    print("\nAviationAI:", response)
 
             is_helpful = get_user_feedback()
             if not is_helpful:
                 print("I'm sorry the response wasn't helpful. Let me try to improve.")
 
+            # ✅ Update chat history (keep only last 5 messages)
             chat_history.append((expanded_query, response))
             chat_history = chat_history[-max_history:]
 
-            store_chat_in_db(session_id, expanded_query, response)
-            print(f"Expanded Query: {expanded_query}")
-
         except Exception as e:
-            logging.error(f"Error in chat loop: {e}")
-            print("\nAviationAI: I'm sorry, but I encountered an error while processing your query. Please try again.")
+            logging.error(f"Error: {e}")
+            print("\nAviationAI:", response)
+
+        # ✅ Store chat history in AstraDB
+        store_chat_in_db(session_id, expanded_query, response)
+        print(f"Expanded Query: {expanded_query}")
 
 if __name__ == "__main__":
     chat_loop()
