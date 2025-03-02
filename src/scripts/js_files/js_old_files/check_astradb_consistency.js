@@ -7,23 +7,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
-const envPath = path.resolve(__dirname, '../../../.env');
-console.log('Loading .env file from:', envPath);
-dotenv.config({ path: envPath });
-
-// Debug: Log all environment variables
-console.log('Environment variables:');
-console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
-console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
-console.log('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
-console.log('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 async function checkConsistency() {
-    if (!process.env.ASTRA_DB_SECURE_BUNDLE_PATH) {
-        console.error('ASTRA_DB_SECURE_BUNDLE_PATH is not set. Please check your .env file.');
-        process.exit(1);
-    }
     const client = new Client({
         cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
         credentials: {
@@ -38,10 +24,9 @@ async function checkConsistency() {
         console.log('Connected to Astra DB');
 
         // Read local embeddings
-        const embeddingsPath = path.resolve(__dirname, '../../../data/embeddings/aviation_embeddings.json');
-        console.log('Reading embeddings from:', embeddingsPath);
+        const embeddingsPath = path.join(__dirname, '../../data/embeddings/aviation_embeddings.json');
         const localEmbeddings = JSON.parse(await fs.readFile(embeddingsPath, 'utf8'));
-        
+
         // Query Astra DB
         const query = 'SELECT chunk_id, filename, text, tokens, embedding FROM aviation_documents';
         const result = await client.execute(query);

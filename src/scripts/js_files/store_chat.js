@@ -10,13 +10,17 @@ import fs from 'fs';
 // Resolve environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
+console.log("✅ Environment variables loaded:", process.env.ASTRA_DB_CLIENT_ID ? "✅" : "❌ MISSING");
 
 // Set up logging
-const logDir = path.resolve(__dirname, '../../logs');
+const logDir = path.resolve(__dirname, '../../../logs');
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
+
+// Add this line for debugging
+console.log(`Log directory: ${logDir}`);
 
 const logFileName = `store_chat_${format(new Date(), 'yyyy-MM-dd')}.log`;
 const logFilePath = path.join(logDir, logFileName);

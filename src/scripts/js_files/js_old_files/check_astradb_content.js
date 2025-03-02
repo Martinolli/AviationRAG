@@ -2,29 +2,11 @@ import { Client } from 'cassandra-driver';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Navigate to the project root (AviationRAG) and load the .env file
-const projectRoot = path.resolve(__dirname, '..', '..', '..');
-const envPath = path.join(projectRoot, '.env');
-
-if (fs.existsSync(envPath)) {
-    dotenv.config({ path: envPath });
-    console.log(`Loaded .env file from: ${envPath}`);
-} else {
-    console.error(`Could not find .env file at ${envPath}. Please ensure it exists in the AviationRAG directory.`);
-    process.exit(1);
-}
-
-// Log environment variables
-console.log('Environment variables:');
-console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
-console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
-console.log('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET ? '[REDACTED]' : 'Not set');
-console.log('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 async function checkAstraDBContent() {
     let client;
@@ -45,7 +27,7 @@ async function checkAstraDBContent() {
         console.log('Connected to Astra DB successfully!');
 
         // Query to get a sample of rows from the table
-        const sampleQuery = 'SELECT * FROM aviation_documents LIMIT 5';
+        const sampleQuery = 'SELECT * FROM aviation_data.aviation_documents LIMIT 5';
         const sampleResult = await client.execute(sampleQuery);
 
         console.log("Sample data from AstraDB:");
@@ -73,23 +55,20 @@ async function checkAstraDBContent() {
         });
 
         // Get the count of rows in the table
-        const countQuery = 'SELECT COUNT(*) FROM aviation_documents';
+        const countQuery = 'SELECT COUNT(*) FROM aviation_data.aviation_documents';
         const countResult = await client.execute(countQuery);
         console.log(`\nTotal number of documents in AstraDB: ${countResult.rows[0].count.toString()}`);
 
-        // Get all filenames (this might be slow for large datasets)
+        // Get the unique filenames
         console.log("\nUnique filenames in the database:");
-        const filenamesQuery = 'SELECT filename FROM aviation_documents';
+        const filenamesQuery = 'SELECT filename FROM aviation_data.aviation_documents';
         const filenamesResult = await client.execute(filenamesQuery);
-        
-        // Use a Set to get unique filenames
         const uniqueFilenames = new Set(filenamesResult.rows.map(row => row.filename));
-        
-        // Print unique filenames
         uniqueFilenames.forEach(filename => console.log(filename));
 
         // Get the number of unique filenames
         console.log(`\nTotal number of unique files: ${uniqueFilenames.size}`);
+
     } catch (err) {
         console.error('Error querying Astra DB:', err);
     } finally {

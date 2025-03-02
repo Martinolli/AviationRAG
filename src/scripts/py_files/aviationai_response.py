@@ -42,7 +42,7 @@ def store_chat_in_db(session_id, user_query, ai_response):
     """
     # Define the correct path to store_chat.js inside src/scripts/
     
-    script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
+    script_path = os.path.join(os.path.dirname(__file__), '..', 'js_files', 'store_chat.js')
 
     if not ai_response or len(ai_response) < 10:
         logging.error("⚠️ Invalid AI response detected! Storing default message.")
@@ -57,9 +57,11 @@ def store_chat_in_db(session_id, user_query, ai_response):
     # Call the JavaScript file with the correct path
     try:
         subprocess.run(
-            ["node", script_path, json.dumps(chat_data)], 
-            check=True
-        )
+            ["node", script_path, json.dumps(chat_data)],
+            check=True,
+            cwd=os.path.join(os.path.dirname(__file__), "..", "js_files")  # Ensure correct working directory
+    )
+
         print("Chat stored successfully in AstraDB!")
     except subprocess.CalledProcessError as e:
         logging.error(f"Error storing chat: {e}")
@@ -68,7 +70,7 @@ def retrieve_chat_from_db(session_id, limit=5):
     """
     Calls the Node.js script to retrieve chat history from AstraDB.
     """
-    script_path = os.path.join(os.path.dirname(__file__), "store_chat.js")
+    script_path = os.path.join(os.path.dirname(__file__), '..', 'js_files', 'store_chat.js')
 
     if not session_id.strip():
         print("⚠️ Warning: `session_id` is empty! Generating a new one...")
@@ -348,7 +350,7 @@ def generate_response(context, query, full_context, model):
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
-                temperature=0.6,
+                temperature=0.7,
                 max_tokens=max_tokens
             )
             return response.choices[0].message.content.strip()

@@ -3,7 +3,6 @@ import path from 'path';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { createObjectCsvWriter } from 'csv-writer';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -97,36 +96,14 @@ async function saveCheckpoint(embeddings, outputPath) {
 
 async function generateEmbeddings() {
   try {
-    // Get the directory of the current module
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-
-    // Navigate to the project root directory
-    const projectRoot = path.resolve(__dirname, '..', '..', '..');
-
-    // Define paths relative to the project root
-    const chunkedDocsPath = path.join(projectRoot, 'data', 'processed', 'chunked_documents');
-    const outputPath = path.join(projectRoot, 'data', 'embeddings', 'aviation_embeddings.json');
-    const checkpointPath = path.join(projectRoot, 'data', 'embeddings', 'checkpoint.json');
-
-    // Log the paths for debugging
-    console.log('Project Root:', projectRoot);
-    console.log('Chunked Docs Path:', chunkedDocsPath);
-
-    // Check if the chunked_documents directory exists
-    if (!fs.existsSync(chunkedDocsPath)) {
-      console.error(`The directory ${chunkedDocsPath} does not exist.`);
-      console.log('Please ensure that you have processed documents and created JSON chunks before running this script.');
-      return;
-    }
-
-    // Get the list of JSON files in the chunked_documents directory
+    const chunkedDocsPath = path.resolve('data/processed/chunked_documents');
+    const outputPath = path.resolve('data/embeddings/aviation_embeddings.json');
+    const checkpointPath = path.resolve('data/embeddings/checkpoint.json');
     const files = await fs.promises.readdir(chunkedDocsPath);
     const jsonFiles = files.filter(file => file.endsWith('.json'));
 
     if (jsonFiles.length === 0) {
       console.error('No JSON files found in the chunked_documents directory.');
-      console.log('Please ensure that you have processed documents and created JSON chunks before running this script.');
       return;
     }
 
@@ -156,9 +133,6 @@ async function generateEmbeddings() {
 
   } catch (err) {
     console.error('Error while generating embeddings:', err);
-    if (err.code === 'ENOENT') {
-      console.log('Please check if the project structure is correct and all necessary directories exist.');
-    }
   }
 }
 
