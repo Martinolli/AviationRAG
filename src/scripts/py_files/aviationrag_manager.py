@@ -45,27 +45,27 @@ if __name__ == "__main__":
     logging.info("--- AviationRAG Processing Pipeline Started ---")
     
     # Step 1: Read documents and generate aviation_corpus.pkl
-    if not run_script("python src/scripts read_documents.py", "Read Documents"):
+    if not run_script("python src/scripts/read_documents.py", "Read Documents"):
         exit(1)
     
     # Step 2: Chunk documents
-    if not run_script("python src/scripts aviation_chunk_saver.py", "Chunk Documents"):
+    if not run_script("python src/scripts/aviation_chunk_saver.py", "Chunk Documents"):
         exit(1)
     
     # Step 3: Convert PKL to JSON
-    if not run_script("python src/scripts extract_pkl_to_json.py", "Extract PKL to JSON"):
+    if not run_script("python src/scripts/extract_pkl_to_json.py", "Extract PKL to JSON"):
         exit(1)
     
     # Step 4: Generate embeddings
-    if not run_script("node src/scripts generate_embeddings.js", "Generate Embeddings"):
+    if not run_script("node src/scripts/generate_embeddings.js", "Generate Embeddings"):
         exit(1)
     
     # Step 5: Store embeddings in AstraDB
-    if not run_script("node src/scripts store_embeddings_astra.js", "Store Embeddings in AstraDB"):
+    if not run_script("node src/scripts/store_embeddings_astra.js", "Store Embeddings in AstraDB"):
         exit(1)
     
     # Step 6: Validate database consistency
-    if not run_script("node src/scripts check_astradb_content.js", "Check AstraDB Content"):
+    if not run_script("node src/scripts/check_astradb_consistency.js", "Check AstraDB Content"):
         exit(1)
     
     logging.info("--- AviationRAG Processing Pipeline Completed Successfully ---")

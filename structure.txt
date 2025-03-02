@@ -1,0 +1,117 @@
+AviationRAG/
+        |____assets/
+        |         |___md_figures files for REDME.md file
+        |         |___pictures from visualizing_data.py
+        |
+        |
+        |_____config/
+        |          |___secure-connect-aviation_rag-db
+        |
+        |_____data/
+        |      |___documents/
+        |      |           |_____documents to be processed "PDF" or "DOCX" files
+        |      |
+        |      |___embeddings/
+        |      |            |_______aviation_embeddings.json
+        |      |            |_______checkpoint.json
+        |      |            |_______embeddings_report.csv
+        |      |
+        |      |___processed/
+        |      |           |________chunked_documents/
+        |      |           |                        |_______chunked files for each document processed (json)
+        |      |           |
+        |      |           |________aviation_corpus.json
+        |      |           
+        |      |
+        |      |___processed/ProcessedText/
+        |      |                          |______processed texts from PDF and DOCX files (TXT files)
+        |      |
+        |      |___processed/ProcessedTestExapanded/
+        |      |                                  |______texts from PDF and DOCX files (TXT files)
+        |      |
+        |      |___raw/
+        |            |___aviation_corpus.pkl
+        |
+        |_____logs/
+        |        |___logs 
+        |
+        |
+        |_____models/ (empty)
+        |
+        |
+        |
+        |_____node_modules/
+        |
+        |
+        |
+        |_____public/
+        |          |_____empty
+        |
+        |
+        |
+        |_____src/
+        |      |
+        |      |___components/ (empty)
+        |      |
+        |      |
+        |      |___scripts/
+        |      |          |______pycache__/
+        |      |          |
+        |      |          |____js_files/
+        |      |          |           |_____js script files tests
+        |      |          |
+        |      |          |____py_files
+        |      |          |           |_____python files test scripts
+        |      |
+        |      |__________check_astradb.js - check the Astra database
+        |      |
+        |      |__________check_astradb_content.js
+        |      |
+        |      |__________connect_astra.js - connect Astra database
+        |      |
+        |      |__________create_table_astra.js - create the AstraDB table
+        |      |
+        |      |__________generate_embeddings.js - generate embeddings from chunk files
+        |      |
+        |      |__________store_embeddings_astra.js - store the embeddings AstraDB
+        |      |
+        |      |__________test_openai.js - test openai connection
+        |      |
+        |      |__________aviation_chunk_saver.py - create the chunks from aviation corpus
+        |      |
+        |      |__________aviationrag_manager.py - to manage the pipeline throughout the flow
+        |      |
+        |      |__________aviationrag_interface.py - generate an interface streamlit to check the embeddings similarity
+        |      |
+        |      |__________check_pkl_content.py - to check the pkl file content
+        |      |
+        |      |__________config.py - config the data stored folders
+        |      |
+        |      |__________embeddings_similarity.py - check the embeddings similarities
+        |      |
+        |      |__________embeddings_similarity_verification - check the embeddings answers
+        |      |
+        |      |__________extract_pkl_to_json.py - extract files from corpus to json format
+        |      |
+        |      |__________read_documents.py - create the corpus from documents processed
+        |      |
+        |      |__________utils/
+        |
+        |
+        |_____.env API keys, from AstraDB and OpenAI
+        |
+        |_____.gitattributes
+        |
+        |_____.gitignore
+        |
+        |_____package.json
+        |
+        |_____vercel.json
+
+```
+
+## Installation
+
+```bash
+    # Clone the repository
+    git clone https://github.com/yourusername/AviationRAG.git
