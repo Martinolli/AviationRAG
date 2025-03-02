@@ -118,7 +118,7 @@ async function storeChat() {
                 FROM aviation_data.aviation_conversation_history
                 WHERE session_id = ?
                 ORDER BY timestamp DESC
-                LIMIT ${limitValue};
+                LIMIT 10;
             `;
 
             const params = [chatData.session_id];

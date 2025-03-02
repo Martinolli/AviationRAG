@@ -358,17 +358,14 @@ def generate_response(context, query, full_context, model):
 
 
 def chat_loop():
-    """Main chat loop for AviationAI"""
-    
     EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
-    MODEL = "gpt-4"  # Change between "gpt-3.5-turbo" or "gpt-4"
+    MODEL = "gpt-4"  #gpt-3.5-turbo/gpt-4 You can change this to "gpt-4" if available
     
     print("Welcome to the AviationAI Chat System!")
     print("Type 'exit' to end the conversation.")
 
     session_metadata_file = os.path.join(chat_id, "session_metadata.json")
 
-    # ✅ Load session metadata once (avoid redundant reloading)
     session_metadata = {}
     if os.path.exists(session_metadata_file):
         try:
@@ -378,12 +375,12 @@ def chat_loop():
             logging.error("⚠️ Corrupted session metadata file. Resetting...")
             session_metadata = {}
 
-    # ✅ Ensure session_id is initialized
+    # Ensure session_id is initialized
     session_id = None
-    past_exchanges = []  # Initialize chat history
-    chat_cache = {}  # Cache for quick retrieval
 
-    # ✅ Allow user to select a previous session or start a new one
+    # List past sessions for user selection
+    past_exchanges = [] # Initialize before any condition
+
     if session_metadata:
         print("\n📌 Available Previous Sessions:")
         for i, (sid, title) in enumerate(session_metadata.items(), 1):
@@ -394,27 +391,45 @@ def chat_loop():
             if 1 <= choice <= len(session_metadata):
                 session_id = list(session_metadata.keys())[choice - 1]
                 print(f"✅ Continuing session: {session_metadata[session_id]}")
-                past_exchanges = chat_cache.get(session_id, retrieve_chat_from_db(session_id))
-                chat_cache[session_id] = past_exchanges  # Store in cache
+                chat_cache = {}  # In-memory cache for recent chat history
+
+                if session_id in chat_cache:
+                    past_exchanges = chat_cache[session_id]  # Use cached chat history
+                else:
+                    past_exchanges = retrieve_chat_from_db(session_id)
+                    chat_cache[session_id] = past_exchanges  # Store in cache
+
             else:
                 session_id = str(uuid.uuid4())
                 print("🔄 Starting a new session...")
+                past_exchanges = []  # Ensure it's always initialized
+
         except ValueError:
             print("⚠️ Invalid input, creating a new session.")
             session_id = str(uuid.uuid4())
+            past_exchanges = []  # Ensure it's always initialized
+            
     else:
         session_id = str(uuid.uuid4())
-
-    # ✅ Assign a title for new sessions
+        past_exchanges = []
+        
+    # If this is a new session, ask for a title
     if session_id not in session_metadata:
         session_subject = input("Enter a short title for this session (e.g., 'HFACS Methodology Discussion'): ").strip()
         session_metadata[session_id] = session_subject
 
-    # ✅ Save updated session metadata
+    # Save updated session metadata
     with open(session_metadata_file, "w", encoding="utf-8") as file:
         json.dump(session_metadata, file, indent=4)
 
-    # ✅ Load embeddings only once at the beginning
+    # Load session metadata
+    if os.path.exists(session_metadata_file):
+        with open(session_metadata_file, "r", encoding="utf-8") as file:
+            session_metadata = json.load(file)
+    else:
+        session_id = str(uuid.uuid4())
+        past_exchanges = []
+   
     try:
         print("Loading embeddings...")
         embeddings = load_embeddings(EMBEDDINGS_FILE)
@@ -422,10 +437,15 @@ def chat_loop():
         logging.error(f"Error loading embeddings: {e}")
         return
     
-    # ✅ Retrieve past chat history correctly
-    chat_history = [(ex["user_query"], ex["ai_response"]) for ex in past_exchanges if isinstance(ex, dict) and "user_query" in ex and "ai_response" in ex]
+    # Retrieve past conversation history for the session
+    chat_history = []
+    for ex in past_exchanges:
+        if isinstance(ex, dict) and "user_query" in ex and "ai_response" in ex:
+            chat_history.append((ex["user_query"], ex["ai_response"]))  # Store as (query, response) tuple
+        else:
+            logging.error(f"⚠️ Unexpected chat history format: {ex}")
 
-    max_history = 5  # Keep only the last 5 exchanges in chat history
+    max_history = 5  # Maximum number of chat exchanges to keep in history
 
     while True:
         QUERY_TEXT = input("\nUser: ")
@@ -444,58 +464,70 @@ def chat_loop():
 
             print("Processing embeddings...")
             top_results = []
-
-            # ✅ Fixed embedding retrieval logic inside the loop
-            for batch in load_embeddings(EMBEDDINGS_FILE):  
+            for batch in load_embeddings(EMBEDDINGS_FILE):  # Load embeddings in batches
                 valid_embeddings = [emb for emb in batch if isinstance(emb, dict) and 'embedding' in emb and len(emb['embedding']) > 10]
 
-                if valid_embeddings:
-                    print(f"✅ Processing {len(valid_embeddings)} embeddings in batch...")
-                    similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in valid_embeddings]
-                    top_results.extend(filter_and_rank_embeddings(valid_embeddings, similarities, top_n=10))  
-                else:
-                    logging.error("⚠️ No valid embeddings found! Skipping batch.")
-                    continue  # Skip empty batches
+            if not valid_embeddings:
+                logging.error(f"⚠️ No valid embeddings found! Skipping batch. Check 'aviation_embeddings.json'.")
+                print(f"⚠️ No valid embeddings found! Check 'aviation_embeddings.json' for issues.")
+                continue  # Skip empty batches
 
-            if not top_results:
+            print(f"✅ Processing {len(valid_embeddings)} embeddings in batch...")
+
+            similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in valid_embeddings]
+            top_results.extend(filter_and_rank_embeddings(valid_embeddings, similarities, top_n=10))  # Reduce to top 10
+
+            if not valid_embeddings:
                 logging.error("⚠️ No valid embeddings found! GPT-4 may generate poor responses.")
-                response = "I'm sorry, but I couldn't generate a response due to missing data."
-            else:
-                dynamic_top_n = get_dynamic_top_n(similarities)
-                top_results = filter_and_rank_embeddings(embeddings, similarities, top_n=dynamic_top_n)
+                return "I'm sorry, but I couldn't generate a response due to missing data."
 
-                unique_texts = set()
-                combined_context = create_weighted_context(top_results)
-                for result in top_results:
-                    if result['text'] not in unique_texts:
-                        unique_texts.add(result['text'])
-                        combined_context += f"{result['text']}\n"
+            dynamic_top_n = get_dynamic_top_n(similarities)
+            top_results = filter_and_rank_embeddings(embeddings, similarities, top_n=dynamic_top_n)
 
-                # ✅ Include past chat history in the context
-                chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
+            unique_texts = set()
+            combined_context = create_weighted_context(top_results)
+            for result in top_results:
+                if result['text'] not in unique_texts:
+                    unique_texts.add(result['text'])
+                    combined_context += f"{result['text']}\n"
 
-                # ✅ Combine everything into the final context
-                full_context = f"{chat_context}\n\n{combined_context}"
+            # Include past chat history in the context
+            chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
 
-                print("Generating response...")
-                response = generate_response(combined_context, expanded_query, full_context, MODEL) or response
+            # Combine everything into the final context
+            full_context = f"{chat_context}\n\n{combined_context}"
+
+
+            print("Generating response...")
+            response = None  # Ensure response always exists
+            try:
+                generated_response = generate_response(combined_context, expanded_query, full_context, MODEL)
+                if generated_response:
+                    response = generated_response
+                    print("\nAviationAI:", response)
+            except Exception as e:
+                logging.error(f"Error generating response: {e}")
+                response = "I'm sorry, but I couldn't generate a response due to an internal error."
                 print("\nAviationAI:", response)
 
             is_helpful = get_user_feedback()
             if not is_helpful:
                 print("I'm sorry the response wasn't helpful. Let me try to improve.")
+            # Here you could implement logic to refine the response or adjust parameters
 
-            # ✅ Update chat history (keep only last 5 messages)
+             # Update chat history
             chat_history.append((expanded_query, response))
-            chat_history = chat_history[-max_history:]
+            if len(chat_history) > max_history:  # Keep only the last 5 exchanges
+                chat_history = chat_history[-max_history:]
 
         except Exception as e:
             logging.error(f"Error: {e}")
             print("\nAviationAI:", response)
 
-        # ✅ Store chat history in AstraDB
+        # Store chat history in a log file
+
         store_chat_in_db(session_id, expanded_query, response)
         print(f"Expanded Query: {expanded_query}")
-
+        
 if __name__ == "__main__":
     chat_loop()
