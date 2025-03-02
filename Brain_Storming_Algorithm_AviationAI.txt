@@ -1,0 +1,259 @@
+Scripts Sequence:
+
+Version 1 
+
+1 - read_documents.py
+		Input - documents to be processed DOCX format
+		Output 
+			aviation_corpus.pkl
+				information:
+					filename,
+					text,
+					tokens,
+					section_references,
+					personal_names,
+					entities,
+					pos_tags,
+					metadata,
+					category
+				Local Folder
+					AviationRAG/data/raw
+			processed text "TXT" format
+				Local Folder
+					AviationRAG/data/processed/ProcessedText
+			processed text expanded "TXT" format
+				Local Folder
+					AviationRAG/data/Processed/ProcessedTextExpanded
+					
+2 - aviation_chunk_saver.py
+		Input - aviation_corpus.pkl
+		Output - 
+			chunked documents 
+				Format json with the following information in a dictionary format for each document
+					filename
+					metadata
+					category
+					chunks
+						chunk_id
+						text
+						tokens number of
+				Local Folder
+					AviationRAG/data/processed/chunked_documents
+					
+3 - extract_pkl_to_json.py
+		Input - aviation_corpus.pkl
+		Output 
+			aviation_corpus.json
+			information - the same as aviation_corpus.pkl
+			Local Folder
+				AviationRAG/data/processed
+		
+4 - check_pkl_content.py
+		Input - aviation_corpus.pkl
+		Output
+			Screen information about the aviation_corpus.pkl content
+			
+5 - generate_embeddings.js
+		Input - chunked documents
+		Output
+			aviation_embeddings.json
+			checkpoint.json
+			embeddings_report.csv
+			Local Folder
+				AviationRAG/data/embeddings
+				
+6 - check_embeddings.py
+		Input aviation_embeddings.json
+		Output
+			Screeen - information about embeddings stored
+			
+7 - store_embeddings_astra.js
+		Input aviation_embeddings.json
+		Output
+			Data stored in AstraDB aviation_data.aviation_documents table
+				chunk_id
+				filename
+				text
+				tokens
+				embeddingBuffer
+			Local 
+				AstraDB client aviation_data.aviation_documents table
+				
+8 - check_astradb_content.js
+		Input - aviation_documents table from AstraDB
+		Output
+			Screen - information about data stored in AstraDB
+			
+9 - check_astradb_consistency.js
+		Input 
+			aviation_data.aviation_documents table from AstraDB
+			aviation_embeddings.json
+		Output
+			Screee - information about consistency between two data stored 
+			
+10 - visualizing_data.py
+		Input aviation_corpus.pkl
+		Output
+			charts with the following presentation
+				average lexical diversity
+				average names per category
+				category distribuction
+				compound score distribution
+				documents lenght distribution
+				lexical diversity plot
+				lexical diversity histogram
+				lexical diversity violin
+				positive versus negative scatter
+				sentiment score boxplot
+				sentiment score heatmap
+				sentiment score violin
+				tokens count
+				word category heatmap
+				wordcloud map
+			Local Folder
+				AviationRAG/assets/pictures
+			update_aviation_corpus.csv with statistic data
+			update_aviation_corpus.pkl with statistic data
+			Local Folder
+				AviationRAG/data/processed
+
+-	Algorithm Description
+
+General Features
+
+	- The general idea is to create a sequence of operations to perform the scripts above in a systematic and controlled manner.
+	- To have the ability to for each step verify the correctness of the task and proceeed or not to the next step.
+	- The routine also needs to have the capacity to check and identify specific documents by title and delete them from the DataBase when necessary.
+	- Access by Login and Password
+	- The rooutine shall permit to choice if the user want to add a new document, make a consult about a specific document by title or subjects.
+	- Chat using aviationai routine
+	- Tow types access: adiministrator and user
+	
+
+	Steps
+	
+	1 Start Routine
+
+	2 Login 
+
+	3 Access the main page
+
+	4 Choose Options
+
+	5 Access information
+
+	6 Change to another choice
+
+	7 Access the information
+
+	8 Back main page
+
+	9 Exit
+
+	10 Save Log
+
+	11 Close Routine
+
+
+	
+	Options
+		Upload a new document to the database.
+		Verify documents in the database.
+		Verify Tokens in the database
+		Show Charts with database data.
+		Chat
+
+Version 2
+
+**AviationRAG Algorithm Development Report**
+
+## **1. Introduction**
+This report outlines the development of an integrated algorithm for the AviationRAG project. The goal is to streamline the entire workflow, from document processing to embedding storage and retrieval, into a single, structured system. The proposed solution ensures systematic execution, data verification, and improved accessibility for users.
+
+---
+
+## **2. General Features Enhancements**
+
+### **Systematic Execution & Control**
+- Implement logging and error handling for tracking progress and failures.
+- Introduce a retry mechanism for temporary failures (e.g., API timeouts).
+
+### **Verification at Each Step**
+- Use checksum or hash-based validation to confirm correct processing.
+- Compare document sizes or token counts before and after chunking.
+
+### **Document Management**
+- Enable document updates (not just addition/deletion).
+- Implement version control to track changes over time.
+
+### **User Authentication & Access Control**
+- Consider JWT-based authentication over basic login/password.
+- Define user roles: admin (full control) and user (read/query only).
+- Maintain an audit log for document modifications and deletions.
+
+---
+
+## **3. Refining the Processing Workflow**
+
+### **Step 1: Read Documents**
+- Automate new file detection in `data/documents`.
+- Enable batch processing or manual selection.
+
+### **Step 2: Chunking**
+- Validate chunk integrity by verifying token counts.
+
+### **Step 3: Convert PKL to JSON**
+- Automate JSON conversion upon PKL file generation.
+
+### **Step 4: Generate Embeddings**
+- Implement a scheduler for processing new chunks periodically.
+- Optimize OpenAI API calls with rate-limiting strategies.
+
+### **Step 5: Store Embeddings in AstraDB**
+- Verify consistency by comparing document lists before and after insertion.
+
+### **Step 6: Consistency Checks**
+- Automate validation of embeddings and stored data.
+- Log and notify the admin of discrepancies.
+
+### **Step 7: Data Visualization**
+- Generate reports on demand rather than within the main pipeline.
+- Enable comparison of document versions over time.
+
+---
+
+## **4. Expanding User Options**
+
+### **Additional Functionalities**
+- **Query by Metadata**: Search by filename, category, or extracted entities.
+- **Export Data**: Allow exporting processed data to CSV, JSON, or PDF.
+- **RAG Integration**: Connect chat feature with the embeddings database for document-specific responses.
+
+---
+
+## **5. Implementation Plan**
+
+### **Phase 1: Execution Flow Definition**
+- Develop a main controller script to sequentially call each processing step.
+
+### **Phase 2: Configuration Management**
+- Store paths, API keys, and credentials in `.env` or JSON configuration files.
+
+### **Phase 3: User Interface Development**
+- Start with a Command-Line Interface (CLI) for testing.
+- Progress towards a web-based dashboard for improved accessibility.
+
+### **Phase 4: Parallel Testing**
+- Continue document uploads while progressively integrating each module.
+
+---
+
+## **6. Next Steps**
+- Develop a prototype script to orchestrate the workflow with logging, error handling, and conditional execution.
+- Conduct parallel testing and refinement to ensure stability and accuracy.
+- Optimize the algorithm for efficiency and scalability.
+
+This document serves as the blueprint for refining and automating the AviationRAG project, ensuring a systematic and controlled approach to data processing and management.
+
+**Prepared by:** AviationRAG Development Team
+
