@@ -489,12 +489,12 @@ def chat_loop():
             top_results = []
 
             for batch in load_embeddings(EMBEDDINGS_FILE):  
-                valid_embeddings = [emb for emb in batch if isinstance(emb, dict) and 'embedding' in emb and len(emb['embedding']) > 10]
+                valid_embeddings = [emb for emb in batch if isinstance(emb, dict) and 'embedding' in emb and len(emb['embedding']) > 15]
 
                 if valid_embeddings:
                     print(f"✅ Processing {len(valid_embeddings)} embeddings in batch...")
                     similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in valid_embeddings]
-                    top_results.extend(filter_and_rank_embeddings(valid_embeddings, similarities, top_n=10))  
+                    top_results.extend(filter_and_rank_embeddings(valid_embeddings, similarities, top_n=15))  
                 else:
                     logging.warning("⚠️ No valid embeddings found in this batch. Skipping.")
                     continue
