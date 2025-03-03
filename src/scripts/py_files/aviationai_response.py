@@ -9,6 +9,7 @@ from nltk.corpus import wordnet
 import logging
 import subprocess
 import uuid
+import sys
 
 
 # Load environment variables
@@ -27,14 +28,43 @@ if not os.path.exists(chat_dir):
 if not os.path.exists(chat_id):
     os.makedirs(chat_id)
 
-# Set up logging
-log_file_path = os.path.join(log_dir, 'chat_system.log')
-logging.basicConfig(
-    filename=log_file_path,
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
+# Ensure log directory exists
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+# Define multiple log files
+info_log_path = os.path.join(log_dir, 'info.log')
+error_log_path = os.path.join(log_dir, 'error.log')
+performance_log_path = os.path.join(log_dir, 'performance.log')
+
+log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+
+# Ensure UTF-8 encoding for all handlers
+info_log = logging.FileHandler("logs/info.log", encoding="utf-8")
+error_log = logging.FileHandler("logs/error.log", encoding="utf-8")
+performance_log = logging.FileHandler("logs/performance.log", encoding="utf-8")
+console_handler = logging.StreamHandler(sys.stdout)  # ✅ Stream to console
+
+# Set logging levels
+info_log.setLevel(logging.INFO)
+error_log.setLevel(logging.ERROR)
+performance_log.setLevel(logging.DEBUG)
+console_handler.setLevel(logging.INFO)
+
+# Apply formatters
+info_log.setFormatter(log_formatter)
+error_log.setFormatter(log_formatter)
+performance_log.setFormatter(log_formatter)
+console_handler.setFormatter(log_formatter)
+
+# Create Logger
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+logger.addHandler(info_log)
+logger.addHandler(error_log)
+logger.addHandler(performance_log)
+logger.addHandler(console_handler)  # ✅ Enable console logging
+
 
 # Set up the OpenAI API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -66,6 +96,8 @@ def store_chat_in_db(session_id, user_query, ai_response):
     )
 
         print("Chat stored successfully in AstraDB!")
+        logging.info(f"💾 Storing chat for session: {session_id} | Query: {user_query[:50]}...")
+
     except subprocess.CalledProcessError as e:
         logging.error(f"Error storing chat: {e}")
 
@@ -74,6 +106,7 @@ def retrieve_chat_from_db(session_id, limit=5):
     Calls the Node.js script to retrieve chat history from AstraDB.
     """
     script_path = os.path.join(os.path.dirname(__file__), '..', 'js_files', 'store_chat.js')
+    logging.info(f"📥 Retrieving chat messages for session: {session_id}")
 
     if not session_id.strip():
         print("⚠️ Warning: `session_id` is empty! Generating a new one...")
@@ -255,29 +288,31 @@ def compute_cosine_similarity(vec1, vec2):
         float: Cosine similarity between vec1 and vec2
     """
     try:
-        # Convert input to numpy arrays if they're not already
-        vec1 = np.asarray(vec1, dtype=np.float64)
-        vec2 = np.asarray(vec2, dtype=np.float64)
-        
-        # Check if vectors have the same dimension
-        if vec1.shape != vec2.shape:
-            raise ValueError("Vectors must have the same dimension")
-        
-        # Compute dot product and magnitudes
-        dot_product = np.dot(vec1, vec2)
-        magnitude1 = np.linalg.norm(vec1)
-        magnitude2 = np.linalg.norm(vec2)
-        
-        # Check for zero magnitude to avoid division by zero
-        if magnitude1 == 0 or magnitude2 == 0:
+        # Ensure vectors are not None
+        if vec1 is None or vec2 is None:
+            logging.error("One or both vectors are None")
             return 0.0
         
-        # Compute and return cosine similarity
-        return dot_product / (magnitude1 * magnitude2)
-    
+        # Convert to NumPy arrays
+        vec1 = np.array(vec1, dtype=np.float32)
+        vec2 = np.array(vec2, dtype=np.float32)
+
+        # Compute magnitudes
+        magnitude1 = np.linalg.norm(vec1)
+        magnitude2 = np.linalg.norm(vec2)
+
+        # Handle cases where magnitude is zero
+        if magnitude1 == 0 or magnitude2 == 0:
+            logging.error("One or both vectors have zero magnitude, returning similarity as 0.")
+            return 0.0
+
+        # Compute cosine similarity
+        similarity = np.dot(vec1, vec2) / (magnitude1 * magnitude2)
+        return similarity
+
     except Exception as e:
-        logging.error(f"Error in compute_cosine_similarity: {e}")
-        return 0.0  # Return 0 similarity in case of any error
+        logging.error(f"Error in compute_cosine_similarity: {str(e)}")
+        return 0.0
 
 def filter_and_rank_embeddings(embeddings, similarities, top_n=15, min_similarity=0.7):
     """Filter and rank embeddings based on similarity scores."""
@@ -310,6 +345,8 @@ def generate_response(context, expanded_query, full_context, model):
     if len(truncated_full_context) > max_context_length:
         truncated_full_context = truncated_full_context[-max_context_length:]
     
+    logging.info(f"🤖 Calling GPT-4 for expanded query: {expanded_query[:50]}...")
+    
     prompt = f"""
     You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples
     where relevant. Use the context and history below to answer the user's question:
@@ -336,13 +373,17 @@ def generate_response(context, expanded_query, full_context, model):
 
     for attempt in range(max_retries):
         try:
+            start_time = time.time() # Start time tracking
             response = client.chat.completions.create(
                 model=model,
                 messages=[{"role": "user", "content": prompt}],
                 temperature=0.7,
                 max_tokens=max_tokens
             )
+            execution_time = time.time() - start_time  # Calculate execution time
+            logging.debug(f"⚡ GPT-4 Response Time: {execution_time:.2f} sec")
             response_text = response.choices[0].message.content.strip()
+            logging.info(f"✅ GPT-4 Response Generated: {response_text[:50]}...")  # Show first 50 characters
 
             if not response_text:
                 logging.error("⚠️ GPT-4 returned an empty response!")
