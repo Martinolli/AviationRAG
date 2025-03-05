@@ -13,7 +13,6 @@ import uuid
 import sys
 import faiss
 
-
 # Load environment variables
 load_dotenv()
 
@@ -234,13 +233,6 @@ def get_embedding(text):
         logging.error(f"Error generating embedding: {e}")
         return None
 
-def get_dynamic_top_n(similarities, max_n=15, threshold=0.6):
-    sorted_similarities = sorted(similarities, reverse=True)
-    for i, sim in enumerate(sorted_similarities):
-        if sim < threshold or i == max_n:
-            return i
-    return max_n
-
 def create_weighted_context(top_results):
     combined_context = ""
     total_weight = sum(result['similarity'] for result in top_results)
@@ -251,86 +243,48 @@ def create_weighted_context(top_results):
 
 embeddings_cache = {}  # In-memory cache for embeddings
 
-def load_embeddings(file_path, batch_size=1000):
-    """Load embeddings from a JSON file and cache results."""
+def load_embeddings(file_path):
+    """Load embeddings from a JSON file and create FAISS index."""
     global embeddings_cache
 
     if file_path in embeddings_cache:
-        return embeddings_cache[file_path]  # Return cached embeddings
+        return embeddings_cache[file_path]
 
     if not os.path.exists(file_path):
         logging.error(f"🚨 Embeddings file not found: {file_path}")
-        return []
+        return None, []
 
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
-        embeddings_cache[file_path] = data  # Store embeddings in cache
-
-        for i in range(0, len(data), batch_size):
-            yield data[i:i + batch_size]
-
-        return data
+        index, embeddings = create_faiss_index(data)
+        embeddings_cache[file_path] = (index, embeddings)
+        return index, embeddings
 
     except json.JSONDecodeError as e:
         logging.error(f"🚨 Error loading embeddings JSON: {e}")
-        return []
+        return None, []
 
-def compute_cosine_similarity(vec1, vec2):
-    """
-    Compute cosine similarity between two vectors.
-    
-    Args:
-        vec1 (list or np.array): First vector
-        vec2 (list or np.array): Second vector
-    
-    Returns:
-        float: Cosine similarity between vec1 and vec2
-    """
-    try:
-        # Ensure vectors are not None
-        if vec1 is None or vec2 is None:
-            logging.error("One or both vectors are None")
-            return 0.0
-        
-        # Convert to NumPy arrays
-        vec1 = np.array(vec1, dtype=np.float32)
-        vec2 = np.array(vec2, dtype=np.float32)
+def create_faiss_index(embeddings):
+    """Create a FAISS index from the embeddings."""
+    dimension = len(embeddings[0]['embedding'])
+    index = faiss.IndexFlatIP(dimension)  # Inner product is equivalent to cosine similarity for normalized vectors
+    vectors = np.array([emb['embedding'] for emb in embeddings], dtype=np.float32)
+    faiss.normalize_L2(vectors)  # Normalize vectors
+    index.add(vectors)
+    return index, embeddings
 
-        # Compute magnitudes
-        magnitude1 = np.linalg.norm(vec1)
-        magnitude2 = np.linalg.norm(vec2)
-
-        # Handle cases where magnitude is zero
-        if magnitude1 == 0 or magnitude2 == 0:
-            logging.error("One or both vectors have zero magnitude, returning similarity as 0.")
-            return 0.0
-
-        # Compute cosine similarity
-        similarity = np.dot(vec1, vec2) / (magnitude1 * magnitude2)
-        return similarity
-
-    except Exception as e:
-        logging.error(f"Error in compute_cosine_similarity: {str(e)}")
-        return 0.0
-
-def filter_and_rank_embeddings(embeddings, similarities, top_n=15, min_similarity=0.6):
-    """Filter and rank embeddings based on similarity scores."""
-    # Calculate the average similarity
-    avg_similarity = np.mean(similarities)
-    # Use max of average similarity and min_similarity as the threshold
-    threshold = max(avg_similarity, min_similarity)
-    
-    return sorted(
-        [
-            {**emb, 'similarity': sim}
-            for emb, sim in zip(embeddings, similarities)
-            if sim > threshold and isinstance(emb, dict) and 'embedding' in emb
-        ],
-        key=lambda x: x['similarity'],
-        reverse=True
-    )[:top_n]
+def search_faiss_index(index, query_vector, k=15):
+    """Search the FAISS index for similar vectors."""
+    query_vector = np.array([query_vector], dtype=np.float32)
+    faiss.normalize_L2(query_vector)
+    total_vectors = index.ntotal
+    k = min(k, total_vectors)  # Ensure k is not larger than the total number of vectors
+    logging.info(f"Searching FAISS index with {total_vectors} vectors for top {k} results")
+    distances, indices = index.search(query_vector, k)
+    logging.info(f"FAISS search returned {len(indices[0])} results")
+    return distances[0], indices[0]
 
 def generate_response(context, expanded_query, full_context, model):
     """Generate a response using OpenAI."""
@@ -360,12 +314,12 @@ def generate_response(context, expanded_query, full_context, model):
 
     Human: {expanded_query}
 
-    AI: Let me provide a detailed and informative answer:
-    Format your response in the most appropriate structure:
-    - Include relevant facts, explanations, and examples where appropriate. 
-    - If it's about regulations, provide a **list of key FAA, ICAO, EASA, or MIL-STDs guidelines if available**.
-    - If it's about an accident, provide a **summary of investigation insights**.
-    - If it's about a technical issue, provide **a structured breakdown** with root causes.
+    Provide a detailed, comprehensive, and accurate response based on the context above. 
+    Include relevant facts, explanations, and examples where appropriate. 
+    For each key piece of information in your response, cite the source document in square brackets, 
+    e.g., [Document: Safety Manual]. If information comes from multiple sources, list all relevant sources.
+    If the context doesn't contain enough information to fully answer the question, 
+    clearly state what information is missing or uncertain.
     """
     # Calculate max tokens dynamically
     max_tokens = min(500, 4000 - len(truncated_full_context.split()))
@@ -461,7 +415,10 @@ def chat_loop():
     # ✅ Load embeddings only once at the beginning
     try:
         print("Loading embeddings...")
-        embeddings = load_embeddings(EMBEDDINGS_FILE)
+        faiss_index, embeddings = load_embeddings(EMBEDDINGS_FILE)
+        if faiss_index is None:
+            logging.error("Failed to load embeddings and create FAISS index.")
+            return
     except Exception as e:
         logging.error(f"Error loading embeddings: {e}")
         return
@@ -486,28 +443,23 @@ def chat_loop():
                 print("⚠️ Embedding generation failed! Cannot process the query.")
                 continue
 
-            print("Processing embeddings...")
-            top_results = []
+            print("Searching for similar embeddings...")
+            distances, indices = search_faiss_index(faiss_index, query_embedding)
+            logging.info(f"Got {len(indices)} results from FAISS search")
 
-            for batch in load_embeddings(EMBEDDINGS_FILE):  
-                valid_embeddings = [emb for emb in batch if isinstance(emb, dict) and 'embedding' in emb and len(emb['embedding']) > 15]
+            top_results = [
+                {**embeddings[i], 'similarity': float(distances[i])}
+                for i in indices
+                if i < len(embeddings) and distances[i] > 0.6
+                ]
 
-                if valid_embeddings:
-                    print(f"✅ Processing {len(valid_embeddings)} embeddings in batch...")
-                    similarities = [compute_cosine_similarity(query_embedding, emb['embedding']) for emb in valid_embeddings]
-                    top_results.extend(filter_and_rank_embeddings(valid_embeddings, similarities, top_n=10))  
-                else:
-                    logging.warning("⚠️ No valid embeddings found in this batch. Skipping.")
-                    continue
-
+            logging.info(f"Filtered to {len(top_results)} results above threshold")
+        
             if not top_results:
                 logging.error(f"⚠️ No valid embeddings found for query: {expanded_query}")
                 print(f"⚠️ No relevant data found for: {expanded_query}")
                 response = "I'm sorry, but I couldn't find any relevant information to answer your query."
             else:
-                dynamic_top_n = get_dynamic_top_n(similarities)
-                top_results = filter_and_rank_embeddings(top_results, similarities, top_n=dynamic_top_n)
-
                 combined_context = create_weighted_context(top_results)
                 chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
                 full_context = f"{chat_context}\n\n{combined_context}"

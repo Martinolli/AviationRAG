@@ -359,15 +359,15 @@ def generate_response(context, expanded_query, full_context, model):
 
     Human: {expanded_query}
 
-    AI: Let me provide a detailed and informative answer:
-    Format your response in the most appropriate structure:
-    - Include relevant facts, explanations, and examples where appropriate. 
-    - If it's about regulations, provide a **list of key FAA, ICAO, EASA, or MIL-STDs guidelines if available**.
-    - If it's about an accident, provide a **summary of investigation insights**.
-    - If it's about a technical issue, provide **a structured breakdown** with root causes.
+    Provide a detailed, comprehensive, and accurate response based on the context above. 
+    Include relevant facts, explanations, and examples where appropriate. 
+    For each key piece of information in your response, cite the source document in square brackets, 
+    e.g., [Document: Safety Manual]. If information comes from multiple sources, list all relevant sources.
+    If the context doesn't contain enough information to fully answer the question, 
+    clearly state what information is missing or uncertain.
     """
     # Calculate max tokens dynamically
-    max_tokens = min(500, 4000 - len(truncated_full_context.split()))
+    max_tokens = min(500, 8000 - len(truncated_full_context.split()))
 
     import random
 

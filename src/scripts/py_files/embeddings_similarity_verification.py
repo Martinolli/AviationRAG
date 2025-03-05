@@ -106,7 +106,7 @@ def generate_response(context, query, model):
     Returns:
         str: The generated response from OpenAI.
     """
-    max_context_length = 4000  # Adjust based on the model's capabilities
+    max_context_length = 8000  # Adjust based on the model's capabilities
     truncated_context = context[:max_context_length]
     
     prompt = f"""
@@ -240,6 +240,6 @@ if __name__ == "__main__":
             followup_response = generate_response(combined_context, question, MODEL)
             print(f"Follow-up Response {i}:")
             print(followup_response)
-
+  
     except Exception as e:
         print(f"Error: {e}")
