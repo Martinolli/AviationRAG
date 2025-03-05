@@ -1,0 +1,142 @@
+def chat_loop():
+    """Main chat loop for AviationAI"""
+    
+    MODEL = "gpt-4"  # Change between "gpt-3.5-turbo" or "gpt-4"
+    
+    print("Welcome to the AviationAI Chat System!")
+    print("Type 'exit' to end the conversation.")
+
+    session_metadata_file = os.path.join(chat_id, "session_metadata.json")
+
+    # ✅ Load session metadata once (avoid redundant reloading)
+    session_metadata = {}
+    if os.path.exists(session_metadata_file):
+        try:
+            with open(session_metadata_file, "r", encoding="utf-8") as file:
+                session_metadata = json.load(file)
+        except json.JSONDecodeError:
+            logging.error("⚠️ Corrupted session metadata file. Resetting...")
+            session_metadata = {}
+
+    # ✅ Ensure session_id is initialized
+    session_id = None
+    past_exchanges = []  # Initialize chat history
+    chat_cache = {}  # Cache for quick retrieval
+
+    # ✅ Allow user to select a previous session or start a new one
+    if session_metadata:
+        print("\n📌 Available Previous Sessions:")
+        for i, (sid, title) in enumerate(session_metadata.items(), 1):
+            print(f"{i}. {title} (Session ID: {sid[:8]}...)")
+
+        try:
+            choice = int(input("\nEnter session number to continue (or 0 for a new session): "))
+            if 1 <= choice <= len(session_metadata):
+                session_id = list(session_metadata.keys())[choice - 1]
+                print(f"✅ Continuing session: {session_metadata[session_id]}")
+                past_exchanges = chat_cache.get(session_id, retrieve_chat_from_db(session_id))
+                chat_cache[session_id] = past_exchanges  # Store in cache
+            else:
+                session_id = str(uuid.uuid4())
+                print("🔄 Starting a new session...")
+        except ValueError:
+            print("⚠️ Invalid input, creating a new session.")
+            session_id = str(uuid.uuid4())
+    else:
+        session_id = str(uuid.uuid4())
+
+    # ✅ Assign a title for new sessions
+    if session_id not in session_metadata:
+        session_subject = input("Enter a short title for this session (e.g., 'HFACS Methodology Discussion'): ").strip()
+        session_metadata[session_id] = session_subject
+
+    # ✅ Save updated session metadata
+    with open(session_metadata_file, "w", encoding="utf-8") as file:
+        json.dump(session_metadata, file, indent=4)
+
+    # ✅ Load embeddings only once at the beginning
+    try:
+        print("Loading embeddings...")
+        embeddings = load_embeddings(EMBEDDINGS_FILE)
+    except Exception as e:
+        logging.error(f"Error loading embeddings: {e}")
+        return
+    
+    # ✅ Retrieve past chat history correctly
+    chat_history = [(ex["user_query"], ex["ai_response"]) for ex in past_exchanges if isinstance(ex, dict) and "user_query" in ex and "ai_response" in ex]
+
+    max_history = 5  # Keep only the last 5 exchanges in chat history
+
+    while True:
+        QUERY_TEXT = input("\nUser: ")
+        if QUERY_TEXT.lower() == 'exit':
+            print("Thank you for using the AviationAI Chat System. Goodbye!")
+            break
+        
+        try:
+            print("Generating query embedding...")
+            expanded_query = expand_query(QUERY_TEXT)
+            query_embedding = get_embedding(expanded_query)
+            if query_embedding is None or len(query_embedding) == 0:
+                logging.error(f"❌ Query embedding is empty for: {expanded_query}")
+                print("⚠️ Embedding generation failed! Cannot process the query.")
+                continue
+
+            logging.info(f"✅ Query embedding generated successfully for: {expanded_query[:50]}...")
+  
+            # Retrieve the most similar results
+            similarity_results = compute_similarity_with_faiss(query_embedding, k=10)
+
+            top_results = []
+            for idx, score in similarity_results:
+                try:
+                    idx = int(idx)  # ✅ Ensure index is an integer
+                    if 0 <= idx < len(embeddings):
+                        top_results.append(embeddings[idx])
+                    else:
+                        logging.warning(f"⚠️ FAISS returned out-of-range index: {idx}")
+                except ValueError:
+                    logging.error(f"❌ FAISS returned invalid index type: {idx}")
+            
+            if faiss_index.index.ntotal == 0:
+                logging.error("⚠️ FAISS Index is empty. Reloading embeddings...")
+                load_and_index_embeddings()  # ✅ Ensure FAISS is ready before searching
+
+            if not top_results:
+                logging.error(f"⚠️ No valid embeddings found for query: {expanded_query}")
+                print(f"⚠️ No relevant data found for: {expanded_query}. Please try rephrasing your question.")
+                response = "I'm sorry, but I couldn't find enough data to answer. Try rephrasing or providing more details."
+                continue
+            
+            combined_context = create_weighted_context(top_results)
+            chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
+            full_context = f"{chat_context}\n\n{combined_context}"
+
+            print("Generating response...")
+            logging.info("🛠️ Calling GPT-4 to generate response...")
+            response = generate_response(combined_context, expanded_query, full_context, MODEL)
+
+            if response and len(response) >= 10:
+                logging.info(f"✅ GPT-4 Response Generated: {response[:50]}...")
+            else:
+                logging.error("⚠️ GPT-4 returned an empty or invalid response!")
+                response = "I'm sorry, but I couldn't generate a meaningful response. Please try rephrasing your query."
+
+            print("\nAviationAI:", response)
+
+            is_helpful = get_user_feedback()
+            if not is_helpful:
+                print("I'm sorry the response wasn't helpful. Let me try to improve.")
+
+            chat_history.append((expanded_query, response))
+            chat_history = chat_history[-max_history:]
+
+            store_chat_in_db(session_id, expanded_query, response)
+            print(f"Expanded Query: {expanded_query}")
+
+        except Exception as e:
+            logging.error(f"Error in chat loop: {e}")
+            print("\nAviationAI: I'm sorry, but I encountered an error while processing your query. Please try again.")
+
+if __name__ == "__main__":
+    chat_loop()

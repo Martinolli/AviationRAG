@@ -1,7 +1,6 @@
 import json
 from openai import OpenAI
 from openai import OpenAIError
-from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 from dotenv import load_dotenv
 import os
@@ -66,9 +65,44 @@ logger.addHandler(error_log)
 logger.addHandler(performance_log)
 logger.addHandler(console_handler)  # ✅ Enable console logging
 
-
 # Set up the OpenAI API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+class FAISSIndex:
+    def __init__(self, embedding_dim):
+        self.index = faiss.IndexFlatL2(embedding_dim)  # L2 distance for similarity search
+        self.embeddings = []  # Store original embeddings for reference
+
+    def add_embeddings(self, embeddings):
+        """Adds new embeddings to FAISS index."""
+        embeddings = np.array(embeddings, dtype=np.float32)
+
+        if embeddings.shape[1] != self.index.d:
+            logging.error(f"❌ Dimension mismatch! FAISS expects {self.index.d}, but embeddings have {embeddings.shape[1]}")
+            return
+
+        if self.index.ntotal > 0:
+            logging.warning(f"⚠️ FAISS already contains {self.index.ntotal} embeddings. Skipping reloading.")
+            return
+
+        self.index.add(embeddings)
+        logging.info(f"✅ Added {len(embeddings)} embeddings. FAISS Index now contains {self.index.ntotal} embeddings.")
+
+        self.embeddings.extend(embeddings)
+        logging.info(f"✅ Added {len(embeddings)} embeddings. FAISS Index now contains {self.index.ntotal} embeddings.")
+
+    def search(self, query_embedding, k=5):
+        """Finds top k nearest embeddings."""
+        query_embedding = np.array(query_embedding, dtype=np.float32).reshape(1, -1)
+        distances, indices = self.index.search(query_embedding, k)
+        return indices[0], distances[0]
+
+# ✅ Initialize FAISS globally (so it doesn't reset every query)
+
+embedding_dim = 1536  # Adjust based on embeddings
+faiss_index = FAISSIndex(embedding_dim)
+embeddings_loaded = False  # Track if embeddings are already loaded
+EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
 
 def store_chat_in_db(session_id, user_query, ai_response):
     """
@@ -244,47 +278,69 @@ def create_weighted_context(top_results):
 embeddings_cache = {}  # In-memory cache for embeddings
 
 def load_embeddings(file_path):
-    """Load embeddings from a JSON file and create FAISS index."""
-    global embeddings_cache
-
-    if file_path in embeddings_cache:
-        return embeddings_cache[file_path]
-
-    if not os.path.exists(file_path):
-        logging.error(f"🚨 Embeddings file not found: {file_path}")
-        return None, []
-
+    """Loads aviation embeddings from JSON file."""
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
+            if isinstance(data, list) and all(isinstance(item, dict) for item in data):
+                embeddings = [np.array(entry["embedding"], dtype=np.float32) for entry in data if "embedding" in entry]
 
-        index, embeddings = create_faiss_index(data)
-        embeddings_cache[file_path] = (index, embeddings)
-        return index, embeddings
+                if len(embeddings) == 0:
+                    logging.error("❌ No embeddings found in the dataset!")
+                    return []
 
-    except json.JSONDecodeError as e:
-        logging.error(f"🚨 Error loading embeddings JSON: {e}")
-        return None, []
+                logging.info(f"📚 Loaded {len(embeddings)} embeddings from file.")
+                return np.array(embeddings, dtype=np.float32)  # ✅ Convert to NumPy array
 
-def create_faiss_index(embeddings):
-    """Create a FAISS index from the embeddings."""
-    dimension = len(embeddings[0]['embedding'])
-    index = faiss.IndexFlatIP(dimension)  # Inner product is equivalent to cosine similarity for normalized vectors
-    vectors = np.array([emb['embedding'] for emb in embeddings], dtype=np.float32)
-    faiss.normalize_L2(vectors)  # Normalize vectors
-    index.add(vectors)
-    return index, embeddings
+            else:
+                embeddings = data  # Assume it's already in the correct format
 
-def search_faiss_index(index, query_vector, k=15):
-    """Search the FAISS index for similar vectors."""
-    query_vector = np.array([query_vector], dtype=np.float32)
-    faiss.normalize_L2(query_vector)
-    total_vectors = index.ntotal
-    k = min(k, total_vectors)  # Ensure k is not larger than the total number of vectors
-    logging.info(f"Searching FAISS index with {total_vectors} vectors for top {k} results")
-    distances, indices = index.search(query_vector, k)
-    logging.info(f"FAISS search returned {len(indices[0])} results")
-    return distances[0], indices[0]
+            if len(embeddings) == 0:
+                logging.error("❌ No embeddings found in the dataset!")
+                return []
+
+            logging.info(f"📚 Loaded {len(embeddings)} embeddings from file.")
+            return embeddings
+
+    except Exception as e:
+        logging.error(f"❌ Error loading embeddings: {e}")
+        return []
+
+# Create FAISS index globally
+def compute_similarity_with_faiss(query_embedding, k=5):
+    """Searches for the top K most similar embeddings using FAISS."""
+    try:
+        if query_embedding is None or len(query_embedding) == 0:
+            logging.error("❌ Query embedding is empty. Cannot perform FAISS search.")
+            return []
+
+        query_embedding = np.array(query_embedding, dtype=np.float32)
+        if query_embedding.ndim == 1:
+            query_embedding = query_embedding.reshape(1, -1)  # Ensure correct shape
+        elif query_embedding.ndim != 2 or query_embedding.shape[1] != faiss_index.index.d:
+            logging.error(f"❌ Query embedding shape mismatch! Expected (1, {faiss_index.index.d}), but got {query_embedding.shape}")
+            return []
+
+        if faiss_index.index.ntotal == 0:
+            logging.error("⚠️ FAISS Index is empty. No embeddings available!")
+            return []
+
+        indices, distances = faiss_index.index.search(query_embedding, k)
+
+        # ✅ Convert FAISS indices to a Python list of integers
+        indices = indices.flatten().tolist()
+        indices = [int(idx) for idx in indices]  # Convert to integers
+        distances = distances.flatten().tolist()
+
+        logging.info(f"✅ FAISS search completed. Top result indices: {indices}, Distances: {distances}")
+
+        similarity_scores = [1 / (1 + dist) if dist > 0 else 1.0 for dist in distances]
+
+        return list(zip(indices, similarity_scores))
+
+    except Exception as e:
+        logging.error(f"❌ Error in FAISS similarity search: {e}")
+        return []
 
 def generate_response(context, expanded_query, full_context, model):
     """Generate a response using OpenAI."""
@@ -322,7 +378,7 @@ def generate_response(context, expanded_query, full_context, model):
     clearly state what information is missing or uncertain.
     """
     # Calculate max tokens dynamically
-    max_tokens = min(500, 4000 - len(truncated_full_context.split()))
+    max_tokens = min(500, 8000 - len(truncated_full_context.split()))
 
     import random
 
@@ -355,10 +411,28 @@ def generate_response(context, expanded_query, full_context, model):
                 logging.error(f"❌ Error calling GPT-4: {e}")
                 return "I'm sorry, but I encountered an error while generating a response."
 
+def load_and_index_embeddings():
+    """Loads embeddings and adds them to FAISS only once."""
+    global embeddings_loaded
+    if embeddings_loaded:
+        logging.info("📌 Embeddings already loaded. Skipping reloading.")
+        return
+    embeddings = load_embeddings(EMBEDDINGS_FILE)
+    if len(embeddings) > 0:
+        embeddings = np.array(embeddings, dtype=np.float32)  # ✅ Convert to correct format
+        faiss_index.add_embeddings(embeddings)
+        embeddings_loaded = True
+        logging.info(f"✅ FAISS now contains {faiss_index.index.ntotal} embeddings.")
+    else:
+        logging.error("❌ No embeddings available. FAISS search won't work!")
+
+# ✅ Load embeddings ONCE before the chat loop starts
+
+load_and_index_embeddings()
+
 def chat_loop():
     """Main chat loop for AviationAI"""
     
-    EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
     MODEL = "gpt-4"  # Change between "gpt-3.5-turbo" or "gpt-4"
     
     print("Welcome to the AviationAI Chat System!")
@@ -415,10 +489,7 @@ def chat_loop():
     # ✅ Load embeddings only once at the beginning
     try:
         print("Loading embeddings...")
-        faiss_index, embeddings = load_embeddings(EMBEDDINGS_FILE)
-        if faiss_index is None:
-            logging.error("Failed to load embeddings and create FAISS index.")
-            return
+        embeddings = load_embeddings(EMBEDDINGS_FILE)
     except Exception as e:
         logging.error(f"Error loading embeddings: {e}")
         return
@@ -438,41 +509,50 @@ def chat_loop():
             print("Generating query embedding...")
             expanded_query = expand_query(QUERY_TEXT)
             query_embedding = get_embedding(expanded_query)
-            if query_embedding is None:
-                logging.error(f"❌ Failed to generate query embedding for: {expanded_query}")
+            if query_embedding is None or len(query_embedding) == 0:
+                logging.error(f"❌ Query embedding is empty for: {expanded_query}")
                 print("⚠️ Embedding generation failed! Cannot process the query.")
                 continue
 
-            print("Searching for similar embeddings...")
-            distances, indices = search_faiss_index(faiss_index, query_embedding)
-            logging.info(f"Got {len(indices)} results from FAISS search")
+            logging.info(f"✅ Query embedding generated successfully for: {expanded_query[:50]}...")
+  
+            # Retrieve the most similar results
+            similarity_results = compute_similarity_with_faiss(query_embedding, k=10)
 
-            top_results = [
-                {**embeddings[i], 'similarity': float(distances[i])}
-                for i in indices
-                if i < len(embeddings) and distances[i] > 0.6
-                ]
+            top_results = []
+            for idx, score in similarity_results:
+                try:
+                    idx = int(idx)  # ✅ Ensure index is an integer
+                    if 0 <= idx < len(embeddings):
+                        top_results.append(embeddings[idx])
+                    else:
+                        logging.warning(f"⚠️ FAISS returned out-of-range index: {idx}")
+                except ValueError:
+                    logging.error(f"❌ FAISS returned invalid index type: {idx}")
+            
+            if faiss_index.index.ntotal == 0:
+                logging.error("⚠️ FAISS Index is empty. Reloading embeddings...")
+                load_and_index_embeddings()  # ✅ Ensure FAISS is ready before searching
 
-            logging.info(f"Filtered to {len(top_results)} results above threshold")
-        
             if not top_results:
                 logging.error(f"⚠️ No valid embeddings found for query: {expanded_query}")
-                print(f"⚠️ No relevant data found for: {expanded_query}")
-                response = "I'm sorry, but I couldn't find any relevant information to answer your query."
+                print(f"⚠️ No relevant data found for: {expanded_query}. Please try rephrasing your question.")
+                response = "I'm sorry, but I couldn't find enough data to answer. Try rephrasing or providing more details."
+                continue
+            
+            combined_context = create_weighted_context(top_results)
+            chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
+            full_context = f"{chat_context}\n\n{combined_context}"
+
+            print("Generating response...")
+            logging.info("🛠️ Calling GPT-4 to generate response...")
+            response = generate_response(combined_context, expanded_query, full_context, MODEL)
+
+            if response and len(response) >= 10:
+                logging.info(f"✅ GPT-4 Response Generated: {response[:50]}...")
             else:
-                combined_context = create_weighted_context(top_results)
-                chat_context = "\n".join([f"Human: {q}\nAI: {a}" for q, a in chat_history])
-                full_context = f"{chat_context}\n\n{combined_context}"
-
-                print("Generating response...")
-                logging.info("🛠️ Calling GPT-4 to generate response...")
-                response = generate_response(combined_context, expanded_query, full_context, MODEL)
-
-                if response and len(response) >= 10:
-                    logging.info(f"✅ GPT-4 Response Generated: {response[:50]}...")
-                else:
-                    logging.error("⚠️ GPT-4 returned an empty or invalid response!")
-                    response = "I'm sorry, but I couldn't generate a meaningful response. Please try rephrasing your query."
+                logging.error("⚠️ GPT-4 returned an empty or invalid response!")
+                response = "I'm sorry, but I couldn't generate a meaningful response. Please try rephrasing your query."
 
             print("\nAviationAI:", response)
 
