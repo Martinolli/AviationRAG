@@ -278,68 +278,49 @@ def create_weighted_context(top_results):
 embeddings_cache = {}  # In-memory cache for embeddings
 
 def load_embeddings(file_path):
-    """Loads aviation embeddings from JSON file."""
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, 'r') as f:
             data = json.load(f)
-            
-            if isinstance(data, list):
-                # If data is a list of dictionaries
-                embeddings = [np.array(entry["embedding"], dtype=np.float32) for entry in data if "embedding" in entry]
-            elif isinstance(data, dict):
-                # If data is a dictionary with embeddings as values
-                embeddings = [np.array(emb, dtype=np.float32) for emb in data.values() if isinstance(emb, list)]
-            else:
-                logging.error("❌ Unexpected data format in embeddings file!")
-                return []
-
-            if len(embeddings) == 0:
-                logging.error("❌ No embeddings found in the dataset!")
-                return []
-
-            logging.info(f"📚 Loaded {len(embeddings)} embeddings from file.")
-            return np.array(embeddings, dtype=np.float32)  # Convert to NumPy array
-
+        
+        # Assuming the embeddings are stored as a list of dictionaries
+        embeddings = [item['embedding'] for item in data if 'embedding' in item]
+        texts = [item['text'] for item in data if 'text' in item]
+        
+        if not embeddings:
+            logging.error("❌ No valid embeddings found in the file.")
+            return None, None
+        
+        embeddings_array = np.array(embeddings, dtype=np.float32)
+        logging.info(f"📚 Loaded {len(embeddings)} embeddings from file.")
+        return embeddings_array, texts
     except Exception as e:
-        logging.error(f"❌ Error loading embeddings: {e}")
+        logging.error(f"❌ Error loading embeddings: {str(e)}")
+        return None, None
+
+def create_faiss_index(embeddings):
+    if embeddings is None or len(embeddings) == 0:
+        logging.error("❌ No valid embeddings to create FAISS index.")
+        return None
+    
+    dimension = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(embeddings)
+    return index
+
+def compute_similarity_with_faiss(query_embedding, index, embeddings, texts, top_k=10):
+    if index is None or embeddings is None or texts is None:
+        logging.error("❌ Invalid input for FAISS similarity search.")
         return []
-
-# Create FAISS index globally
-def compute_similarity_with_faiss(query_embedding, k=5):
-    """Searches for the top K most similar embeddings using FAISS."""
-    try:
-        if query_embedding is None or len(query_embedding) == 0:
-            logging.error("❌ Query embedding is empty. Cannot perform FAISS search.")
-            return []
-
-        query_embedding = np.array(query_embedding, dtype=np.float32)
-        if query_embedding.ndim == 1:
-            query_embedding = query_embedding.reshape(1, -1)  # Ensure correct shape
-        elif query_embedding.ndim != 2 or query_embedding.shape[1] != faiss_index.index.d:
-            logging.error(f"❌ Query embedding shape mismatch! Expected (1, {faiss_index.index.d}), but got {query_embedding.shape}")
-            return []
-
-        if faiss_index.index.ntotal == 0:
-            logging.error("⚠️ FAISS Index is empty. No embeddings available!")
-            return []
-
-        indices, distances = faiss_index.index.search(query_embedding, k)
-
-        # ✅ Convert FAISS indices to a Python list of integers
-        indices = indices.flatten().tolist()
-        indices = [int(idx) for idx in indices]  # Convert to integers
-        distances = distances.flatten().tolist()
-
-        logging.info(f"✅ FAISS search completed. Top result indices: {indices}, Distances: {distances}")
-
-        similarity_scores = [1 / (1 + dist) if dist > 0 else 1.0 for dist in distances]
-
-        return list(zip(indices, similarity_scores))
-
-    except Exception as e:
-        logging.error(f"❌ Error in FAISS similarity search: {e}")
-        return []
-
+    
+    distances, indices = index.search(np.array([query_embedding]), top_k)
+    results = []
+    for i, idx in enumerate(indices[0]):
+        results.append({
+            'text': texts[idx],
+            'similarity': 1 / (1 + distances[0][i])  # Convert distance to similarity
+        })
+    return results
+    
 def generate_response(context, expanded_query, full_context, model):
     """Generate a response using OpenAI."""
     max_context_length = 8000  # Adjust this value based on your needs
@@ -411,22 +392,36 @@ def generate_response(context, expanded_query, full_context, model):
 
 def load_and_index_embeddings():
     """Loads embeddings and adds them to FAISS only once."""
-    global embeddings_loaded
+    global embeddings_loaded, embeddings
     if embeddings_loaded:
         logging.info("📌 Embeddings already loaded. Skipping reloading.")
-        return
+        return embeddings
+
     embeddings = load_embeddings(EMBEDDINGS_FILE)
-    if len(embeddings) > 0:
-        embeddings = np.array(embeddings, dtype=np.float32)  # ✅ Convert to correct format
-        faiss_index.add_embeddings(embeddings)
-        embeddings_loaded = True
-        logging.info(f"✅ FAISS now contains {faiss_index.index.ntotal} embeddings.")
+    if isinstance(embeddings, list) and len(embeddings) > 0:
+        try:
+            embeddings_array = np.array([emb['embedding'] for emb in embeddings if isinstance(emb, dict) and 'embedding' in emb], dtype=np.float32)
+            if len(embeddings_array) > 0:
+                faiss_index.add_embeddings(embeddings_array)
+                embeddings_loaded = True
+                logging.info(f"✅ FAISS now contains {faiss_index.index.ntotal} embeddings.")
+            else:
+                logging.error("❌ No valid embeddings found in the loaded data.")
+        except Exception as e:
+            logging.error(f"❌ Error processing embeddings: {e}")
     else:
-        logging.error("❌ No embeddings available. FAISS search won't work!")
+        logging.error("❌ No embeddings available or invalid format. FAISS search won't work!")
 
-# ✅ Load embeddings ONCE before the chat loop starts
+    return embeddings
 
+# Load embeddings ONCE before the chat loop starts
 embeddings = load_and_index_embeddings()
+
+if not embeddings or not isinstance(embeddings, list) or len(embeddings) == 0:
+    logging.error("❌ No embeddings loaded or invalid format. Exiting the program.")
+    sys.exit(1)
+else:
+    logging.info(f"✅ Successfully loaded {len(embeddings)} embeddings.")
 
 def chat_loop():
     """Main chat loop for AviationAI"""
@@ -509,6 +504,12 @@ def chat_loop():
             # Retrieve the most similar results
             similarity_results = compute_similarity_with_faiss(query_embedding, k=10)
 
+            if not similarity_results:
+                logging.warning("⚠️ No similarity results found. Skipping context creation.")
+                response = "I'm sorry, but I couldn't find relevant information to answer your query. Could you please rephrase or provide more details?"
+                print("\nAviationAI:", response)
+                continue
+
             top_results = []
             for idx, score in similarity_results:
                 try:
@@ -520,10 +521,19 @@ def chat_loop():
                 except ValueError:
                     logging.error(f"❌ FAISS returned invalid index type: {idx}")
             
+            if not top_results:
+                logging.error(f"⚠️ No valid embeddings found for query: {expanded_query}")
+                print(f"⚠️ No relevant data found for: {expanded_query}. Please try rephrasing your question.")
+                response = "I'm sorry, but I couldn't find enough data to answer. Try rephrasing or providing more details."
+                continue
+
             if faiss_index.index.ntotal == 0:
                 logging.error("⚠️ FAISS Index is empty. Reloading embeddings...")
                 load_and_index_embeddings()  # ✅ Ensure FAISS is ready before searching
-
+                if faiss_index.index.ntotal == 0:
+                    logging.error("❌ Failed to load embeddings into FAISS. Exiting the program.")
+                    sys.exit(1)
+                
             if not top_results:
                 logging.error(f"⚠️ No valid embeddings found for query: {expanded_query}")
                 print(f"⚠️ No relevant data found for: {expanded_query}. Please try rephrasing your question.")
@@ -561,4 +571,23 @@ def chat_loop():
             print("\nAviationAI: I'm sorry, but I encountered an error while processing your query. Please try again.")
 
 if __name__ == "__main__":
+    embeddings = load_embeddings(EMBEDDINGS_FILE)
+    
+    if embeddings is None or not isinstance(embeddings, list) or len(embeddings) == 0:
+        logging.error("❌ No embeddings available or invalid format. FAISS search won't work!")
+        sys.exit(1)
+    
+    # Convert embeddings to numpy array for FAISS
+    embeddings_array = np.array([emb['embedding'] for emb in embeddings if isinstance(emb, dict) and 'embedding' in emb], dtype=np.float32)
+    
+    if len(embeddings_array) == 0:
+        logging.error("❌ No valid embeddings found in the loaded data.")
+        sys.exit(1)
+    
+    # Initialize FAISS index
+    faiss_index = FAISSIndex(embeddings_array.shape[1])
+    faiss_index.add_embeddings(embeddings_array)
+    logging.info(f"✅ FAISS now contains {faiss_index.index.ntotal} embeddings.")
+
+    # Start the chat loop
     chat_loop()
