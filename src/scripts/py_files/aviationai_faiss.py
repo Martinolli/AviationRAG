@@ -4,6 +4,11 @@ import os
 import numpy as np
 from openai import OpenAI
 from dotenv import load_dotenv
+from openai import OpenAIError
+import time
+import uuid
+import sys
+import subprocess
 
 # Load environment variables
 load_dotenv()
@@ -71,7 +76,9 @@ def generate_response(query, model = "gpt-4"):
     # truncated_context = context[:max_context_length]
     
     prompt = f"""
-    
+    You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples
+    where relevant.
+
     Question:
     {query}
 
@@ -83,40 +90,40 @@ def generate_response(query, model = "gpt-4"):
     clearly state what information is missing or uncertain.
     """
     try:
-        if model in ["gpt-3.5-turbo", "gpt-4"]:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.7
-            )
-            return response.choices[0].message.content.strip()
-        elif model == "text-davinci-003":
-            response = client.completions.create(
-                model=model,
-                prompt=prompt,
-                temperature=0.7,
-                max_tokens=1000
-            )
-            return response.choices[0].text.strip()
-        else:
-            raise ValueError(f"Unsupported model: {model}")
-    except Exception as e:
-        print(f"Error generating response: {e}")
-        return None
+        start_time = time.time() # Start time tracking
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=2000
+        )
+        execution_time = time.time() - start_time  # Calculate execution time
+        logging.debug(f"⚡ GPT-4 Response Time: {execution_time:.2f} sec")
+        response_text = response.choices[0].message.content.strip()
+        logging.info(f"✅ GPT-4 Response Generated: {response_text[:50]}...")  # Show first 50 characters
 
-def interact_with_model(query):
+        if not response_text:
+            logging.error("⚠️ GPT-4 returned an empty response!")
+            return "I'm sorry, but I couldn't generate a response."
+            
+        return response_text
+        
+    except OpenAIError as e:
+        logging.error(f"❌ Error calling GPT-4: {e}")
+        return "I'm sorry, but I encountered an error while generating a response."
+
+def chat_loop(query):
     # Generate embedding for the query
-    query_embedding = get_embedding(query)  # You'll need to implement this function
+    query_embedding = get_embedding(query)  
     
     # Search similar embeddings
     results = faiss_index.search(query_embedding, k=5)
     
     # Use the results to inform your model's response
     print("Generating response...")
-    response = generate_response(results, "gpt-4")  # You'll need to implement this function
+    response = generate_response(results, "gpt-4")
     print("\nGenerated Response:")
     print(response)
-
 
 # Main application loop
 if __name__ == "__main__":
@@ -124,5 +131,5 @@ if __name__ == "__main__":
         query = input("Enter your query (or 'quit' to exit): ")
         if query.lower() == 'quit':
             break
-        response = interact_with_model(query)
+        response = chat_loop(query)
         print(response)
