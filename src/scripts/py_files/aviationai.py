@@ -9,6 +9,7 @@ import subprocess
 from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
 from faiss_indexer import FAISSIndexer
+import faiss
 
 # ✅ Load environment variables
 load_dotenv()
@@ -151,41 +152,70 @@ def get_embedding(text):
 
 # ✅ Function to generate a response
 def generate_response(query, model="gpt-4"):
-    """Generate a response using GPT-4 with compliance-focused analysis."""
+    """Generate a structured compliance-driven response using GPT-4."""
 
     prompt = f"""
-    You are an aviation compliance expert specializing in safety regulations,
-    accident analysis, and procedural risk assessments.
+    🛠️ **Aviation Compliance Expert Analysis**
     
-    When answering the user's query, you must, when applicable:
-    - Analyze the issue from an aviation compliance perspective.
-    - Compare the problem with known accident cases stored in FAISS.
-    - Identify likely regulatory gaps using FAA, ICAO, EASA standards,
-    or the Standards and Recomended Practices in Aviation Industy.
-    - Provide structured recommendations based on safety best practices.
+    You are an AI specializing in **aviation safety, compliance, and regulatory risk analysis**. 
+    When answering user queries, follow this structured approach:
+    
+    ✈️ **1️⃣ Issue Analysis**  
+    - Identify the key aviation compliance concern in the query.  
+    - Analyze potential procedural gaps, risk factors, or human error aspects.
+    - Identify the core **aviation safety concerns** in the query.  
+    - Assess potential **regulatory violations or procedural gaps** 
 
-    Here is the question you must analyze:
+    📑 **2️⃣ Regulatory Review (FAA, ICAO, EASA)**  
+    - Determine which aviation regulations, SARPs (Standards & Recommended Practices), or compliance frameworks apply.  
+    - Compare the issue against **ICAO Annex 19, FAA Part 5, EASA safety frameworks**.  
+    - Identify compliance gaps and industry best practices.  
+
+    🔍 **3️⃣ Cross-Check with Accident Reports**  
+    - Retrieve relevant aviation accident reports (if applicable) to compare with the current issue.  
+    - Identify lessons learned from past cases.  
+
+    🛠️ **4️⃣ Risk Mitigation Framework & Safety Enhancements**  
+    - **Communication Enhancement:** Require ATC clearances to be confirmed using ICAO Standard Phraseology.  
+    - **Pilot Decision-Making Protocols:** Ensure that all captains follow Crew Resource Management (CRM) best practices.  
+    - **Pre-Flight Risk Assessments:** Mandate runway safety briefings during high-traffic periods to avoid misunderstandings.  
+    - **Safety Culture Improvements:** Conduct SMS workshops to align operational behavior with FAA Part 5 and ICAO Annex 19.  
+    
+    🛠️ **5️⃣ Compliance Validation Score & Risk Level**  
+    The compliance validation score is determined based on:  
+    - ✅ **Adherence to ICAO, FAA, and EASA regulations**  
+    - ✅ **Severity of human error or procedural gaps**  
+    - ✅ **Historical trends in similar accidents**  
+
+    📊 **Final Risk & Compliance Score:**  
+    - **1-3 (High Risk, Non-Compliant)** – Significant violations and poor safety culture.  
+    - **4-6 (Moderate Risk, Partially Compliant)** – Some procedural weaknesses that need improvement.  
+    - **7-10 (Low Risk, Compliant)** – Strong safety culture with minor procedural gaps.  
+
+    **This scenario has a compliance validation score of 6/10, indicating moderate SMS failures.**  
+
+    🔍 **6️⃣ Cross-Check with Accident Investigations**  
+    - Use retrieved reports to compare **similar risk factors, human errors, and procedural failures**.
+    - Cross-reference at least **two similar aviation accidents** and highlight common safety failures.    
+
+    Here is the user's question:
     {query}
 
-    🚀 **Ensure your answer is structured as follows:**
-    1️⃣ **Analysis of the Issue**
-    2️⃣ **Comparison with Similar Accidents**
-    3️⃣ **Regulatory Compliance Review**
-    4️⃣ **Recommendations for Safety Improvement**
-    Remarks: If the request is too broad, focus on the most critical aspects.
-    The answer could be informative, according to the question asked.    """
+    Ensure your response is well-structured, factual, and backed by aviation regulations.
+    """
     
     try:
         response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.5,
-            max_tokens=2000
+            temperature=0.4,  # ✅ Lower temperature for more factual answers
+            max_tokens=2500  # ✅ Allow longer responses if needed
         )
         return response.choices[0].message.content.strip()
     except OpenAIError as e:
         logging.error(f"❌ Error calling GPT-4: {e}")
         return "I'm sorry, but I encountered an error while generating a response."
+
 
 # ✅ Function to handle chat loop
 def chat_loop():
@@ -247,6 +277,11 @@ def chat_loop():
         print(" - 'What regulatory gaps led to the Tenerife Airport Disaster?'")
         print(" - 'Does this maintenance procedure comply with FAA Part 43?'")
         print(" - 'How does SMS align with ICAO Annex 19?'")
+        print(" - 'Analyze how ICAO Annex 19 applies to accident prevention.'")
+        print(" - 'What are the SMS compliance lessons from the Tenerife disaster?'")
+        print(" - 'Compare FAA Part 43 maintenance regulations with EASA Part M.'")
+        print(" - 'Assess if this risk management process aligns with FAA Part 5.'")
+
 
         query = input("\nUser: ")
 
@@ -262,7 +297,20 @@ def chat_loop():
             continue
 
         logging.info("Searching FAISS for relevant documents...")
-        results = faiss_index.search(query_embedding, k=5)
+        # ✅ Normalize query embedding before search
+        normalized_query_embedding = faiss_index.normalize_vector(query_embedding)
+
+        # ✅ Retrieve more potential matches, then rank them
+        indices, distances = faiss_index.index.search(normalized_query_embedding, k=20)
+
+        # ✅ Post-process: Filter out weak matches based on similarity score
+        valid_results = [(idx, 1 / (1 + dist)) for idx, dist in zip(indices.flatten(), distances.flatten()) if dist < 0.4]
+
+        # ✅ Sort by similarity score (higher = more relevant)
+        valid_results.sort(key=lambda x: x[1], reverse=True)
+
+        # ✅ Return top 5 most relevant results
+        results = valid_results[:7]
 
         # ✅ Format retrieved results for GPT-4
         context_texts = "\n".join([f"- {res['text']}" for res, _ in results])

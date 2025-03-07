@@ -16,6 +16,14 @@ class FAISSIndexer:
         for i, meta in enumerate(metadata):
             self.metadata[i] = meta  # ✅ Use explicit indexing to prevent misalignment
 
+    def normalize_vector(self, vector):
+        """
+        Normalize the input vector using L2 normalization.
+        """
+        vector = np.array(vector).reshape(1, -1).astype('float32')
+        faiss.normalize_L2(vector)
+        return vector
+    
     def search(self, query_embedding, k=5):
         query_embedding = np.array(query_embedding, dtype=np.float32).reshape(1, -1)
         distances, indices = self.index.search(query_embedding, k)
