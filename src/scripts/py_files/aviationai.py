@@ -9,7 +9,12 @@ import subprocess
 from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
 from faiss_indexer import FAISSIndexer
-import faiss
+import tiktoken
+
+def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
 
 # ✅ Load environment variables
 load_dotenv()
@@ -63,6 +68,7 @@ EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
 try:
     faiss_index = FAISSIndexer.load_from_file(EMBEDDINGS_FILE)
     logging.info(f"✅ FAISS index created with {faiss_index.index.ntotal} embeddings.")
+    print(f"Debug: FAISS index size: {faiss_index.index.ntotal}")
 except Exception as e:
     logging.error(f"❌ Error creating FAISS index: {e}")
     exit(1)
@@ -151,25 +157,50 @@ def get_embedding(text):
         return None
 
 # ✅ Function to generate a response
-def generate_response(query, model="gpt-4"):
+def generate_response(query, context, model="gpt-4"):
     """Generate a structured compliance-driven response using GPT-4."""
-
+    
     prompt = f"""
     🛠️ **Aviation Compliance Expert Analysis**
     
-    You are an AI assistant specializing in aviation. Provide detailed, thorough answers with examples
-    where relevant. Use the context and history below to answer the user's question:
+    You are an AI specializing in aviation safety, compliance, and regulatory risk analysis. 
+    Analyze the user's query and respond appropriately based on the following guidelines:
+
+    1. For broad or open-ended questions:
+       - Provide a general overview of the topic.
+       - Highlight key areas of concern.
+       - Suggest more specific questions for detailed analysis if needed.
+
+    2. For specific questions about regulations, procedures, or incidents:
+       - Focus on the relevant aspects without necessarily going through all analysis steps.
+       - Provide direct answers backed by aviation regulations or industry standards.
+
+    3. For questions requiring in-depth analysis:
+       - Use the structured approach outlined below, adapting as necessary:
+         a) Issue Analysis
+         b) Regulatory Review (FAA, ICAO, EASA)
+         c) Cross-Check with Accident Reports (if applicable)
+         d) Risk Mitigation Framework & Safety Enhancements
+         e) Compliance Validation Score & Risk Level (if appropriate)
+         f) Cross-Check with Accident Investigations (if relevant)
+
+    4. For simple factual queries:
+       - Provide a concise, direct answer without extensive analysis.
+
+    5. If the query is unclear or lacks context:
+       - Ask for clarification or provide a range of possible interpretations.
+
+    Always prioritize accuracy and relevance in your responses. Use the provided context 
+    to support your answers, but feel free to draw on your general knowledge of aviation 
+    safety and regulations when appropriate.
     
-    
+    Context:
+    {context}
+
     Here is the user's question:
     {query}
 
-     Provide a detailed, comprehensive, and accurate response based on the context above. 
-    Include relevant facts, explanations, and examples where appropriate. 
-    For each key piece of information in your response, cite the source document in square brackets, 
-    e.g., [Document: Safety Manual]. If information comes from multiple sources, list all relevant sources.
-    If the context doesn't contain enough information to fully answer the question, 
-    clearly state what information is missing or uncertain.
+    Ensure your response is well-structured, factual, and backed by aviation regulations.
     """
     
     try:
@@ -251,52 +282,61 @@ def chat_loop():
         print(" - 'Assess if this risk management process aligns with FAA Part 5.'")
 
 
-        query = input("\nUser: ")
+        query = input("\nUser: ").strip()
 
         if query.lower() == 'exit':
-            print("Goodbye!")
+            print("Thank you for using the Aviation RAG Chat System. Goodbye!")
             break
 
-        logging.info("Generating query embedding...")
-        query_embedding = get_embedding(query)
+        try:
+            logging.info("Generating query embedding...")
+            query_embedding = get_embedding(query)
+            if query_embedding is None:
+                raise ValueError("Failed to generate query embedding")
 
-        if query_embedding is None:
-            print("⚠️ Embedding generation failed. Try again.")
-            continue
+            logging.info("Searching FAISS for relevant documents...")
+            results = faiss_index.search(query_embedding, k=10)
 
-        logging.info("Searching FAISS for relevant documents...")
-        # ✅ Normalize query embedding before search
-        normalized_query_embedding = faiss_index.normalize_vector(query_embedding)
+            print(f"Debug: Found {len(results)} valid results")
+            
+            context_texts = []
+            total_tokens = 0
+            max_tokens = 6000  # Leave room for the query and response
 
-        # ✅ Retrieve more potential matches, then rank them
-        indices, distances = faiss_index.index.search(normalized_query_embedding, k=20)
+            for metadata, score in results:
+                doc_text = metadata['text']
+                doc_tokens = num_tokens_from_string(doc_text)
 
-        # ✅ Post-process: Filter out weak matches based on similarity score
-        valid_results = [(idx, 1 / (1 + dist)) for idx, dist in zip(indices.flatten(), distances.flatten()) if dist < 0.4]
+                if total_tokens + doc_tokens > max_tokens:
+                    break
 
-        # ✅ Sort by similarity score (higher = more relevant)
-        valid_results.sort(key=lambda x: x[1], reverse=True)
+                context_texts.append(doc_text)
+                total_tokens += doc_tokens
+                print(f"Debug: Document from {metadata['filename']} (score: {score:.4f}, tokens: {doc_tokens})")
 
-        # ✅ Return top 5 most relevant results
-        results = valid_results[:7]
+            context = "\n".join(context_texts)
+      
+           # Generate response
+            response = generate_response(query, context)
 
-        # ✅ Format retrieved results for GPT-4
-        context_texts = "\n".join([f"- {res['text']}" for res, _ in results])
+            print("\nAviationAI:", response)
 
-        formatted_query = f"""
-        Based on the following aviation documents:
+            # Store chat in AstraDB
+            store_chat_in_db(session_id, query, response)
 
-        {context_texts}
+            # Update chat history
+            past_exchanges.append((query, response))
+            if len(past_exchanges) > 5:
+                past_exchanges = past_exchanges[-5:]
 
-        Question:
-        {query}
-        """
+        except Exception as e:
+            logging.error(f"Error: {e}")
+            print(f"An error occurred: {e}")
 
-        print("Generating response...")
-        response = generate_response(formatted_query, "gpt-4")
-        print("\nAviationAI:", response)
-
-        store_chat_in_db(session_id, query, response)
+    # Save session metadata
+    session_metadata[session_id] = f"Session from {time.strftime('%Y-%m-%d %H:%M:%S')}"
+    with open(session_metadata_file, "w") as file:
+        json.dump(session_metadata, file)
 
 # ✅ Run the chat loop
 if __name__ == "__main__":
