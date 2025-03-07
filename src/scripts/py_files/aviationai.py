@@ -157,7 +157,7 @@ def get_embedding(text):
         return None
 
 # ✅ Function to generate a response
-def generate_response(query, context, model="gpt-4"):
+def generate_response(query, context, model="gpt-4-turbo"):
     """Generate a structured compliance-driven response using GPT-4."""
     
     prompt = f"""
@@ -207,8 +207,8 @@ def generate_response(query, context, model="gpt-4"):
         response = client.chat.completions.create(
             model=model,
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.4,  # ✅ Lower temperature for more factual answers
-            max_tokens=2500  # ✅ Allow longer responses if needed
+            temperature=0.6,  # ✅ Lower temperature for more factual answers
+            max_tokens=3000  # ✅ Allow longer responses if needed
         )
         return response.choices[0].message.content.strip()
     except OpenAIError as e:
@@ -295,7 +295,7 @@ def chat_loop():
                 raise ValueError("Failed to generate query embedding")
 
             logging.info("Searching FAISS for relevant documents...")
-            results = faiss_index.search(query_embedding, k=10)
+            results = faiss_index.search(query_embedding, k=15)
 
             print(f"Debug: Found {len(results)} valid results")
             
