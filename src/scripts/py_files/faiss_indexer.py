@@ -10,9 +10,11 @@ class FAISSIndexer:
 
     def add_embeddings(self, embeddings, metadata):
         embeddings_array = np.array(embeddings).astype('float32')
+        # ✅ Normalize embeddings before adding to FAISS
+        faiss.normalize_L2(embeddings_array)
         self.index.add(embeddings_array)
         for i, meta in enumerate(metadata):
-            self.metadata[self.index.ntotal - len(metadata) + i] = meta
+            self.metadata[i] = meta  # ✅ Use explicit indexing to prevent misalignment
 
     def search(self, query_embedding, k=5):
         query_embedding = np.array(query_embedding, dtype=np.float32).reshape(1, -1)

@@ -114,14 +114,31 @@ def generate_response(query, model = "gpt-4"):
 
 def chat_loop(query):
     # Generate embedding for the query
-    query_embedding = get_embedding(query)  
-    
-    # Search similar embeddings
+    query_embedding = get_embedding(query)
+
+    if query_embedding is None:
+        logging.error("❌ Failed to generate query embedding. Skipping FAISS search.")
+        print("I'm sorry, but I couldn't process your request due to an embedding issue.")
+        return  # ✅ Stop execution if embedding fails
+
     results = faiss_index.search(query_embedding, k=5)
-    
+
     # Use the results to inform your model's response
-    print("Generating response...")
-    response = generate_response(results, "gpt-4")
+    print("Generating response...")# ✅ Extract relevant text from FAISS search results
+    context_texts = "\n".join([f"- {res['text']}" for res, _ in results])
+
+    # ✅ Format query and context properly before sending to GPT-4
+    formatted_query = f"""
+    Based on the following extracted aviation safety documents:
+
+    {context_texts}
+
+    Question:
+    {query}
+
+    Provide a detailed, accurate response using the above information.
+    """
+    response = generate_response(formatted_query, "gpt-4")
     print("\nGenerated Response:")
     print(response)
 
