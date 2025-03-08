@@ -125,25 +125,30 @@ def retrieve_chat_from_db(session_id, limit=5):
     }
 
     try:
-        # Use UTF-8 encoding when running the command
-        result = subprocess.run(['python', 'src/scripts/py_files/retrieve_chat.py', session_id], 
-                                capture_output=True, text=True, encoding='utf-8')
-        
-        # Check if stdout is None before calling strip()
-        if result.stdout is not None:
-            output = result.stdout.strip()
-            if output:
-                return eval(output)
-        
-        # If we reach here, either stdout was None or empty
-        print(f"No chat history found for session {session_id}")
-        return []
-    
+        result = subprocess.run(
+            ["node", script_path, json.dumps(chat_data)], 
+            capture_output=True, text=True, check=True
+        )
+        output = result.stdout.strip()
+
+        # Extract only the JSON part from the output
+        first_brace = output.find("{")
+        if first_brace != -1:
+            output = output[first_brace:]  # Remove any extra log lines before JSON
+
+        try:
+            parsed_output = json.loads(output)
+            if parsed_output.get("success", False):
+                return parsed_output.get("messages", [])
+            else:
+                logging.error(f"Chat retrieval failed. Parsed output: {parsed_output}")
+                return []
+        except json.JSONDecodeError as e:
+            logging.error(f"JSON parsing error: {e}. Raw output: {output}")
+            return []
+
     except subprocess.CalledProcessError as e:
-        print(f"Error retrieving chat history: {e}")
-        return []
-    except Exception as e:
-        print(f"Unexpected error: {e}")
+        logging.error(f"Error retrieving chat: {e}")
         return []
 
 # ✅ Function to get embeddings
@@ -208,7 +213,7 @@ def generate_response(query, context, model="gpt-4-turbo"):
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.6,  # ✅ Lower temperature for more factual answers
-            max_tokens=3000  # ✅ Allow longer responses if needed
+            max_tokens=5000  # ✅ Allow longer responses if needed
         )
         return response.choices[0].message.content.strip()
     except OpenAIError as e:
@@ -269,7 +274,12 @@ def chat_loop():
     # ✅ Save updated session metadata
     with open(session_metadata_file, "w", encoding="utf-8") as file:
         json.dump(session_metadata, file, indent=4)
-    
+    # ✅ Retrieve past chat history correctly
+
+    chat_history = [(ex["user_query"], ex["ai_response"]) for ex in past_exchanges if isinstance(ex, dict) and "user_query" in ex and "ai_response" in ex]
+
+    max_history = 5  # Keep only the last 5 exchanges in chat history
+
     while True:
         print("\n🔹 Suggested Topics: ")
         print(" - 'Analyze an accident similar to Helios Airways Flight 522.'")
@@ -333,11 +343,10 @@ def chat_loop():
             logging.error(f"Error: {e}")
             print(f"An error occurred: {e}")
 
-    # Save session metadata
-    session_metadata[session_id] = f"Session from {time.strftime('%Y-%m-%d %H:%M:%S')}"
-    with open(session_metadata_file, "w") as file:
-        json.dump(session_metadata, file)
+        chat_history.append((query, response))
+        chat_history = chat_history[-max_history:]
 
+    
 # ✅ Run the chat loop
 if __name__ == "__main__":
     chat_loop()
