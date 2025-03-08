@@ -4,10 +4,11 @@ from pathlib import Path
 
 def check_pkl_content():
     # Get the project root directory
-    project_root = Path(__file__).resolve().parent.parent.parent
+    # Define base directory
+    BASE_DIR = Path(r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG')
     
     # Define the path to the aviation_corpus.pkl file
-    pkl_path = project_root / 'data' / 'raw' / 'aviation_corpus.pkl'
+    pkl_path = BASE_DIR / 'data' / 'raw' / 'aviation_corpus.pkl'
     
     if not pkl_path.exists():
         print(f"Error: The file {pkl_path} does not exist.")

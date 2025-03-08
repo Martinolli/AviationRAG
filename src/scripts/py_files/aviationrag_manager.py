@@ -65,6 +65,7 @@ if __name__ == "__main__":
         ("python src/scripts/py_files/read_documents.py", "Read Documents"),
         ("python src/scripts/py_files/aviation_chunk_saver.py", "Chunk Documents"),
         ("python src/scripts/py_files/extract_pkl_to_json.py", "Extract PKL to JSON"),
+        ("python src/scripts/py_files/check_pklcontent.py", "Check PKL Content"),
         ("node src/scripts/js_files/generate_embeddings.js", "Generate Embeddings"),
         ("node src/scripts/js_files/store_embeddings_astra.js", "Store Embeddings in AstraDB"),
         ("node src/scripts/js_files/check_astradb_consistency.js", "Check AstraDB Consistency"),
