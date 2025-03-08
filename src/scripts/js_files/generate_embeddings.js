@@ -7,87 +7,94 @@ import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Get the directory of the current module
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-const BATCH_SIZE = 5; // Adjust based on API limits and performance
-const DELAY_MS = 1000;
-const MAX_RETRIES = 3;
+// Navigate to the project root directory
+const projectRoot = path.resolve(__dirname, '..', '..', '..');
 
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+// Set up paths
+// Define paths relative to the project root
+const chunkedDocsPath = path.join(projectRoot, 'data', 'processed', 'chunked_documents');
+const outputPath = path.join(projectRoot, 'data', 'embeddings', 'aviation_embeddings.json');
+const checkpointPath = path.join(projectRoot, 'data', 'embeddings', 'checkpoint.json');
 
-function loadExistingEmbeddings(outputPath) {
-  if (fs.existsSync(outputPath)) {
-    const rawData = fs.readFileSync(outputPath, 'utf-8');
-    return JSON.parse(rawData);
-  }
-  return [];
-}
+// Initialize OpenAI API
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-function isChunkIdExists(existingEmbeddings, chunkId) {
-  return existingEmbeddings.some(embedding => embedding.chunk_id === chunkId);
-}
-
-async function processChunk(chunk, filename, chunkId, metadata, existingEmbeddings) {
-  if (isChunkIdExists(existingEmbeddings, chunkId)) {
-    console.log(`Skipping duplicate chunk ID: ${chunkId}`);
-    return null;
-  }
-
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+// Load existing embeddings if available
+let existingEmbeddings = {};
+if (fs.existsSync(outputPath)) {
     try {
-      const response = await openai.embeddings.create({
-        model: 'text-embedding-ada-002',
-        input: chunk.text,
-      });
+        const fileContent = fs.readFileSync(outputPath, "utf-8");
+        existingEmbeddings = JSON.parse(fileContent);
+    } catch (error) {
+        console.error("Error loading existing embeddings:", error);
+        existingEmbeddings = {};
+    }
+}
 
-      const embeddingVector = response.data[0].embedding;
-      console.log(`Generated embedding for chunk ID: ${chunkId}`);
-      return {
+// Function to check if a chunk ID already has an embedding
+async function isChunkIdExists(chunkId) {
+    return existingEmbeddings.hasOwnProperty(chunkId);
+}
+
+// Function to generate embeddings for a single chunk
+async function generateEmbedding(text) {
+    try {
+        const response = await openai.embeddings.create({
+            model: "text-embedding-ada-002",
+            input: text
+        });
+        return response.data[0].embedding;
+    } catch (error) {
+        console.error("Error generating embedding:", error);
+        return null;
+    }
+}
+
+// Function to process a single chunk
+async function processChunk(chunk, filename, chunkId, metadata) {
+    if (isChunkIdExists(chunkId)) {
+        console.log(`Skipping duplicate chunk ID: ${chunkId}`);
+        return null;
+    }
+
+    const embedding = await generateEmbedding(chunk.text);
+    if (!embedding) return null;
+
+    return {
         chunk_id: chunkId,
         filename,
         metadata,
         text: chunk.text,
         tokens: chunk.tokens,
-        embedding: embeddingVector,
-      };
-    } catch (err) {
-      console.error(`Error generating embedding for chunk ID: ${chunkId} (Attempt ${attempt})`, err);
-      if (attempt === MAX_RETRIES) {
-        console.error(`Failed to generate embedding for chunk ID: ${chunkId} after ${MAX_RETRIES} attempts`);
-        return null;
-      }
-      await delay(DELAY_MS * attempt);
+        embedding: embedding,
+    };
+}
+
+// Function to process all chunks in batch
+async function processFile(filePath) {
+    try {
+        const rawData = fs.readFileSync(filePath, "utf-8");
+        const document = JSON.parse(rawData);
+
+        console.log(`Processing file: ${document.filename}`);
+        const embeddings = [];
+
+        for (const chunk of document.chunks) {
+            const chunkId = chunk.chunk_id;
+            const metadata = document.metadata || {};
+            const processedChunk = await processChunk(chunk, document.filename, chunkId, metadata);
+            if (processedChunk) embeddings.push(processedChunk);
+        }
+
+        return embeddings.filter(emb => emb !== null);
+    } catch (error) {
+        console.error(`Error processing file ${filePath}:`, error);
+        return [];
     }
-  }
-}
-
-async function processChunkBatch(chunks, filename, metadata, existingEmbeddings) {
-  const batchPromises = chunks.map(chunk => 
-    processChunk(chunk, filename, chunk.chunk_id, metadata, existingEmbeddings)
-  );
-  return (await Promise.all(batchPromises)).filter(result => result !== null);
-}
-
-async function processFile(filePath, existingEmbeddings) {
-  const content = await fs.promises.readFile(filePath, 'utf8');
-  const chunkedDoc = JSON.parse(content);
-  const { filename, metadata } = chunkedDoc;
-
-  console.log(`Processing file: ${filename}, Metadata:`, metadata);
-  
-  const embeddings = [];
-  for (let i = 0; i < chunkedDoc.chunks.length; i += BATCH_SIZE) {
-    const batch = chunkedDoc.chunks.slice(i, i + BATCH_SIZE);
-    const batchResults = await processChunkBatch(batch, filename, metadata, existingEmbeddings);
-    embeddings.push(...batchResults);
-    await delay(DELAY_MS);
-  }
-
-  return embeddings;
 }
 
 async function saveCheckpoint(embeddings, outputPath) {
@@ -95,93 +102,61 @@ async function saveCheckpoint(embeddings, outputPath) {
   console.log(`Checkpoint saved to ${outputPath}`);
 }
 
+// Main function to process all chunked documents
 async function generateEmbeddings() {
-  try {
-    // Get the directory of the current module
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = path.dirname(__filename);
-
-    // Navigate to the project root directory
-    const projectRoot = path.resolve(__dirname, '..', '..', '..');
-
-    // Define paths relative to the project root
-    const chunkedDocsPath = path.join(projectRoot, 'data', 'processed', 'chunked_documents');
-    const outputPath = path.join(projectRoot, 'data', 'embeddings', 'aviation_embeddings.json');
-    const checkpointPath = path.join(projectRoot, 'data', 'embeddings', 'checkpoint.json');
-
     // Log the paths for debugging
     console.log('Project Root:', projectRoot);
     console.log('Chunked Docs Path:', chunkedDocsPath);
+    const files = fs.readdirSync(chunkedDocsPath).filter(file => file.endsWith(".json"));
+    let newEmbeddings = [];
 
-    // Check if the chunked_documents directory exists
-    if (!fs.existsSync(chunkedDocsPath)) {
-      console.error(`The directory ${chunkedDocsPath} does not exist.`);
-      console.log('Please ensure that you have processed documents and created JSON chunks before running this script.');
-      return;
+    for (const file of files) {
+        const filePath = path.join(chunkedDocsPath, file);
+        const embeddings = await processFile(filePath);
+        newEmbeddings = newEmbeddings.concat(embeddings);
     }
 
-    // Get the list of JSON files in the chunked_documents directory
-    const files = await fs.promises.readdir(chunkedDocsPath);
-    const jsonFiles = files.filter(file => file.endsWith('.json'));
+    // Save new embeddings to file
+    if (newEmbeddings.length > 0) {
+        console.log(` Generated ${newEmbeddings.length} new embeddings.`);
 
-    if (jsonFiles.length === 0) {
-      console.error('No JSON files found in the chunked_documents directory.');
-      console.log('Please ensure that you have processed documents and created JSON chunks before running this script.');
-      return;
+        // Define updatedEmbeddings correctly
+        let updatedEmbeddings = { ...existingEmbeddings }; 
+
+        newEmbeddings.forEach(emb => updatedEmbeddings[emb.chunk_id] = emb);
+
+        fs.writeFileSync(outputPath, JSON.stringify(updatedEmbeddings, null, 2), "utf-8");
+        console.log(" Updated embeddings file.");
+
+        // Generate CSV report for new embeddings
+        await generateCSVReport(newEmbeddings);
+
+        // Save checkpoint after each file
+        await saveCheckpoint(updatedEmbeddings, checkpointPath);
+
+    } else {
+        console.log(" No new embeddings were generated.");
     }
-
-    let allEmbeddings = loadExistingEmbeddings(outputPath);
-    const processedFiles = new Set(allEmbeddings.map(e => e.filename));
-
-    console.log(`Found ${jsonFiles.length} files to process.`);
-    for (const file of jsonFiles) {
-      if (processedFiles.has(file)) {
-        console.log(`Skipping already processed file: ${file}`);
-        continue;
-      }
-
-      const filePath = path.join(chunkedDocsPath, file);
-      const embeddings = await processFile(filePath, allEmbeddings);
-      allEmbeddings = allEmbeddings.concat(embeddings);
-      
-      // Save checkpoint after each file
-      await saveCheckpoint(allEmbeddings, checkpointPath);
-    }
-
-    await saveCheckpoint(allEmbeddings, outputPath);
-    console.log(`All embeddings saved to ${outputPath}`);
-
-    // Generate CSV report
-    await generateCSVReport(allEmbeddings);
-
-  } catch (err) {
-    console.error('Error while generating embeddings:', err);
-    if (err.code === 'ENOENT') {
-      console.log('Please check if the project structure is correct and all necessary directories exist.');
-    }
-  }
 }
-
 async function generateCSVReport(embeddings) {
-  const csvWriter = createObjectCsvWriter({
-    path: 'data/embeddings/embeddings_report.csv',
-    header: [
-      {id: 'chunk_id', title: 'Chunk ID'},
-      {id: 'filename', title: 'Filename'},
-      {id: 'tokens', title: 'Tokens'},
-      {id: 'text', title: 'Text'}
-    ]
-  });
-
-  const records = embeddings.map(e => ({
-    chunk_id: e.chunk_id,
-    filename: e.filename,
-    tokens: e.tokens,
-    text: e.text.substring(0, 100) + '...' // Truncate text for readability
-  }));
-
-  await csvWriter.writeRecords(records);
-  console.log('CSV report generated: data/embeddings/embeddings_report.csv');
-}
-
+    const csvWriter = createObjectCsvWriter({
+      path: 'data/embeddings/embeddings_report.csv',
+      header: [
+        {id: 'chunk_id', title: 'Chunk ID'},
+        {id: 'filename', title: 'Filename'},
+        {id: 'tokens', title: 'Tokens'},
+        {id: 'text', title: 'Text'}
+      ]
+    });
+  
+    const records = embeddings.map(e => ({
+      chunk_id: e.chunk_id,
+      filename: e.filename,
+      tokens: e.tokens,
+      text: e.text.substring(0, 100) + '...' // Truncate text for readability
+    }));
+  
+    await csvWriter.writeRecords(records);
+    console.log('CSV report generated: data/embeddings/embeddings_report.csv');
+  }
 generateEmbeddings();
