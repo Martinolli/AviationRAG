@@ -1,6 +1,7 @@
 # Add these lines at the end of your .gitignore file
 data/raw/aviation_corpus.pkl
 data/processed/aviation_corpus.json
+data/astra_db/astra_db_content.json
 
 # Node modules
 node_modules/
