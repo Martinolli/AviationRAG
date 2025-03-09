@@ -2,11 +2,49 @@ import { Client } from 'cassandra-driver';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import winston from 'winston';
+import {format} from 'date-fns';
+import fs from 'fs';
+
 
 // Resolve environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+
+// Set up logging
+const logDir = path.resolve(__dirname, '../../../logs');
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+
+// Add this line for debugging
+console.log(`Log directory: ${logDir}`);
+
+const logFileName = `retrieve_chat_${format(new Date(), 'yyyy-MM-dd')}.log`;
+const logFilePath = path.join(logDir, logFileName);
+
+const logger = winston.createLogger({
+    level: 'info',
+    format: winston.format.combine(
+      winston.format.timestamp(),
+      winston.format.printf(({ timestamp, level, message }) => {
+        return `${timestamp} [${level}]: ${message}`;
+      })
+    ),
+    transports: [
+      new winston.transports.Console(),
+      new winston.transports.File({ 
+        filename: logFilePath,
+        maxsize: 5242880, // 5MB
+        maxFiles: 5,
+        tailable: true
+      })
+    ]
+  });
+
+logger.info(`Logging to: ${logFilePath}`);  // Add this for debugging
 
 // Log environment variables for debugging
 console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
