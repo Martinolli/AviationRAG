@@ -31,6 +31,12 @@ tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
 def count_tokens(text):
     return len(tokenizer.encode(text))
 
+# Function to check if a document has been processed already
+def is_document_already_chunked(filename):
+    """Checks if a chunk file already exists for a given document."""
+    chunk_file = os.path.join(chunk_output_dir, f"{os.path.splitext(filename)[0]}_chunks.json")
+    return os.path.exists(chunk_file)
+
 # Function to chunk text by sentences and enforce token limits
 def chunk_text_by_sentences(text, max_tokens=500, overlap=50):
     sentences = sent_tokenize(text)  # Tokenize into sentences
@@ -90,6 +96,13 @@ def validate_and_split_chunks(chunks, max_tokens):
 def save_documents_as_chunks(documents, output_dir, max_tokens=500, overlap=50):
     for doc in documents:
         filename = doc['filename']
+
+        # ✅ Skip document if it has already been processed
+        if is_document_already_chunked(filename):
+            logging.info(f"Skipping already chunked document: {filename}")
+            print(f"Skipping already chunked document: {filename}")
+            continue
+        
         text = doc['text']
         metadata = doc.get('metadata', {})  # Get metadata if it exists, otherwise empty dict
         category = doc.get('category', '')  # Get category if it exists, otherwise empty string
@@ -99,6 +112,7 @@ def save_documents_as_chunks(documents, output_dir, max_tokens=500, overlap=50):
 
         output_filename = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}_chunks.json")
         
+        print(f"Processing and saving chunks for {filename}")
         chunk_data = {
             "filename": filename,
             "metadata": metadata,
@@ -136,6 +150,7 @@ def main():
     save_documents_as_chunks(documents, chunk_output_dir)
 
     logging.info(f"All documents processed. Chunks saved in '{chunk_output_dir}'.")
+    print(f"All documents processed. Chunks saved in '{chunk_output_dir}'.")
 
 if __name__ == '__main__':
     main()
