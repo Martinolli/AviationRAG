@@ -213,7 +213,7 @@ def generate_response(query, context, model="gpt-4-turbo"):
             model=model,
             messages=[{"role": "user", "content": prompt}],
             temperature=0.6,  # ✅ Lower temperature for more factual answers
-            max_tokens=5000  # ✅ Allow longer responses if needed
+            max_tokens=2000  # ✅ Allow longer responses if needed
         )
         return response.choices[0].message.content.strip()
     except OpenAIError as e:
@@ -248,7 +248,7 @@ def chat_loop():
     if session_metadata:
         print("\n📌 Available Previous Sessions:")
         for i, (sid, title) in enumerate(session_metadata.items(), 1):
-            print(f"{i}. {title} (Session ID: {sid[:8]}...)")
+            print(f"{i}. {title}")
 
         try:
             choice = int(input("\nEnter session number to continue (or 0 for a new session): "))
