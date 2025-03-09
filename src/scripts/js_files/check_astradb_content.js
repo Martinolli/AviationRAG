@@ -44,52 +44,33 @@ async function checkAstraDBContent() {
         await client.connect();
         console.log('Connected to Astra DB successfully!');
 
-        // Query to get a sample of rows from the table
-        const sampleQuery = 'SELECT * FROM aviation_documents LIMIT 5';
-        const sampleResult = await client.execute(sampleQuery);
+        // Query to get all rows from the table
+        const query = 'SELECT * FROM aviation_documents';
+        const result = await client.execute(query, [], { fetchSize: 1000 });
 
-        console.log("Sample data from AstraDB:");
-        sampleResult.rows.forEach((row, index) => {
-            console.log(`\nDocument ${index + 1}:`);
-            console.log(`Filename: ${row.filename}`);
-            console.log(`Chunk ID: ${row.chunk_id}`);
-            console.log(`Text: ${row.text.substring(0, 100)}...`);
-            console.log(`Tokens: ${row.tokens}`);
-            if (row.embedding) {
-                console.log(`Embedding type: ${typeof row.embedding}`);
-                console.log(`Embedding constructor: ${row.embedding.constructor.name}`);
-                console.log(`Embedding length: ${row.embedding.length}`);
-                if (row.embedding instanceof Buffer) {
-                    console.log(`Buffer byte length: ${row.embedding.byteLength}`);
-                    const float32Array = new Float32Array(row.embedding.buffer, row.embedding.byteOffset, row.embedding.byteLength / 4);
-                    console.log(`Float32Array length: ${float32Array.length}`);
-                    console.log(`Embedding sample: ${JSON.stringify(Array.from(float32Array.slice(0, 5)))}`);
-                } else {
-                    console.log(`Embedding sample: ${JSON.stringify(row.embedding.slice(0, 5))}`);
-                }
-            } else {
-                console.log(`Embedding: N/A`);
+        let allRows = [];
+        for await (const row of result) {
+            // Convert embedding Buffer to array if it exists
+            if (row.embedding && row.embedding instanceof Buffer) {
+                const float32Array = new Float32Array(row.embedding.buffer, row.embedding.byteOffset, row.embedding.byteLength / 4);
+                row.embedding = Array.from(float32Array);
             }
-        });
+            allRows.push(row);
+        }
 
-        // Get the count of rows in the table
-        const countQuery = 'SELECT COUNT(*) FROM aviation_documents';
-        const countResult = await client.execute(countQuery);
-        console.log(`\nTotal number of documents in AstraDB: ${countResult.rows[0].count.toString()}`);
+        console.log(`Total number of documents retrieved: ${allRows.length}`);
 
-        // Get all filenames (this might be slow for large datasets)
+        // Save data to a JSON file
+        const outputPath = path.join(projectRoot, 'data', 'astra_db', 'astra_db_content.json');
+        fs.writeFileSync(outputPath, JSON.stringify(allRows, null, 2));
+        console.log(`Data saved to: ${outputPath}`);
+
+        // Get unique filenames
+        const uniqueFilenames = new Set(allRows.map(row => row.filename));
         console.log("\nUnique filenames in the database:");
-        const filenamesQuery = 'SELECT filename FROM aviation_documents';
-        const filenamesResult = await client.execute(filenamesQuery);
-        
-        // Use a Set to get unique filenames
-        const uniqueFilenames = new Set(filenamesResult.rows.map(row => row.filename));
-        
-        // Print unique filenames
         uniqueFilenames.forEach(filename => console.log(filename));
-
-        // Get the number of unique filenames
         console.log(`\nTotal number of unique files: ${uniqueFilenames.size}`);
+        
     } catch (err) {
         console.error('Error querying Astra DB:', err);
     } finally {
