@@ -4,6 +4,8 @@ import os
 import time
 from dotenv import load_dotenv
 import sys
+import argparse
+from tqdm import tqdm
 
 # Load environment variables
 load_dotenv()
@@ -43,7 +45,7 @@ def run_script(command, script_name, max_retries=3):
             execution_time = time.time() - start_time
             logging.info(f"✅ {script_name} completed successfully in {execution_time:.2f} seconds.")
             logging.info(result.stdout)
-            return True  # Success
+            return True, execution_time  # Success
             
         except subprocess.CalledProcessError as e:
             logging.error(f"❌ Error in {script_name} (Attempt {attempt}): {e}")
@@ -54,30 +56,50 @@ def run_script(command, script_name, max_retries=3):
                 time.sleep(5)  # Wait before retrying
             else:
                 logging.error(f"⛔ {script_name} failed after {max_retries} attempts. Moving to next step.")
-                return False  # Final failure
+                return False, 0  # Final failure
                 
-    return False  # This line is reached only if all retries failed
+    return False, 0  # This line is reached only if all retries failed
 
-if __name__ == "__main__":
+def main(args):
     logging.info("🚀 --- AviationRAG Processing Pipeline Started --- 🚀")
     
     steps = [
         ("python src/scripts/py_files/read_documents.py", "Read Documents"),
         ("python src/scripts/py_files/aviation_chunk_saver.py", "Chunk Documents"),
         ("python src/scripts/py_files/extract_pkl_to_json.py", "Extract PKL to JSON"),
-        ("python src/scripts/py_files/check_pklcontent.py", "Check PKL Content"),
-        ("node src/scripts/js_files/generate_embeddings.js", "Generate Embeddings"),
-        ("node src/scripts/js_files/store_embeddings_astra.js", "Store Embeddings in AstraDB"),
-        ("node src/scripts/js_files/check_astradb_consistency.js", "Check AstraDB Consistency"),
+        ("python src/scripts/py_files/check_pkl_content.py", "Check PKL Content"),
+        ("node src/scripts/js_files/check_new_chunks.js", "Generate New Embeddings"),
+        ("python src/scripts/py_files/check_embeddings.py", "Check Embeddings"),
+        ("node src/scripts/js_files/check_new_embeddings.js", "Store New Embeddings in AstraDB"),
         ("node src/scripts/js_files/check_astradb_content.js", "Check AstraDB Content"),
+        ("node src/scripts/js_files/check_astradb_consistency.js", "Check AstraDB Consistency"),
         ("python src/scripts/py_files/visualizing_data.py", "Update Visualizing Data")
     ]
     
     failed_steps = []
+    successful_steps = []
+    total_time = 0
     
-    for command, script_name in steps:
-        if not run_script(command, script_name):
-            failed_steps.append(script_name)
+    with tqdm(total=len(steps), desc="Pipeline Progress", unit="step") as pbar:
+        for command, script_name in steps:
+            if args.step and script_name != args.step:
+                pbar.update(1)
+                continue
+            
+            success, execution_time = run_script(command, script_name)
+            total_time += execution_time
+            
+            if success:
+                successful_steps.append((script_name, execution_time))
+            else:
+                failed_steps.append(script_name)
+            
+            pbar.update(1)
+
+    logging.info("\n--- Pipeline Summary ---")
+    logging.info(f"Total execution time: {total_time:.2f} seconds")
+    logging.info(f"Successful steps: {len(successful_steps)}")
+    logging.info(f"Failed steps: {len(failed_steps)}")
 
     if failed_steps:
         logging.error("❗ Pipeline completed with errors in the following steps:")
@@ -86,4 +108,19 @@ if __name__ == "__main__":
     else:
         logging.info("✅ Pipeline completed successfully without errors!")
 
+    logging.info("\nDetailed Step Execution Times:")
+    for step, time in successful_steps:
+        logging.info(f"{step}: {time:.2f} seconds")
+
     logging.info("🏁 --- AviationRAG Processing Pipeline Finished --- 🏁")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="AviationRAG Processing Pipeline")
+    parser.add_argument("--step", help="Run a specific step in the pipeline")
+    parser.add_argument("--verbose", action="store_true", help="Increase output verbosity")
+    args = parser.parse_args()
+
+    if args.verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    main(args)
