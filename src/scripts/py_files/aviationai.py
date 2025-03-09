@@ -11,11 +11,6 @@ from dotenv import load_dotenv
 from faiss_indexer import FAISSIndexer
 import tiktoken
 
-def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
-    encoding = tiktoken.get_encoding(encoding_name)
-    num_tokens = len(encoding.encode(string))
-    return num_tokens
-
 # ✅ Load environment variables
 load_dotenv()
 
@@ -59,7 +54,7 @@ logger.addHandler(performance_log)
 logger.addHandler(console_handler)
 
 # ✅ Initialize OpenAI API Client
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 # ✅ Path to embeddings file
 EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
@@ -68,11 +63,31 @@ EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
 try:
     faiss_index = FAISSIndexer.load_from_file(EMBEDDINGS_FILE)
     logging.info(f"✅ FAISS index created with {faiss_index.index.ntotal} embeddings.")
-    print(f"Debug: FAISS index size: {faiss_index.index.ntotal}")
+    # print(f"Debug: FAISS index size: {faiss_index.index.ntotal}")
 except Exception as e:
     logging.error(f"❌ Error creating FAISS index: {e}")
     exit(1)
 
+def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
+
+def parse_json_output(output):
+    first_brace = output.find("{")
+    if first_brace != -1:
+        output = output[first_brace:]
+    try:
+        parsed_output = json.loads(output)
+        if parsed_output.get("success", False):
+            return parsed_output.get("messages", [])
+        else:
+            logging.error(f"Chat retrieval failed. Parsed output: {parsed_output}")
+            return []
+    except json.JSONDecodeError as e:
+        logging.error(f"JSON parsing error: {e}. Raw output: {output}")
+        return []
+    
 # ✅ Function to store chat history in AstraDB
 def store_chat_in_db(session_id, user_query, ai_response):
     """
@@ -100,7 +115,6 @@ def store_chat_in_db(session_id, user_query, ai_response):
             cwd=os.path.join(os.path.dirname(__file__), "..", "js_files")  # Ensure correct working directory
     )
 
-        print("Chat stored successfully in AstraDB!")
         logging.info(f"💾 Storing chat for session: {session_id} | Query: {user_query[:50]}...")
 
     except subprocess.CalledProcessError as e:
@@ -115,7 +129,6 @@ def retrieve_chat_from_db(session_id, limit=5):
     logging.info(f"📥 Retrieving chat messages for session: {session_id}")
 
     if not session_id.strip():
-        print("⚠️ Warning: `session_id` is empty! Generating a new one...")
         session_id = str(uuid.uuid4())  # Assign a new session if empty
 
     chat_data = {
@@ -129,23 +142,7 @@ def retrieve_chat_from_db(session_id, limit=5):
             ["node", script_path, json.dumps(chat_data)], 
             capture_output=True, text=True, check=True
         )
-        output = result.stdout.strip()
-
-        # Extract only the JSON part from the output
-        first_brace = output.find("{")
-        if first_brace != -1:
-            output = output[first_brace:]  # Remove any extra log lines before JSON
-
-        try:
-            parsed_output = json.loads(output)
-            if parsed_output.get("success", False):
-                return parsed_output.get("messages", [])
-            else:
-                logging.error(f"Chat retrieval failed. Parsed output: {parsed_output}")
-                return []
-        except json.JSONDecodeError as e:
-            logging.error(f"JSON parsing error: {e}. Raw output: {output}")
-            return []
+        return parse_json_output(result.stdout.strip())
 
     except subprocess.CalledProcessError as e:
         logging.error(f"Error retrieving chat: {e}")
@@ -307,7 +304,7 @@ def chat_loop():
             logging.info("Searching FAISS for relevant documents...")
             results = faiss_index.search(query_embedding, k=15)
 
-            print(f"Debug: Found {len(results)} valid results")
+            # print(f"Debug: Found {len(results)} valid results")
             
             context_texts = []
             total_tokens = 0
@@ -322,7 +319,7 @@ def chat_loop():
 
                 context_texts.append(doc_text)
                 total_tokens += doc_tokens
-                print(f"Debug: Document from {metadata['filename']} (score: {score:.4f}, tokens: {doc_tokens})")
+                # print(f"Debug: Document from {metadata['filename']} (score: {score:.4f}, tokens: {doc_tokens})")
 
             context = "\n".join(context_texts)
       
