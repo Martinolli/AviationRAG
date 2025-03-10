@@ -17,7 +17,7 @@ The existing ProjectRAG aviation system follows this document processing pipelin
 
 ### Proposed Directory Structure
 
-```
+```text
 src/scripts/py_files/scrapers/
   __init__.py
   scraper_manager.py     # Orchestrates all scrapers
@@ -118,4 +118,3 @@ Potential enhancements to consider:
 4. **Authentication**: Support for authenticated access to restricted resources
 5. **Multi-format Support**: Add handlers for additional document formats
 6. **Content Filtering**: Implement relevance scoring to filter out low-value content
-
