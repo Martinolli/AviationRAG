@@ -95,6 +95,11 @@ async function saveCheckpoint(embeddings, outputPath) {
   console.log(`Checkpoint saved to ${outputPath}`);
 }
 
+async function saveFinalOutput(embeddings, outputPath) {
+  await fs.promises.writeFile(outputPath, JSON.stringify(embeddings, null, 2));
+  console.log(`Final output saved to ${outputPath}`);
+}
+
 async function generateEmbeddings() {
   try {
     // Get the directory of the current module
@@ -130,7 +135,16 @@ async function generateEmbeddings() {
       return;
     }
 
-    let allEmbeddings = loadExistingEmbeddings(outputPath);
+    let allEmbeddings = [];
+    
+    // Check for existing checkpoint
+    if (await fs.promises.access(checkpointPath).then(() => true).catch(() => false)) {
+      console.log('Found existing checkpoint. Resuming from last saved state.');
+      allEmbeddings = JSON.parse(await fs.promises.readFile(checkpointPath, 'utf8'));
+    } else {
+      allEmbeddings = loadExistingEmbeddings(outputPath);
+    }
+
     const processedFiles = new Set(allEmbeddings.map(e => e.filename));
 
     console.log(`Found ${jsonFiles.length} files to process.`);
@@ -148,9 +162,13 @@ async function generateEmbeddings() {
       await saveCheckpoint(allEmbeddings, checkpointPath);
     }
 
-    await saveCheckpoint(allEmbeddings, outputPath);
+    await saveFinalOutput(allEmbeddings, outputPath);
     console.log(`All embeddings saved to ${outputPath}`);
 
+    // Remove checkpoint file after successful run
+    await fs.promises.unlink(checkpointPath);
+    console.log('Checkpoint file removed after successful completion.');
+    
     // Generate CSV report
     await generateCSVReport(allEmbeddings);
 

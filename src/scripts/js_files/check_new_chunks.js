@@ -49,14 +49,14 @@ function generateEmbeddings() {
   console.log('Generating embeddings for new chunks...');
   exec('node src/scripts/js_files/generate_embeddings.js', (error, stdout, stderr) => {
     if (error) {
-      console.error(`Error: ${error.message}`);
+      console.error(`Error executing generate_embeddings.js: ${error.message}`);
       return;
     }
     if (stderr) {
-      console.error(`Stderr: ${stderr}`);
+      console.error(`Error while generating embeddings: ${stderr}`);
       return;
     }
-    console.log(`Stdout: ${stdout}`);
+    console.log(`Embedding generation output: ${stdout}`);
   });
 }
 
