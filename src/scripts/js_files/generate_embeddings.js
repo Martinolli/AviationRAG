@@ -31,6 +31,24 @@ function isChunkIdExists(existingEmbeddings, chunkId) {
   return existingEmbeddings.some(embedding => embedding.chunk_id === chunkId);
 }
 
+async function getOpenAIEmbedding(text, retries = 0) {
+  try {
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-ada-002",
+      input: text,
+    });
+    
+    return embeddingResponse.data[0].embedding;
+  } catch (error) {
+    if (retries < MAX_RETRIES) {
+      console.warn(`OpenAI API error, retrying (${retries + 1}/${MAX_RETRIES}): ${error.message}`);
+      await delay(DELAY_MS * (retries + 1)); // Exponential backoff
+      return getOpenAIEmbedding(text, retries + 1);
+    }
+    throw error;
+  }
+}
+
 async function processChunk(chunk, filename, chunkId, metadata, existingEmbeddings) {
   if (isChunkIdExists(existingEmbeddings, chunkId)) {
     console.log(`Skipping duplicate chunk ID: ${chunkId}`);
@@ -44,7 +62,8 @@ async function processChunk(chunk, filename, chunkId, metadata, existingEmbeddin
         input: chunk.text,
       });
 
-      const embeddingVector = response.data[0].embedding;
+      // Get embedding for the chunk
+      const embeddingVector = await getOpenAIEmbedding(chunk.text);
       console.log(`Generated embedding for chunk ID: ${chunkId}`);
       return {
         chunk_id: chunkId,
