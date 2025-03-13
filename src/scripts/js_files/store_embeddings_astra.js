@@ -12,6 +12,9 @@ const __dirname = path.dirname(__filename);
 const projectRoot = path.resolve(__dirname, '..', '..', '..');
 const envPath = path.join(projectRoot, '.env');
 
+const EMBEDDINGS_FILE = path.join(projectRoot, 'data', 'embeddings', 'aviation_embeddings.json');
+const ASTRA_CONTENT_FILE = path.join(projectRoot, 'data', 'astra_db', 'astra_db_content.json');
+
 if (fs.existsSync(envPath)) {
     dotenv.config({ path: envPath });
     console.log(`Loaded .env file from: ${envPath}`);
@@ -20,7 +23,7 @@ if (fs.existsSync(envPath)) {
     process.exit(1);
 }
 
-async function insertEmbeddings() {
+async function insertEmbeddings(newEmbeddings) {
     // Check if required environment variables are set
     const requiredEnvVars = ['ASTRA_DB_SECURE_BUNDLE_PATH', 'ASTRA_DB_CLIENT_ID', 'ASTRA_DB_CLIENT_SECRET', 'ASTRA_DB_KEYSPACE'];
     for (const envVar of requiredEnvVars) {
@@ -43,18 +46,12 @@ async function insertEmbeddings() {
         await client.connect();
         console.log('Connected to Astra DB');
 
-        const embeddingsPath = path.join(projectRoot, 'data', 'embeddings', 'aviation_embeddings.json');
-        
-        console.log(`Attempting to read embeddings from: ${embeddingsPath}`);
-
-        const embeddingsData = JSON.parse(await fsPromises.readFile(embeddingsPath, 'utf8'));
-
         const query = 'INSERT INTO aviation_documents (chunk_id, filename, text, tokens, embedding) VALUES (?, ?, ?, ?, ?)';
 
         let successCount = 0;
         let errorCount = 0;
 
-        for (const item of embeddingsData) {
+        for (const item of newEmbeddings) {
             try {
                 // Convert the embedding array to a Buffer
                 const embeddingBuffer = Buffer.from(new Float32Array(item.embedding).buffer);
@@ -84,7 +81,37 @@ async function insertEmbeddings() {
     }
 }
 
-insertEmbeddings().catch(err => {
-    console.error('Unhandled error in insertEmbeddings:', err);
-    process.exit(1);
-});
+async function main() {
+  // 1. Load Local Embeddings
+  const localEmbeddings = await loadEmbeddings(EMBEDDINGS_FILE);
+
+  // 2. Load Existing Astra DB Embeddings (from the local JSON)
+  const astraEmbeddings = await loadEmbeddings(ASTRA_CONTENT_FILE);
+
+  // 3. Identify New Embeddings (same logic as in check_new_embeddings.js)
+  const astraChunkIds = new Set(astraEmbeddings.map(e => e.chunk_id));
+  const newEmbeddings = localEmbeddings.filter(embedding => !astraChunkIds.has(embedding.chunk_id));
+
+  // 4. Store only the new embeddings to Astra DB
+  if(newEmbeddings.length>0){
+    await insertEmbeddings(newEmbeddings);
+  } else {
+    console.log('No new embeddings to store in Astra DB.');
+  }
+}
+
+async function loadEmbeddings(filePath) {
+  // Same loadEmbeddings as in check_new_embeddings.js
+  try {
+    if (!fs.existsSync(filePath)) {
+      console.log(`File ${filePath} does not exist. Assuming empty database.`);
+      return [];
+    }
+    const data = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.log(`Error reading file ${filePath}: ${error.message}`);
+    return [];
+  }
+}
+main().catch(console.error);
