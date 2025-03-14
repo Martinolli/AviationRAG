@@ -47,10 +47,10 @@ const logger = winston.createLogger({
 logger.info(`Logging to: ${logFilePath}`);  // Add this for debugging
 
 // Log environment variables for debugging
-logger.info('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
-logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
-logger.info('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
-logger.info('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
+// logger.info('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
+// logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
+// logger.info('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
+// logger.info('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
 
 // Initialize the Cassandra client
 const client = new Client({
@@ -92,7 +92,7 @@ async function storeChat() {
             }
 
             // store chat message
-            logger.info("Storing chat message...");
+            // logger.info("Storing chat message...");
             const query = `
                 INSERT INTO aviation_conversation_history (session_id, timestamp, user_query, ai_response)
                 VALUES (:session_id, toTimestamp(now()), :user_query, :ai_response)
@@ -102,14 +102,14 @@ async function storeChat() {
 
             await client.execute(query, params, { prepare: true });
 
-            logger.info("Chat stored successfully!");
+            // logger.info("Chat stored successfully!");
 
             // Log chat details to separate file
-            logger.info(`Stored chat for session: ${session_id}`);
+            // logger.info(`Stored chat for session: ${session_id}`);
             
         } else if (chatData.action === "retrieve") {
             // retrieve chat messages
-            logger.info(`Retrieving chat messages for session_id: ${chatData.session_id}`);
+            // logger.info(`Retrieving chat messages for session_id: ${chatData.session_id}`);
 
             const limitValue = chatData.limit || 5;
 

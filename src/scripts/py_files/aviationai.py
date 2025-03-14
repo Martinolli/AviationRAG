@@ -41,7 +41,7 @@ console_handler = logging.StreamHandler(sys.stdout)
 info_log.setLevel(logging.INFO)
 error_log.setLevel(logging.ERROR)
 performance_log.setLevel(logging.DEBUG)
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.ERROR)
 
 for handler in [info_log, error_log, performance_log, console_handler]:
     handler.setFormatter(log_formatter)
@@ -53,17 +53,25 @@ logger.addHandler(error_log)
 logger.addHandler(performance_log)
 logger.addHandler(console_handler)
 
+import logging
+
+# Suppress verbose logging from OpenAI, urllib3, and httpx (used internally)
+logging.getLogger("openai").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+
 # ✅ Initialize OpenAI API Client
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY")) # The client is now in this file
 
 # ✅ Path to embeddings file
 EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
 
 # ✅ Load and create FAISS index
 try:
-    faiss_index = FAISSIndexer.load_from_file(EMBEDDINGS_FILE)
+    faiss_index = FAISSIndexer.load_from_file(EMBEDDINGS_FILE, verbose=False)
     logging.info(f"✅ FAISS index created with {faiss_index.index.ntotal} embeddings.")
-    # print(f"Debug: FAISS index size: {faiss_index.index.ntotal}")
 except Exception as e:
     logging.error(f"❌ Error creating FAISS index: {e}")
     exit(1)
@@ -115,7 +123,7 @@ def store_chat_in_db(session_id, user_query, ai_response):
             cwd=os.path.join(os.path.dirname(__file__), "..", "js_files")  # Ensure correct working directory
     )
 
-        logging.info(f"💾 Storing chat for session: {session_id} | Query: {user_query[:50]}...")
+        # logging.info(f"💾 Storing chat for session: {session_id} | Query: {user_query[:50]}...")
 
     except subprocess.CalledProcessError as e:
         logging.error(f"Error storing chat: {e}")
@@ -278,17 +286,6 @@ def chat_loop():
     max_history = 5  # Keep only the last 5 exchanges in chat history
 
     while True:
-        print("\n🔹 Suggested Topics: ")
-        print(" - 'Analyze an accident similar to Helios Airways Flight 522.'")
-        print(" - 'What regulatory gaps led to the Tenerife Airport Disaster?'")
-        print(" - 'Does this maintenance procedure comply with FAA Part 43?'")
-        print(" - 'How does SMS align with ICAO Annex 19?'")
-        print(" - 'Analyze how ICAO Annex 19 applies to accident prevention.'")
-        print(" - 'What are the SMS compliance lessons from the Tenerife disaster?'")
-        print(" - 'Compare FAA Part 43 maintenance regulations with EASA Part M.'")
-        print(" - 'Assess if this risk management process aligns with FAA Part 5.'")
-
-
         query = input("\nUser: ").strip()
 
         if query.lower() == 'exit':
@@ -303,34 +300,24 @@ def chat_loop():
 
             logging.info("Searching FAISS for relevant documents...")
             results = faiss_index.search(query_embedding, k=15)
-
-            # print(f"Debug: Found {len(results)} valid results")
-            
             context_texts = []
             total_tokens = 0
             max_tokens = 6000  # Leave room for the query and response
-
             for metadata, score in results:
                 doc_text = metadata['text']
                 doc_tokens = num_tokens_from_string(doc_text)
-
                 if total_tokens + doc_tokens > max_tokens:
                     break
-
                 context_texts.append(doc_text)
                 total_tokens += doc_tokens
-                # print(f"Debug: Document from {metadata['filename']} (score: {score:.4f}, tokens: {doc_tokens})")
-
+                
             context = "\n".join(context_texts)
       
            # Generate response
             response = generate_response(query, context)
-
             print("\nAviationAI:", response)
-
             # Store chat in AstraDB
             store_chat_in_db(session_id, query, response)
-
             # Update chat history
             past_exchanges.append((query, response))
             if len(past_exchanges) > 5:
@@ -339,11 +326,8 @@ def chat_loop():
         except Exception as e:
             logging.error(f"Error: {e}")
             print(f"An error occurred: {e}")
-
         chat_history.append((query, response))
         chat_history = chat_history[-max_history:]
-
-    
 # ✅ Run the chat loop
 if __name__ == "__main__":
     chat_loop()
