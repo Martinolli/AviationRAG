@@ -252,14 +252,18 @@ def chat_loop():
      # ✅ Allow user to select a previous session or start a new one
     if session_metadata:
         print("\n📌 Available Previous Sessions:")
-        for i, (sid, title) in enumerate(session_metadata.items(), 1):
+
+        # Get the last 5 sessions only
+        recent_sessions = list(session_metadata.items())[-5:]  # Keep only the last 5
+
+        for i, (sid, title) in enumerate(recent_sessions, 1):
             print(f"{i}. {title}")
 
         try:
             choice = int(input("\nEnter session number to continue (or 0 for a new session): "))
-            if 1 <= choice <= len(session_metadata):
-                session_id = list(session_metadata.keys())[choice - 1]
-                print(f"✅ Continuing session: {session_metadata[session_id]}")
+            if 1 <= choice <= len(recent_sessions):  # Ensure valid choice
+                session_id, session_title = recent_sessions[choice - 1]
+                print(f"✅ Continuing session: {session_title}")
                 past_exchanges = chat_cache.get(session_id, retrieve_chat_from_db(session_id))
                 chat_cache[session_id] = past_exchanges  # Store in cache
             else:
