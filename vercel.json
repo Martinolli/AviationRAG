@@ -1,8 +1,0 @@
-{
-  "routes": [
-    {
-      "pages": "/(.*)",
-      "dest": "/index.tsx"
-    }
-  ]
-}
