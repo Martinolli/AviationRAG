@@ -6,6 +6,11 @@ data/astra_db/astra_db_content.json
 # Node modules
 node_modules/
 
+# Data files
+*.csv
+*.pkl
+*.json
+
 # Python environment
 venv/
 __pycache__/
