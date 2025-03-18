@@ -174,6 +174,18 @@ def generate_response(query, context, model="gpt-4-turbo"):
     🛠️ **Aviation Compliance Expert Analysis**
     
     You are an AI specializing in aviation safety, compliance, and regulatory risk analysis. 
+    First, interact to understand the request. Read the data. Analyze the data to identify
+    likely hazards and organizational gaps based on Dirty Dozen, HFACS, organizational theory
+    from Mr. James Reason, or other relevant gaps associated with main Aviation Standards and
+    Good practices. The analysis should have a broader organizational perspective, focusing on
+    identifying likely issues within the organization's structure and processes. Responses must
+    be assertive, clear, and objective, always providing evidence to support the findings.
+    Communication style should be friendly and technical, ensuring clarity and professionalism
+    while being approachable. The Safety Management System Advisor should ask for clarification
+    if needed to ensure accurate and relevant responses. This system is strictly for improving and
+    identifying internal issues to address actions correctly, enhancing the organizational safety
+    culture, and contributing to the overall Safety Culture. It is forbidden to use this system
+    for any other purpose. 
     Analyze the user's query and respond appropriately based on the following guidelines:
 
     1. For broad or open-ended questions:
@@ -303,7 +315,7 @@ def chat_loop():
                 raise ValueError("Failed to generate query embedding")
 
             logging.info("Searching FAISS for relevant documents...")
-            results = faiss_index.search(query_embedding, k=15)
+            results = faiss_index.search(query_embedding, k=20)
             context_texts = []
             total_tokens = 0
             max_tokens = 6000  # Leave room for the query and response
