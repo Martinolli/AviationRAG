@@ -28,7 +28,7 @@ AviationRAG Web Scraping Development Plan
 - **check_astradb_consistency**
   - cross check between AstraDB content and local embeddings files to verify the files consistency
 - **visualizing-data.py**
-  - generate local charts with data from the aviation_corpus.json and save aviation_corpus.json update with indicators.
+  - generate local charts with data from the `aviation_corpus.pkl` and save `aviation_corpus.json` update with indicators.
 
 ### **2. Web Scraping Integration Plan**
 
@@ -114,6 +114,4 @@ and merge both sources before generating embeddings.
 
 ✅ **List key aviation-related websites** to scrape.
 ✅ **Define scraping rules** (targeting news, regulations, industry insights).
-✅ **Select appropriate scraping methods** (BeautifulSoup for static content, Selenium for JavaScript-heavy pages).
-
-Once these steps are defined, development of `scrape_and_chunk.py` can begin, making AviationRAG an even more powerful tool for aviation knowledge retrieval. 🚀✈️
+✅ **Select appropriate scraping methods** (BeautifulSoup for static content, Selenium for JavaScript-heavy pages)
