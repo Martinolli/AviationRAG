@@ -89,13 +89,11 @@ and merge both sources before generating embeddings.
 
 - Implement **BeautifulSoup** for static webpages or **Selenium** for dynamic content.
 - Extract only **relevant sections** (ignoring ads, headers, footers, and navigation bars).
-- Process the scraped content into coherent **chunks**, ensuring consistent length with DOCX-based ones.
-- Save the output in `data/processed/chunked_web_documents/`.
-- Generate the `aviation_corpus-scrapping.pkl` save in the `data/raw/aviation_corpus_scrapping.pkl`
+- Generate the `aviation_corpus_scrapping.pkl` save in the `data/raw/aviation_corpus_scrapping.pkl`
 
 #### **Step 3: Merge Both aviation_corpus.pkl Sources**
 
-- Append new aviation_corpus_scrapping.pkl before running aviation_chunk_saver.py and embedding generation process.
+- Append new `aviation_corpus_scrapping.pkl` with `aviation_corpus.pkl` before running `aviation_chunk_saver.py` and embedding generation process.
 - Implement duplicate handling to prevent redundant data from being stored.
 
 #### **Step 4: Continue Normal Processing**
