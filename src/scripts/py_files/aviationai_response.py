@@ -7,30 +7,25 @@ import os
 import time
 from nltk.corpus import wordnet
 import logging
-import subprocess
 import uuid
 import sys
 
+from chat_db import retrieve_chat_from_db, store_chat_in_db
+from config import CHAT_DIR, CHAT_ID_DIR, LOG_DIR, PROJECT_ROOT
+
 
 # Load environment variables
-load_dotenv()
+load_dotenv(PROJECT_ROOT / ".env")
 
-# Define absolute paths
-base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
-log_dir = os.path.join(base_dir, 'logs')  # Define the path to the logs folder
-chat_dir = os.path.join(base_dir, 'chat')  # Define the path to the chat folder
-chat_id = os.path.join(base_dir, 'chat_id')  # Define the path to the chat_id folder
+# Define paths
+log_dir = LOG_DIR
+chat_dir = CHAT_DIR
+chat_id = CHAT_ID_DIR
 
 # Ensure the chat directory exists
-if not os.path.exists(chat_dir):
-    os.makedirs(chat_dir)
-
-if not os.path.exists(chat_id):
-    os.makedirs(chat_id)
-
-# Ensure log directory exists
-if not os.path.exists(log_dir):
-    os.makedirs(log_dir)
+chat_dir.mkdir(parents=True, exist_ok=True)
+chat_id.mkdir(parents=True, exist_ok=True)
+log_dir.mkdir(parents=True, exist_ok=True)
 
 # Define multiple log files
 info_log_path = os.path.join(log_dir, 'info.log')
@@ -40,9 +35,9 @@ performance_log_path = os.path.join(log_dir, 'performance.log')
 log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 # Ensure UTF-8 encoding for all handlers
-info_log = logging.FileHandler("logs/info.log", encoding="utf-8")
-error_log = logging.FileHandler("logs/error.log", encoding="utf-8")
-performance_log = logging.FileHandler("logs/performance.log", encoding="utf-8")
+info_log = logging.FileHandler(info_log_path, encoding="utf-8")
+error_log = logging.FileHandler(error_log_path, encoding="utf-8")
+performance_log = logging.FileHandler(performance_log_path, encoding="utf-8")
 console_handler = logging.StreamHandler(sys.stdout)  # ✅ Stream to console
 
 # Set logging levels
@@ -68,82 +63,6 @@ logger.addHandler(console_handler)  # ✅ Enable console logging
 
 # Set up the OpenAI API key
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-def store_chat_in_db(session_id, user_query, ai_response):
-    """
-    Calls the Node.js script to store chat in AstraDB.
-    """
-    # Define the correct path to store_chat.js inside src/scripts/
-    
-    script_path = os.path.join(os.path.dirname(__file__), '..', 'js_files', 'store_chat.js')
-
-    if not ai_response or len(ai_response) < 10:
-        logging.error("⚠️ Invalid AI response detected! Storing default message.")
-        ai_response = "AI response was incomplete or not available."
-
-    chat_data = {
-        "action": "store",
-        "session_id": session_id,
-        "user_query": user_query,
-        "ai_response": ai_response
-    }
-    # Call the JavaScript file with the correct path
-    try:
-        subprocess.run(
-            ["node", script_path, json.dumps(chat_data)],
-            check=True,
-            cwd=os.path.join(os.path.dirname(__file__), "..", "js_files")  # Ensure correct working directory
-    )
-
-        print("Chat stored successfully in AstraDB!")
-        logging.info(f"💾 Storing chat for session: {session_id} | Query: {user_query[:50]}...")
-
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Error storing chat: {e}")
-
-def retrieve_chat_from_db(session_id, limit=5):
-    """
-    Calls the Node.js script to retrieve chat history from AstraDB.
-    """
-    script_path = os.path.join(os.path.dirname(__file__), '..', 'js_files', 'store_chat.js')
-    logging.info(f"📥 Retrieving chat messages for session: {session_id}")
-
-    if not session_id.strip():
-        print("⚠️ Warning: `session_id` is empty! Generating a new one...")
-        session_id = str(uuid.uuid4())  # Assign a new session if empty
-
-    chat_data = {
-        "action": "retrieve",
-        "session_id": session_id,
-        "limit": limit
-    }
-
-    try:
-        result = subprocess.run(
-            ["node", script_path, json.dumps(chat_data)], 
-            capture_output=True, text=True, check=True
-        )
-        output = result.stdout.strip()
-
-        # Extract only the JSON part from the output
-        first_brace = output.find("{")
-        if first_brace != -1:
-            output = output[first_brace:]  # Remove any extra log lines before JSON
-
-        try:
-            parsed_output = json.loads(output)
-            if parsed_output.get("success", False):
-                return parsed_output.get("messages", [])
-            else:
-                logging.error(f"Chat retrieval failed. Parsed output: {parsed_output}")
-                return []
-        except json.JSONDecodeError as e:
-            logging.error(f"JSON parsing error: {e}. Raw output: {output}")
-            return []
-
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Error retrieving chat: {e}")
-        return []
 
 def safe_openai_call(api_function, max_retries=3, base_delay=2):
     """
@@ -437,7 +356,10 @@ def chat_loop():
             if 1 <= choice <= len(session_metadata):
                 session_id = list(session_metadata.keys())[choice - 1]
                 print(f"✅ Continuing session: {session_metadata[session_id]}")
-                past_exchanges = chat_cache.get(session_id, retrieve_chat_from_db(session_id))
+                past_exchanges = chat_cache.get(
+                    session_id,
+                    retrieve_chat_from_db(session_id, warn_on_empty_session=True),
+                )
                 chat_cache[session_id] = past_exchanges  # Store in cache
             else:
                 session_id = str(uuid.uuid4())
@@ -530,7 +452,7 @@ def chat_loop():
             chat_history.append((expanded_query, response))
             chat_history = chat_history[-max_history:]
 
-            store_chat_in_db(session_id, expanded_query, response)
+            store_chat_in_db(session_id, expanded_query, response, print_success=True, log_success=True)
             print(f"Expanded Query: {expanded_query}")
 
         except Exception as e:

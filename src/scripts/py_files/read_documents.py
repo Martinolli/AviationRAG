@@ -15,6 +15,15 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import PyPDF2
 import logging
 
+from config import (
+    ABBREVIATIONS_CSV,
+    DOCUMENTS_DIR,
+    LOG_DIR,
+    PKL_FILENAME,
+    TEXT_EXPANDED_DIR,
+    TEXT_OUTPUT_DIR,
+)
+
 # Load spaCy's English model
 nlp = spacy.load('en_core_web_sm')
 nlp.max_length = 2000000  # or any other suitable value
@@ -30,21 +39,10 @@ warnings.filterwarnings("ignore", message="usetex mode requires TeX.")
 STOP_WORDS = set(stopwords.words('english'))
 import docx
 
-# Define base directory
-BASE_DIR = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
-
-# Define paths
-DOCUMENTS_DIR = os.path.join(BASE_DIR, 'data', 'documents')
-TEXT_OUTPUT_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedText')
-TEXT_EXPANDED_DIR = os.path.join(BASE_DIR, 'data', 'processed', 'ProcessedTextExpanded')
-PKL_FILENAME = os.path.join(BASE_DIR, 'data', 'raw', 'aviation_corpus.pkl')
-LOG_DIR = os.path.join(BASE_DIR, 'logs')  # Define the path to the logs folder
-
-log_file_path = os.path.join(LOG_DIR, 'read_documents.log')
+log_file_path = LOG_DIR / "read_documents.log"
 
 # Ensure the log directory exists
-if not os.path.exists(LOG_DIR):
-    os.makedirs(LOG_DIR)
+os.makedirs(LOG_DIR, exist_ok=True)
 
 # Configure logging properly
 logging.basicConfig(
@@ -59,7 +57,7 @@ logging.basicConfig(
 logging.info("Logging initialized successfully.")
 
 # Ensure directories exist
-for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, os.path.dirname(PKL_FILENAME)]:
+for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, PKL_FILENAME.parent]:
     os.makedirs(directory, exist_ok=True)  # No need to log this for every run
 
 # Donwload NLTK data
@@ -109,11 +107,11 @@ nlp.add_pipe("aviation_ner", after="ner")
 def load_abbreviation_dict():
     abbreviation_dict = {}
     try:
-        with open('abbreviations.csv', mode='r') as infile:
+        with open(ABBREVIATIONS_CSV, mode='r', encoding='utf-8') as infile:
             reader = csv.reader(infile)
             abbreviation_dict = {rows[0].strip(): rows[1].strip() for rows in reader if len(rows) >= 2}
     except FileNotFoundError:
-        logging.error("Error: The file 'abbreviations.csv' was not found.")
+        logging.error(f"Error: The file '{ABBREVIATIONS_CSV}' was not found.")
     except Exception as e:
         logging.exception("An error occurred while loading the abbreviation dictionary.")
     return abbreviation_dict

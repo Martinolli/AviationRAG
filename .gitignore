@@ -1,56 +1,58 @@
-# Add these lines at the end of your .gitignore file
-data/raw/aviation_corpus.pkl
-data/processed/aviation_corpus.json
-data/astra_db/astra_db_content.json
-
-# Node modules
+# Node / frontend
 node_modules/
+.next/
+out/
+.vercel/
 
-# Data files
-*.csv
-*.pkl
-*.json
-
-# Python environment
-venv/
+# Python caches and environments
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+env/
 
-# Environment variables
-.env
-
-# Ignore all files in data/raw except the PKL file
-data/raw/*
-!data/raw/*.pkl
-
-# IDE and editor files
+# OS / editor artifacts
 .vscode/
 .idea/
 *.swp
-
-# OS generated files
 .DS_Store
 Thumbs.db
 
-# Log files
-*.log
+# Environment files
+.env
+.env.*
+!.env.example
 
-# Temporary files
+# Logs and temporary files
+logs/
+chat/*.log
+chat_id/*.txt
+*.log
 *.tmp
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Generated data artifacts
+data/embeddings/
+data/astra_db/
+data/raw/scraped/
+data/processed/chunked_documents/
+data/processed/ProcessedText/
+data/processed/ProcessedTextExpanded/
+data/processed/aviation_corpus.json
+data/processed/updated_aviation_corpus.pkl
+data/processed/updated_aviation_corpus.csv
 
-# Astra DB secure connect bundle
-secure-connect-*.zip
+# Generated visualizations
+assets/pictures/
 
-# Compiled Python files
-*.pyc
+# Notebook artifacts
+.ipynb_checkpoints/
 
-# Distribution / packaging
+# Python packaging / build
 .Python
 build/
-develop-eggs/
 dist/
 downloads/
 eggs/
@@ -64,4 +66,6 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-.vercel
+
+# Astra DB secure bundle
+secure-connect-*.zip

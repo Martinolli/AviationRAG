@@ -1,14 +1,10 @@
 import pickle
 import os
-from pathlib import Path
+
+from config import PKL_FILENAME
 
 def check_pkl_content():
-    # Get the project root directory
-    # Define base directory
-    BASE_DIR = Path(r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG')
-    
-    # Define the path to the aviation_corpus.pkl file
-    pkl_path = BASE_DIR / 'data' / 'raw' / 'aviation_corpus.pkl'
+    pkl_path = PKL_FILENAME
     
     if not pkl_path.exists():
         print(f"Error: The file {pkl_path} does not exist.")
