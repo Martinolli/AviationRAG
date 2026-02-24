@@ -5,30 +5,30 @@ import json
 import time
 import uuid
 import sys
-import subprocess
 from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
 from faiss_indexer import FAISSIndexer
 import tiktoken
 
+from chat_db import retrieve_chat_from_db, store_chat_in_db
+from config import CHAT_DIR, CHAT_ID_DIR, EMBEDDINGS_FILE as EMBEDDINGS_PATH, LOG_DIR, PROJECT_ROOT
+
 # ✅ Load environment variables
-load_dotenv()
+load_dotenv(PROJECT_ROOT / ".env")
 
 # ✅ Define base paths
-base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
-log_dir = os.path.join(base_dir, 'logs')
-chat_dir = os.path.join(base_dir, 'chat')
-chat_id = os.path.join(base_dir, 'chat_id')
+log_dir = LOG_DIR
+chat_dir = CHAT_DIR
+chat_id = CHAT_ID_DIR
 
 # ✅ Ensure directories exist
 for directory in [log_dir, chat_dir, chat_id]:
-    if not os.path.exists(directory):
-        os.makedirs(directory)
+    directory.mkdir(parents=True, exist_ok=True)
 
 # ✅ Configure logging
-info_log_path = os.path.join(log_dir, 'info.log')
-error_log_path = os.path.join(log_dir, 'error.log')
-performance_log_path = os.path.join(log_dir, 'performance.log')
+info_log_path = log_dir / "info.log"
+error_log_path = log_dir / "error.log"
+performance_log_path = log_dir / "performance.log"
 
 log_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
@@ -53,8 +53,6 @@ logger.addHandler(error_log)
 logger.addHandler(performance_log)
 logger.addHandler(console_handler)
 
-import logging
-
 # Suppress verbose logging from OpenAI, urllib3, and httpx (used internally)
 logging.getLogger("openai").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -66,7 +64,7 @@ logging.getLogger("httpcore").setLevel(logging.WARNING)
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY")) # The client is now in this file
 
 # ✅ Path to embeddings file
-EMBEDDINGS_FILE = "data/embeddings/aviation_embeddings.json"
+EMBEDDINGS_FILE = str(EMBEDDINGS_PATH)
 
 # ✅ Load and create FAISS index
 try:
@@ -80,81 +78,6 @@ def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> i
     encoding = tiktoken.get_encoding(encoding_name)
     num_tokens = len(encoding.encode(string))
     return num_tokens
-
-def parse_json_output(output):
-    first_brace = output.find("{")
-    if first_brace != -1:
-        output = output[first_brace:]
-    try:
-        parsed_output = json.loads(output)
-        if parsed_output.get("success", False):
-            return parsed_output.get("messages", [])
-        else:
-            logging.error(f"Chat retrieval failed. Parsed output: {parsed_output}")
-            return []
-    except json.JSONDecodeError as e:
-        logging.error(f"JSON parsing error: {e}. Raw output: {output}")
-        return []
-    
-# ✅ Function to store chat history in AstraDB
-def store_chat_in_db(session_id, user_query, ai_response):
-    """
-    Calls the Node.js script to store chat in AstraDB.
-    """
-    # Define the correct path to store_chat.js inside src/scripts/
-    
-    script_path = os.path.join(os.path.dirname(__file__), '..', 'js_files', 'store_chat.js')
-
-    if not ai_response or len(ai_response) < 10:
-        logging.error("⚠️ Invalid AI response detected! Storing default message.")
-        ai_response = "AI response was incomplete or not available."
-
-    chat_data = {
-        "action": "store",
-        "session_id": session_id,
-        "user_query": user_query,
-        "ai_response": ai_response
-    }
-    # Call the JavaScript file with the correct path
-    try:
-        subprocess.run(
-            ["node", script_path, json.dumps(chat_data)],
-            check=True,
-            cwd=os.path.join(os.path.dirname(__file__), "..", "js_files")  # Ensure correct working directory
-    )
-
-        # logging.info(f"💾 Storing chat for session: {session_id} | Query: {user_query[:50]}...")
-
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Error storing chat: {e}")
-
-# ✅ Function to retrieve chat history from AstraDB
-def retrieve_chat_from_db(session_id, limit=5):
-    """
-    Calls the Node.js script to retrieve chat history from AstraDB.
-    """
-    script_path = os.path.join(os.path.dirname(__file__), '..', 'js_files', 'store_chat.js')
-    logging.info(f"📥 Retrieving chat messages for session: {session_id}")
-
-    if not session_id.strip():
-        session_id = str(uuid.uuid4())  # Assign a new session if empty
-
-    chat_data = {
-        "action": "retrieve",
-        "session_id": session_id,
-        "limit": limit
-    }
-
-    try:
-        result = subprocess.run(
-            ["node", script_path, json.dumps(chat_data)], 
-            capture_output=True, text=True, check=True
-        )
-        return parse_json_output(result.stdout.strip())
-
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Error retrieving chat: {e}")
-        return []
 
 # ✅ Function to get embeddings
 def get_embedding(text):

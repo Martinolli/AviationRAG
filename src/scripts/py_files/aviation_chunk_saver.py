@@ -6,23 +6,23 @@ from nltk.tokenize import sent_tokenize
 import tiktoken
 import pickle
 
+from config import CHUNKED_DIR, LOG_DIR, PKL_FILENAME
+
 # Ensure necessary NLTK data is downloaded
 nltk.download('punkt')
 
-# Define absolute paths
-base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
-pkl_file = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
-chunk_output_dir = os.path.join(base_dir, 'data', 'processed', 'chunked_documents')
-log_dir = os.path.join(base_dir, 'logs')  # Define the path to the logs folder
+# Define paths
+pkl_file = PKL_FILENAME
+chunk_output_dir = CHUNKED_DIR
+log_dir = LOG_DIR
 
 # Set up logging
-log_file_path = os.path.join(log_dir, 'chunking.log')
+log_file_path = log_dir / "chunking.log"
 logging.basicConfig(level=logging.INFO, filename=log_file_path,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Directory to save chunked JSON files
-if not os.path.exists(chunk_output_dir):
-    os.makedirs(chunk_output_dir)
+os.makedirs(chunk_output_dir, exist_ok=True)
 
 # Initialize OpenAI tokenizer for accurate token counting
 tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")

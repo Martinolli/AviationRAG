@@ -1,6 +1,7 @@
 import json
-import os
-from collections import defaultdict
+from collections import Counter, defaultdict
+
+from config import EMBEDDINGS_FILE
 
 def verify_embeddings(file_path):
     try:
@@ -50,8 +51,9 @@ def verify_embeddings(file_path):
         print(f"Average tokens per embedding: {total_tokens / len(data):.2f}")
 
         # Check for duplicate chunk_ids
-        chunk_ids = [item.get('chunk_id') for item in data]
-        duplicate_chunk_ids = set([chunk_id for chunk_id in chunk_ids if chunk_ids.count(chunk_id) > 1])
+        chunk_ids = [item.get('chunk_id') for item in data if item.get('chunk_id') is not None]
+        chunk_id_counts = Counter(chunk_ids)
+        duplicate_chunk_ids = {chunk_id for chunk_id, count in chunk_id_counts.items() if count > 1}
         if duplicate_chunk_ids:
             print(f"\nWarning: Found {len(duplicate_chunk_ids)} duplicate chunk_ids:")
             for chunk_id in duplicate_chunk_ids:
@@ -67,5 +69,5 @@ def verify_embeddings(file_path):
         print(f"An unexpected error occurred: {str(e)}")
 
 # Use the path from your project structure
-embeddings_path = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG\data\embeddings\aviation_embeddings.json'
+embeddings_path = EMBEDDINGS_FILE
 verify_embeddings(embeddings_path)

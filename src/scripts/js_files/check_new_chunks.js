@@ -1,77 +1,99 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { exec } from 'child_process';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { execFile } from "child_process";
+import { promisify } from "util";
 
-// Get the directory of the current module
+const execFileAsync = promisify(execFile);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const projectRoot = path.resolve(__dirname, '..', '..', '..');
-const EMBEDDINGS_FILE = path.join(projectRoot, 'data', 'embeddings', 'aviation_embeddings.json');
-const CHUNKS_DIR = path.join(projectRoot, 'data', 'processed', 'chunked_documents');
+const projectRoot = path.resolve(__dirname, "..", "..", "..");
+
+const EMBEDDINGS_FILE = path.join(projectRoot, "data", "embeddings", "aviation_embeddings.json");
+const CHUNKS_DIR = path.join(projectRoot, "data", "processed", "chunked_documents");
+const GENERATE_SCRIPT = path.join(projectRoot, "src", "scripts", "js_files", "generate_embeddings.js");
 
 function loadExistingEmbeddings() {
   try {
-    const data = fs.readFileSync(EMBEDDINGS_FILE, 'utf8');
+    if (!fs.existsSync(EMBEDDINGS_FILE)) {
+      console.log("No existing embeddings file found. Will generate all embeddings.");
+      return [];
+    }
+    const data = fs.readFileSync(EMBEDDINGS_FILE, "utf8");
     return JSON.parse(data);
   } catch (error) {
-    console.log('No existing embeddings file found. Will generate all embeddings.');
-    
+    console.log(`Unable to read embeddings file: ${error.message}`);
     return [];
   }
 }
 
 function scanChunkedDocuments() {
-  const chunkFiles = fs.readdirSync(CHUNKS_DIR).filter(file => file.endsWith('_chunks.json'));
-  return chunkFiles.map(file => {
-    const data = fs.readFileSync(path.join(CHUNKS_DIR, file), 'utf8');
-    return JSON.parse(data);
-  });
+  if (!fs.existsSync(CHUNKS_DIR)) {
+    console.log(`Chunk directory does not exist: ${CHUNKS_DIR}`);
+    return [];
+  }
+
+  const chunkFiles = fs.readdirSync(CHUNKS_DIR).filter((file) => file.endsWith("_chunks.json"));
+  return chunkFiles
+    .map((file) => {
+      try {
+        const data = fs.readFileSync(path.join(CHUNKS_DIR, file), "utf8");
+        return JSON.parse(data);
+      } catch (error) {
+        console.warn(`Skipping invalid chunk file ${file}: ${error.message}`);
+        return null;
+      }
+    })
+    .filter((doc) => doc !== null);
 }
 
 function findNewChunks(existingEmbeddings, chunkedDocuments) {
-  const existingChunks = new Set(existingEmbeddings.map(e => `${e.filename}_${e.chunk_id}`));
+  const existingChunkIds = new Set(existingEmbeddings.map((embedding) => embedding.chunk_id));
   const newChunks = [];
 
-  chunkedDocuments.forEach(doc => {
-    doc.chunks.forEach(chunk => {
-      const chunkKey = `${doc.filename}_${chunk.chunk_id}`;
-      if (!existingChunks.has(chunkKey)) {
+  chunkedDocuments.forEach((doc) => {
+    const chunks = Array.isArray(doc.chunks) ? doc.chunks : [];
+    chunks.forEach((chunk) => {
+      if (!existingChunkIds.has(chunk.chunk_id)) {
         newChunks.push({ filename: doc.filename, chunk_id: chunk.chunk_id });
       }
     });
   });
+
   console.log(`Found ${newChunks.length} new chunk(s) to process.`);
   return newChunks;
 }
 
-function generateEmbeddings() {
-  console.log('Generating embeddings for new chunks...');
-  exec('node src/scripts/js_files/generate_embeddings.js', (error, stdout, stderr) => {
-    if (error) {
-      console.error(`Error executing generate_embeddings.js: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.error(`Error while generating embeddings: ${stderr}`);
-      return;
-    }
-    console.log(`Embedding generation output: ${stdout}`);
+async function generateEmbeddings() {
+  console.log("Generating embeddings for new chunks...");
+  const { stdout, stderr } = await execFileAsync("node", [GENERATE_SCRIPT], {
+    cwd: projectRoot,
+    maxBuffer: 1024 * 1024 * 20,
   });
+
+  if (stderr) {
+    console.error(stderr);
+  }
+  if (stdout) {
+    console.log(stdout);
+  }
 }
 
-function main() {
+async function main() {
   const existingEmbeddings = loadExistingEmbeddings();
   const chunkedDocuments = scanChunkedDocuments();
   const newChunks = findNewChunks(existingEmbeddings, chunkedDocuments);
 
   if (newChunks.length > 0) {
     console.log(`Found ${newChunks.length} new chunks. Generating embeddings...`);
-    generateEmbeddings();
+    await generateEmbeddings();
   } else {
-    console.log('No new chunks found. Skipping embedding generation.');
+    console.log("No new chunks found. Skipping embedding generation.");
   }
-  
 }
 
-main();
+main().catch((error) => {
+  console.error("Error in check_new_chunks:", error);
+  process.exit(1);
+});

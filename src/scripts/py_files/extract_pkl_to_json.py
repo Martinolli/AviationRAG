@@ -1,24 +1,19 @@
 import pickle
 import json
-import os
 
-# Define absolute paths
-base_dir = r'C:\Users\Aspire5 15 i7 4G2050\ProjectRAG\AviationRAG'
-pkl_path = os.path.join(base_dir, 'data', 'raw', 'aviation_corpus.pkl')
-json_path = os.path.join(base_dir, 'data', 'processed', 'aviation_corpus.json')
+from config import JSON_CORPUS_FILE, PKL_FILENAME
+
+pkl_path = PKL_FILENAME
+json_path = JSON_CORPUS_FILE
 
 # Load the pickle file
 def extract_pkl_to_json(pkl_path, json_path):
+    json_path.parent.mkdir(parents=True, exist_ok=True)
     with open(pkl_path, 'rb') as file:
         corpus = pickle.load(file)
     with open(json_path, 'w', encoding='utf-8') as json_file:
         json.dump(corpus, json_file, ensure_ascii=False, indent=4)
 
-# Call the function to actually perform the extraction
-extract_pkl_to_json(pkl_path, json_path)
-
-
-print(f"Data successfully extracted and saved to {json_path}")
-
 if __name__ == "__main__":
     extract_pkl_to_json(pkl_path, json_path)
+    print(f"Data successfully extracted and saved to {json_path}")

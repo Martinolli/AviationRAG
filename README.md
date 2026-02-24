@@ -966,17 +966,71 @@ Connect AstraDB database
 ## Installation
 
 ```bash
-    # Clone the repository
-    git clone https://github.com/yourusername/AviationRAG.git
+# Clone the repository
+git clone https://github.com/yourusername/AviationRAG.git
+cd AviationRAG
 
-    # Navigate to the project directory
-    cd AviationRAG
+# Python environment
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
 
-    # Install dependencies
-    npm install
+# Required spaCy model
+python -m spacy download en_core_web_sm
+
+# Node dependencies
+npm install
 ```
 
 ## Usage
+
+### Quick start (recommended)
+
+```bash
+# From AviationRAG root:
+python src\scripts\py_files\aviationrag_manager.py
+```
+
+You can run a single step if needed:
+
+```bash
+python src\scripts\py_files\aviationrag_manager.py --step "Check PKL Content"
+python src\scripts\py_files\aviationrag_manager.py --step "Generate New Embeddings"
+python src\scripts\py_files\aviationrag_manager.py --step "Store New Embeddings in AstraDB"
+```
+
+If you are one level above (for example in `ProjectRAG`), run:
+
+```bash
+python AviationRAG\src\scripts\py_files\aviationrag_manager.py
+```
+
+### Streamlit interfaces
+
+```bash
+streamlit run src\interface\streamlit_app.py
+```
+
+### Environment variables
+
+Copy `.env.example` to `.env` and fill in values before running scripts that use OpenAI/AstraDB:
+
+```bash
+copy .env.example .env
+```
+
+### Quality checks
+
+Run local smoke checks before committing:
+
+```bash
+.\local_check.ps1
+```
+
+This runs:
+- Python compile check
+- `unittest` smoke tests in `tests/`
+- JavaScript syntax checks for `src/scripts/js_files/*.js`
 
 ## Routine Algorithm
 
@@ -1035,9 +1089,9 @@ Below there is a pseudo-algorithm description
 
 ## Dependencies
 
-- Node.js
-- Python 3.7+
+- Node.js (for JS pipeline and AstraDB integration)
+- Python 3.10+ (recommended)
 - OpenAI API
 - Astra DB
-- LangChain
-- [List other major dependencies]
+- Python packages listed in `requirements.txt`
+- spaCy model: `en_core_web_sm`
