@@ -1028,6 +1028,7 @@ Run local smoke checks before committing:
 ```
 
 This runs:
+
 - Python compile check
 - `unittest` smoke tests in `tests/`
 - JavaScript syntax checks for `src/scripts/js_files/*.js`
