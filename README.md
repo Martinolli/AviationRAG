@@ -1019,6 +1019,9 @@ Copy `.env.example` to `.env` and fill in values before running scripts that use
 copy .env.example .env
 ```
 
+For Astra DB, use `ASTRA_DB_APPLICATION_TOKEN` (recommended).  
+`ASTRA_DB_CLIENT_ID` and `ASTRA_DB_CLIENT_SECRET` are kept only as legacy fallback.
+
 ### Quality checks
 
 Run local smoke checks before committing:

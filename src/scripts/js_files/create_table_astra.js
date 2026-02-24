@@ -2,17 +2,28 @@ import cassandra from 'cassandra-driver';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getAstraCredentials, getMissingAstraEnvVars } from './astra_auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+const projectRoot = path.resolve(__dirname, '..', '..', '..');
+dotenv.config({ path: path.join(projectRoot, '.env') });
 
 async function createTable() {
+    const missing = getMissingAstraEnvVars();
+    if (missing.length > 0) {
+        console.error(`Missing required env var(s): ${missing.join(', ')}`);
+        process.exit(1);
+    }
+
+    const { username, password, authMode } = getAstraCredentials();
+    console.log(`Using Astra auth mode: ${authMode}`);
+
     const client = new cassandra.Client({
         cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
         credentials: {
-            username: process.env.ASTRA_DB_CLIENT_ID,
-            password: process.env.ASTRA_DB_CLIENT_SECRET,
+            username,
+            password,
         },
         keyspace: process.env.ASTRA_DB_KEYSPACE,
     });

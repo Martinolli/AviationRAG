@@ -165,7 +165,7 @@ def generate_response(query, context, model="gpt-4-turbo"):
 def chat_loop():
     """Interactive chat loop for AviationAI."""
     print("Welcome to the AviationAI Chat System!")
-    print("Type 'exit' to end the conversation.")
+    print("Type 'exit' or 'quit' to end the conversation.")
 
     session_metadata_file = os.path.join(chat_id, "session_metadata.json")
 
@@ -225,11 +225,18 @@ def chat_loop():
     max_history = 5  # Keep only the last 5 exchanges in chat history
 
     while True:
-        query = input("\nUser: ").strip()
+        try:
+            query = input("\nUser: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nThank you for using the Aviation RAG Chat System. Goodbye!")
+            break
 
-        if query.lower() == 'exit':
+        if query.lower() in {"exit", "quit", "q"}:
             print("Thank you for using the Aviation RAG Chat System. Goodbye!")
             break
+
+        if not query:
+            continue
 
         try:
             logging.info("Generating query embedding...")
@@ -262,11 +269,12 @@ def chat_loop():
             if len(past_exchanges) > 5:
                 past_exchanges = past_exchanges[-5:]
 
+            chat_history.append((query, response))
+            chat_history = chat_history[-max_history:]
+
         except Exception as e:
             logging.error(f"Error: {e}")
             print(f"An error occurred: {e}")
-        chat_history.append((query, response))
-        chat_history = chat_history[-max_history:]
 # ✅ Run the chat loop
 if __name__ == "__main__":
     chat_loop()

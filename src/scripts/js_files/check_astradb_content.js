@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
 import fs from 'fs';
+import { getAstraCredentials, getMissingAstraEnvVars } from './astra_auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,7 +23,8 @@ if (fs.existsSync(envPath)) {
 // Log environment variables
 console.log('Environment variables:');
 console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
-console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
+console.log('ASTRA_DB_APPLICATION_TOKEN:', process.env.ASTRA_DB_APPLICATION_TOKEN ? '[REDACTED]' : 'Not set');
+console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID ? '[REDACTED]' : 'Not set');
 console.log('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET ? '[REDACTED]' : 'Not set');
 console.log('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
 
@@ -30,12 +32,21 @@ async function checkAstraDBContent() {
     let client;
 
     try {
+        const missing = getMissingAstraEnvVars();
+        if (missing.length > 0) {
+            console.error(`Missing required env var(s): ${missing.join(', ')}`);
+            process.exit(1);
+        }
+
+        const { username, password, authMode } = getAstraCredentials();
+        console.log(`Using Astra auth mode: ${authMode}`);
+
         // Initialize the Cassandra client
         client = new Client({
             cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
             credentials: { 
-                username: process.env.ASTRA_DB_CLIENT_ID, 
-                password: process.env.ASTRA_DB_CLIENT_SECRET 
+                username,
+                password 
             },
             keyspace: process.env.ASTRA_DB_KEYSPACE,
         });

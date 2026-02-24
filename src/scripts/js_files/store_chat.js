@@ -1,160 +1,161 @@
-import { Client } from 'cassandra-driver';
-import dotenv from 'dotenv';
-import { fileURLToPath } from 'url';
-import path from 'path';
-import winston from 'winston';
-import {format} from 'date-fns';
-import fs from 'fs';
+import { Client } from "cassandra-driver";
+import dotenv from "dotenv";
+import { fileURLToPath } from "url";
+import path from "path";
+import winston from "winston";
+import { format } from "date-fns";
+import fs from "fs";
+import { getAstraCredentials, getMissingAstraEnvVars } from "./astra_auth.js";
 
-
-// Resolve environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
-console.log("✅ Environment variables loaded:", process.env.ASTRA_DB_CLIENT_ID ? "✅" : "❌ MISSING");
+const projectRoot = path.resolve(__dirname, "..", "..", "..");
+const envPath = path.resolve(projectRoot, ".env");
 
-// Set up logging
-const logDir = path.resolve(__dirname, '../../../logs');
+dotenv.config({ path: envPath });
+console.log("Environment variables loaded:", process.env.ASTRA_DB_CLIENT_ID ? "OK" : "MISSING");
+
+const logDir = path.resolve(projectRoot, "logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
-// Add this line for debugging
 console.log(`Log directory: ${logDir}`);
 
-const logFileName = `store_chat_${format(new Date(), 'yyyy-MM-dd')}.log`;
+const logFileName = `store_chat_${format(new Date(), "yyyy-MM-dd")}.log`;
 const logFilePath = path.join(logDir, logFileName);
 
 const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-      winston.format.timestamp(),
-      winston.format.printf(({ timestamp, level, message }) => {
-        return `${timestamp} [${level}]: ${message}`;
-      })
-    ),
-    transports: [
-      new winston.transports.Console(),
-      new winston.transports.File({ 
-        filename: logFilePath,
-        maxsize: 5242880, // 5MB
-        maxFiles: 5,
-        tailable: true
-      })
-    ]
-  });
-
-logger.info(`Logging to: ${logFilePath}`);  // Add this for debugging
-
-// Log environment variables for debugging
-// logger.info('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
-// logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
-// logger.info('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
-// logger.info('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
-
-// Initialize the Cassandra client
-const client = new Client({
-    cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
-    credentials: { 
-        username: process.env.ASTRA_DB_CLIENT_ID, 
-        password: process.env.ASTRA_DB_CLIENT_SECRET 
-    },
-    keyspace: process.env.ASTRA_DB_KEYSPACE,
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`)
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({
+      filename: logFilePath,
+      maxsize: 5242880,
+      maxFiles: 5,
+      tailable: true,
+    }),
+  ],
 });
 
-// Parse arguments from Python
-const chatData = JSON.parse(process.argv[2]);
+logger.info(`Logging to: ${logFilePath}`);
 
-// Ensure session_id is a string and sanitize user inputs
-const session_id = String(chatData.session_id).trim();  
-const user_query = chatData.user_query ? chatData.user_query.replace(/[\r\n]+/g, ' ').trim() : '';  
-const ai_response = chatData.ai_response ? chatData.ai_response.replace(/[\r\n]+/g, ' ').trim() : '';
-
-async function storeChat() {
-    try {
-        await client.connect();
-        logger.info('Connected to Astra DB successfully!');
-        
-        // Log the data we're trying to insert
-        logger.info(`Storing chat message for session: ${session_id}`);
-
-        // Additional validation
-        if (typeof session_id !== 'string' || session_id.length === 0) {
-            throw new Error('Invalid session_id');
-        }
-
-        if (chatData.action === "store") {
-            if (typeof user_query !== 'string' || user_query.length === 0) {
-                throw new Error('Invalid user_query');
-            }
-            if (typeof ai_response !== 'string' || ai_response.length === 0) {
-                throw new Error('Invalid ai_response');
-            }
-
-            // store chat message
-            // logger.info("Storing chat message...");
-            const query = `
-                INSERT INTO aviation_conversation_history (session_id, timestamp, user_query, ai_response)
-                VALUES (:session_id, toTimestamp(now()), :user_query, :ai_response)
-            `;
-
-            const params = { session_id, user_query, ai_response };
-
-            await client.execute(query, params, { prepare: true });
-
-            // logger.info("Chat stored successfully!");
-
-            // Log chat details to separate file
-            // logger.info(`Stored chat for session: ${session_id}`);
-            
-        } else if (chatData.action === "retrieve") {
-            // retrieve chat messages
-            // logger.info(`Retrieving chat messages for session_id: ${chatData.session_id}`);
-
-            const limitValue = chatData.limit || 5;
-
-            const query = `
-                SELECT session_id, timestamp, user_query, ai_response
-                FROM aviation_data.aviation_conversation_history
-                WHERE session_id = ?
-                ORDER BY timestamp DESC
-                LIMIT 10;
-            `;
-
-            const params = [chatData.session_id];
-
-            const result = await client.execute(query, params, { prepare: true });
-
-            logger.info(`Retrieved ${result.rows.length} chat messages for session: ${session_id}`);
-            const responsePayload = { success: true, data: result.rows };
-
-            const formattedData = result.rows.map(row => ({
-                session_id: row.session_id,
-                timestamp: row.timestamp,
-                user_query: row.user_query,
-                ai_response: row.ai_response
-            }));
-            
-            console.log(JSON.stringify({ success: true, messages: formattedData }));
-            
-            return responsePayload;
-
-
-        } else {
-            logging.error("Invalid action specified in chatData");
-            process.exit(1);  // Exit with non-zero status
-        }
-
-    } catch (error) {
-        logger.error("Error retrieving chat:", error);
-        if (error.info) logger.error("Error info:", error.info);
-        if (error.code) logger.error("Error code:", error.code);
-        if (error.query) logger.error("Failed query:", error.query);
-
-        process.exit(1);  // Ensure the script exits with a non-zero status
-    } finally {
-        await client.shutdown();
-    }
+const missing = getMissingAstraEnvVars();
+if (missing.length > 0) {
+  logger.error(`Missing required env var(s): ${missing.join(", ")}`);
+  process.exit(1);
 }
 
-storeChat();
+const { username, password, authMode } = getAstraCredentials();
+logger.info(`Using Astra auth mode: ${authMode}`);
+
+if (!process.argv[2]) {
+  logger.error("No JSON payload argument received.");
+  process.exit(1);
+}
+
+let chatData;
+try {
+  chatData = JSON.parse(process.argv[2]);
+} catch (error) {
+  logger.error(`Invalid JSON payload: ${error.message}`);
+  process.exit(1);
+}
+
+const sessionId = String(chatData.session_id || "").trim();
+const userQuery = chatData.user_query ? String(chatData.user_query).replace(/[\r\n]+/g, " ").trim() : "";
+const aiResponse = chatData.ai_response ? String(chatData.ai_response).replace(/[\r\n]+/g, " ").trim() : "";
+const limitValue = Math.min(Math.max(Number(chatData.limit) || 5, 1), 50);
+
+if (!sessionId) {
+  logger.error("Invalid session_id");
+  process.exit(1);
+}
+
+const client = new Client({
+  cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
+  credentials: {
+    username,
+    password,
+  },
+  keyspace: process.env.ASTRA_DB_KEYSPACE,
+});
+
+async function handleStore() {
+  if (!userQuery) {
+    throw new Error("Invalid user_query");
+  }
+  if (!aiResponse) {
+    throw new Error("Invalid ai_response");
+  }
+
+  const query = `
+    INSERT INTO aviation_conversation_history (session_id, timestamp, user_query, ai_response)
+    VALUES (?, toTimestamp(now()), ?, ?)
+  `;
+
+  await client.execute(query, [sessionId, userQuery, aiResponse], { prepare: true });
+  console.log(JSON.stringify({ success: true, action: "store" }));
+}
+
+async function handleRetrieve() {
+  const query = `
+    SELECT session_id, timestamp, user_query, ai_response
+    FROM aviation_conversation_history
+    WHERE session_id = ?
+    ORDER BY timestamp DESC
+    LIMIT ${limitValue};
+  `;
+
+  const result = await client.execute(query, [sessionId], { prepare: true });
+  const formattedData = result.rows.map((row) => ({
+    session_id: row.session_id,
+    timestamp: row.timestamp,
+    user_query: row.user_query,
+    ai_response: row.ai_response,
+  }));
+
+  logger.info(`Retrieved ${formattedData.length} chat messages for session: ${sessionId}`);
+  console.log(JSON.stringify({ success: true, messages: formattedData }));
+}
+
+async function main() {
+  try {
+    await client.connect();
+    logger.info("Connected to Astra DB successfully.");
+
+    if (chatData.action === "store") {
+      await handleStore();
+      return;
+    }
+
+    if (chatData.action === "retrieve") {
+      await handleRetrieve();
+      return;
+    }
+
+    logger.error(`Invalid action specified: ${chatData.action}`);
+    process.exit(1);
+  } catch (error) {
+    logger.error(`Error handling chat action: ${error.message}`);
+    if (error.info) {
+      try {
+        logger.error(`Error info: ${JSON.stringify(error.info)}`);
+      } catch {
+        logger.error("Error info: [unserializable]");
+      }
+    }
+    if (error.code) {
+      logger.error(`Error code: ${error.code}`);
+    }
+    process.exit(1);
+  } finally {
+    await client.shutdown();
+  }
+}
+
+main();

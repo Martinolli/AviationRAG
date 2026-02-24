@@ -5,12 +5,14 @@ import path from 'path';
 import winston from 'winston';
 import {format} from 'date-fns';
 import fs from 'fs';
+import { getAstraCredentials, getMissingAstraEnvVars } from './astra_auth.js';
 
 
 // Resolve environment variables
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+const projectRoot = path.resolve(__dirname, '..', '..', '..');
+dotenv.config({ path: path.join(projectRoot, '.env') });
 
 
 // Set up logging
@@ -48,16 +50,26 @@ logger.info(`Logging to: ${logFilePath}`);  // Add this for debugging
 
 // Log environment variables for debugging
 logger.info('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
-logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID);
-logger.info('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET);
+logger.info('ASTRA_DB_APPLICATION_TOKEN:', process.env.ASTRA_DB_APPLICATION_TOKEN ? '[REDACTED]' : 'Not set');
+logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID ? '[REDACTED]' : 'Not set');
+logger.info('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET ? '[REDACTED]' : 'Not set');
 logger.info('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
+
+const missing = getMissingAstraEnvVars();
+if (missing.length > 0) {
+    logger.error(`Missing required env var(s): ${missing.join(', ')}`);
+    process.exit(1);
+}
+
+const { username, password, authMode } = getAstraCredentials();
+logger.info(`Using Astra auth mode: ${authMode}`);
 
 // Initialize the Cassandra client
 const client = new Client({
     cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
     credentials: { 
-        username: process.env.ASTRA_DB_CLIENT_ID, 
-        password: process.env.ASTRA_DB_CLIENT_SECRET 
+        username,
+        password 
     },
     keyspace: process.env.ASTRA_DB_KEYSPACE,
 });
@@ -73,12 +85,13 @@ async function retrieveChat() {
 
         const query = `
             SELECT session_id, timestamp, user_query, ai_response
-            FROM aviation_data.aviation_conversation_history
+            FROM aviation_conversation_history
+            WHERE session_id = ?
+            ORDER BY timestamp DESC
             LIMIT ${limit}
         `;
 
-        const params = { session_id, limit };
-        const result = await client.execute(query, params, { prepare: true });
+        const result = await client.execute(query, [session_id], { prepare: true });
 
         logger.info("Chat history retrieved:", result.rows);
         logger.info(JSON.stringify(result.rows));  // Output JSON for further inspection

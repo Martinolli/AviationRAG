@@ -38,9 +38,11 @@ def store_chat_in_db(session_id, user_query, ai_response, print_success=False, l
     }
 
     try:
-        subprocess.run(
+        result = subprocess.run(
             ["node", str(script_path), json.dumps(chat_data)],
             check=True,
+            capture_output=True,
+            text=True,
             cwd=JS_SCRIPTS_DIR,
         )
 
@@ -48,8 +50,12 @@ def store_chat_in_db(session_id, user_query, ai_response, print_success=False, l
             print("Chat stored successfully in AstraDB!")
         if log_success:
             logging.info(f"Storing chat for session: {session_id} | Query: {user_query[:50]}...")
+        if result.stdout.strip():
+            logging.debug(result.stdout.strip())
     except subprocess.CalledProcessError as error:
         logging.error(f"Error storing chat: {error}")
+        if error.stderr:
+            logging.error(f"Store chat stderr: {error.stderr.strip()}")
 
 
 def retrieve_chat_from_db(session_id, limit=5, warn_on_empty_session=False):
@@ -79,4 +85,6 @@ def retrieve_chat_from_db(session_id, limit=5, warn_on_empty_session=False):
         return _parse_json_output(result.stdout.strip())
     except subprocess.CalledProcessError as error:
         logging.error(f"Error retrieving chat: {error}")
+        if error.stderr:
+            logging.error(f"Retrieve chat stderr: {error.stderr.strip()}")
         return []

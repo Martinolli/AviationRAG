@@ -4,6 +4,7 @@ import fsPromises from 'fs/promises';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
+import { getAstraCredentials, getMissingAstraEnvVars } from './astra_auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,20 +25,20 @@ if (fs.existsSync(envPath)) {
 }
 
 async function insertEmbeddings(newEmbeddings) {
-    // Check if required environment variables are set
-    const requiredEnvVars = ['ASTRA_DB_SECURE_BUNDLE_PATH', 'ASTRA_DB_CLIENT_ID', 'ASTRA_DB_CLIENT_SECRET', 'ASTRA_DB_KEYSPACE'];
-    for (const envVar of requiredEnvVars) {
-        if (!process.env[envVar]) {
-            console.error(`Error: ${envVar} is not set in the environment variables.`);
-            process.exit(1);
-        }
+    const missing = getMissingAstraEnvVars();
+    if (missing.length > 0) {
+        console.error(`Missing required env var(s): ${missing.join(', ')}`);
+        process.exit(1);
     }
+
+    const { username, password, authMode } = getAstraCredentials();
+    console.log(`Using Astra auth mode: ${authMode}`);
 
     const client = new Client({
         cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
         credentials: {
-            username: process.env.ASTRA_DB_CLIENT_ID,
-            password: process.env.ASTRA_DB_CLIENT_SECRET,
+            username,
+            password,
         },
         keyspace: process.env.ASTRA_DB_KEYSPACE,
     });

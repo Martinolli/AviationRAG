@@ -326,7 +326,7 @@ def chat_loop():
     MODEL = "gpt-4"  # Change between "gpt-3.5-turbo" or "gpt-4"
     
     print("Welcome to the AviationAI Chat System!")
-    print("Type 'exit' to end the conversation.")
+    print("Type 'exit' or 'quit' to end the conversation.")
 
     session_metadata_file = os.path.join(chat_id, "session_metadata.json")
 
@@ -393,10 +393,18 @@ def chat_loop():
     max_history = 5  # Keep only the last 5 exchanges in chat history
 
     while True:
-        QUERY_TEXT = input("\nUser: ")
-        if QUERY_TEXT.lower() == 'exit':
+        try:
+            QUERY_TEXT = input("\nUser: ")
+        except (EOFError, KeyboardInterrupt):
+            print("\nThank you for using the AviationAI Chat System. Goodbye!")
+            break
+
+        if QUERY_TEXT.lower() in {'exit', 'quit', 'q'}:
             print("Thank you for using the AviationAI Chat System. Goodbye!")
             break
+
+        if not QUERY_TEXT.strip():
+            continue
         
         try:
             print("Generating query embedding...")
