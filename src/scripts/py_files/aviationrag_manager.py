@@ -1,10 +1,21 @@
+"""
+AviationRAG Manager Script
+This script orchestrates the entire AviationRAG processing pipeline,
+executing each step sequentially while providing robust logging,
+error handling, and execution time tracking.
+Features:
+- Executes each step of the pipeline with retries on failure.
+
+"""
+
+
 import subprocess
 import logging
 import time
-from dotenv import load_dotenv
 import sys
 import argparse
 from tqdm import tqdm
+from dotenv import load_dotenv
 
 from config import LOG_DIR, PROJECT_ROOT
 
@@ -33,8 +44,7 @@ def run_script(command, script_name, max_retries=3):
         try:
             attempt += 1
             start_time = time.time()
-            logging.info(f"Attempt {attempt}/{max_retries} - Starting {script_name}...")
-            
+            logging.info("Attempt %d/%d - Starting %s...", attempt, max_retries, script_name)
             result = subprocess.run(
                 command,
                 check=True,
@@ -42,28 +52,24 @@ def run_script(command, script_name, max_retries=3):
                 text=True,
                 cwd=PROJECT_ROOT,
             )
-            
             execution_time = time.time() - start_time
-            logging.info(f"{script_name} completed successfully in {execution_time:.2f} seconds.")
+            logging.info("%s completed successfully in %.2f seconds.", script_name, execution_time)
             logging.info(result.stdout)
             return True, execution_time  # Success
-            
         except subprocess.CalledProcessError as e:
-            logging.error(f"Error in {script_name} (Attempt {attempt}): {e}")
-            logging.error(f"STDERR: {e.stderr}")
-            
+            logging.error("Error in %s (Attempt %d): %s", script_name, attempt, e)
+            logging.error("STDERR: %s", e.stderr)
             if attempt < max_retries:
-                logging.info(f"Retrying {script_name} in 5 seconds...")
+                logging.info("Retrying %s in 5 seconds...", script_name)
                 time.sleep(5)  # Wait before retrying
             else:
-                logging.error(f"{script_name} failed after {max_retries} attempts. Moving to next step.")
+                logging.error("%s failed after %d attempts. Moving to next step.", script_name, max_retries)
                 return False, 0  # Final failure
                 
     return False, 0  # This line is reached only if all retries failed
 
 def main(args):
     logging.info("--- AviationRAG Processing Pipeline Started ---")
-    
     python_exec = sys.executable
 
     steps = [
@@ -100,9 +106,9 @@ def main(args):
             pbar.update(1)
 
     logging.info("\n--- Pipeline Summary ---")
-    logging.info(f"Total execution time: {total_time:.2f} seconds")
-    logging.info(f"Successful steps: {len(successful_steps)}")
-    logging.info(f"Failed steps: {len(failed_steps)}")
+    logging.info("Total execution time: %.2f seconds", total_time)
+    logging.info("Successful steps: %d", len(successful_steps))
+    logging.info("Failed steps: %d", len(failed_steps))
 
     if failed_steps:
         logging.error("Pipeline completed with errors in the following steps:")
@@ -113,7 +119,7 @@ def main(args):
 
     logging.info("\nDetailed Step Execution Times:")
     for step, time in successful_steps:
-        logging.info(f"{step}: {time:.2f} seconds")
+        logging.info("%s: %.2f seconds", step, time)
 
     logging.info("--- AviationRAG Processing Pipeline Finished ---")
 
