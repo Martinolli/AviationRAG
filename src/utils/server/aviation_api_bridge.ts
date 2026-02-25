@@ -32,6 +32,7 @@ function parseBoolean(value: string): boolean {
 function parseArgsToPayload(args: string[]): JsonObject {
   const action = args[0];
   const payload: JsonObject = { action };
+  const booleanKeys = new Set(["strict_mode", "store", "pinned", "purge_history"]);
 
   for (let i = 1; i < args.length; i += 1) {
     const keyToken = args[i];
@@ -42,7 +43,7 @@ function parseArgsToPayload(args: string[]): JsonObject {
     const rawValue = i + 1 < args.length ? args[i + 1] : "";
 
     let value: JsonValue = rawValue;
-    if (rawKey === "strict_mode" || rawKey === "store") {
+    if (booleanKeys.has(rawKey)) {
       value = parseBoolean(rawValue);
     } else if (rawKey === "limit") {
       const parsed = Number(rawValue);

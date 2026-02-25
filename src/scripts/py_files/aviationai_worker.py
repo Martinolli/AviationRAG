@@ -5,7 +5,14 @@ import traceback
 import uuid
 
 from aviationai import answer_query
-from chat_db import retrieve_chat_from_db, store_chat_in_db
+from chat_db import (
+    delete_chat_session_in_db,
+    delete_session_metadata,
+    list_sessions,
+    retrieve_chat_from_db,
+    store_chat_in_db,
+    upsert_session_metadata,
+)
 
 
 def emit(payload):
@@ -95,6 +102,61 @@ def handle_history(request_id, payload):
     }
 
 
+def handle_sessions_list(request_id, payload):
+    limit = int(payload.get("limit", 50))
+    limit = max(1, min(limit, 200))
+    search = str(payload.get("search", "")).strip()
+    filter_mode = str(payload.get("filter", "all")).strip().lower() or "all"
+
+    sessions = list_sessions(search=search, filter_mode=filter_mode, limit=limit)
+    return {
+        "id": request_id,
+        "success": True,
+        "action": "sessions_list",
+        "sessions": sessions,
+    }
+
+
+def handle_session_upsert(request_id, payload):
+    session_id = str(payload.get("session_id", "")).strip() or str(uuid.uuid4())
+    title = str(payload.get("title", "")).strip()
+    pinned = payload.get("pinned", None)
+    if pinned is not None:
+        pinned = bool(pinned)
+
+    session = upsert_session_metadata(session_id=session_id, title=title, pinned=pinned)
+    return {
+        "id": request_id,
+        "success": True,
+        "action": "session_upsert",
+        "session": session,
+    }
+
+
+def handle_session_delete(request_id, payload):
+    session_id = str(payload.get("session_id", "")).strip()
+    if not session_id:
+        return {
+            "id": request_id,
+            "success": False,
+            "error": "Field 'session_id' is required.",
+        }
+
+    purge_history = bool(payload.get("purge_history", True))
+    removed_metadata = delete_session_metadata(session_id)
+    deleted_rows = delete_chat_session_in_db(session_id) if purge_history else 0
+
+    return {
+        "id": request_id,
+        "success": True,
+        "action": "session_delete",
+        "session_id": session_id,
+        "removed_metadata": removed_metadata,
+        "purged_history": purge_history,
+        "deleted_rows": deleted_rows,
+    }
+
+
 def main():
     logging.basicConfig(level=logging.ERROR)
     emit({"event": "ready", "success": True})
@@ -116,6 +178,12 @@ def main():
                 response = handle_ask(request_id, payload)
             elif action == "history":
                 response = handle_history(request_id, payload)
+            elif action == "sessions_list":
+                response = handle_sessions_list(request_id, payload)
+            elif action == "session_upsert":
+                response = handle_session_upsert(request_id, payload)
+            elif action == "session_delete":
+                response = handle_session_delete(request_id, payload)
             elif action == "ping":
                 response = {"id": request_id, "success": True, "action": "ping"}
             else:

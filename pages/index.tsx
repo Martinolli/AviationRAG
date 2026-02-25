@@ -25,8 +25,12 @@ type Message = {
 type Session = {
   id: string;
   title: string;
+  createdAt: string;
   updatedAt: string;
+  pinned: boolean;
 };
+
+type SessionFilter = "all" | "recent" | "pinned";
 
 function normalizeDisplayText(value: string) {
   return String(value || "")
@@ -41,19 +45,31 @@ function nowIso() {
   return new Date().toISOString();
 }
 
-function createSessionId() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-  return `session_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
 function shortTitleFromMessage(message: string) {
   const cleaned = message.trim().replace(/\s+/g, " ");
-  if (!cleaned) {
-    return "New Session";
-  }
+  if (!cleaned) return "New Session";
   return cleaned.split(" ").slice(0, 7).join(" ");
+}
+
+function parseSession(raw: any): Session {
+  const updatedAt = String(raw?.updated_at || raw?.updatedAt || nowIso());
+  const createdAt = String(raw?.created_at || raw?.createdAt || updatedAt);
+  return {
+    id: String(raw?.id || ""),
+    title: String(raw?.title || "New Session"),
+    createdAt,
+    updatedAt,
+    pinned: Boolean(raw?.pinned),
+  };
+}
+
+function sortSessions(items: Session[]) {
+  return [...items].sort((a, b) => {
+    if (a.pinned !== b.pinned) {
+      return a.pinned ? -1 : 1;
+    }
+    return b.updatedAt.localeCompare(a.updatedAt);
+  });
 }
 
 export default function HomePage() {
@@ -63,15 +79,59 @@ export default function HomePage() {
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [loadingSessions, setLoadingSessions] = useState(false);
   const [healthLabel, setHealthLabel] = useState("checking...");
   const [showSources, setShowSources] = useState(true);
   const [selectedSource, setSelectedSource] = useState<SourceSnippet | null>(null);
   const [errorText, setErrorText] = useState("");
+  const [sessionSearch, setSessionSearch] = useState("");
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
 
   const activeMessages = useMemo(
     () => messagesBySession[activeSessionId] || [],
     [messagesBySession, activeSessionId],
   );
+
+  const filteredSessions = useMemo(() => {
+    const search = sessionSearch.trim().toLowerCase();
+    let items = [...sessions];
+
+    if (sessionFilter === "pinned") {
+      items = items.filter((item) => item.pinned);
+    } else if (sessionFilter === "recent") {
+      items = items.filter((item) => !item.pinned).slice(0, 20);
+    }
+
+    if (search) {
+      items = items.filter(
+        (item) =>
+          item.title.toLowerCase().includes(search) || item.id.toLowerCase().includes(search),
+      );
+    }
+
+    return items;
+  }, [sessions, sessionSearch, sessionFilter]);
+
+  const loadSessions = async () => {
+    setLoadingSessions(true);
+    try {
+      const res = await fetch("/api/chat/session?limit=200");
+      const data = await res.json();
+      if (!data?.success) {
+        throw new Error(data?.error || "Failed to load sessions.");
+      }
+      const parsed = Array.isArray(data.sessions) ? data.sessions.map(parseSession) : [];
+      setSessions(sortSessions(parsed));
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Session loading failed.");
+    } finally {
+      setLoadingSessions(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadSessions();
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -90,18 +150,28 @@ export default function HomePage() {
     };
   }, []);
 
-  const createNewSession = () => {
-    const id = createSessionId();
-    const session: Session = {
-      id,
-      title: "New Session",
-      updatedAt: nowIso(),
-    };
-    setSessions((prev) => [session, ...prev]);
-    setActiveSessionId(id);
-    setMessagesBySession((prev) => ({ ...prev, [id]: [] }));
-    setSelectedSource(null);
+  const createNewSession = async (titleSeed = "New Session") => {
     setErrorText("");
+    try {
+      const res = await fetch("/api/chat/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: shortTitleFromMessage(titleSeed) }),
+      });
+      const data = await res.json();
+      if (!data?.success || !data?.session) {
+        throw new Error(data?.error || "Failed to create session.");
+      }
+      const session = parseSession(data.session);
+      setSessions((prev) => sortSessions([session, ...prev.filter((item) => item.id !== session.id)]));
+      setActiveSessionId(session.id);
+      setMessagesBySession((prev) => ({ ...prev, [session.id]: prev[session.id] || [] }));
+      setSelectedSource(null);
+      return session.id;
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Session creation failed.");
+      return "";
+    }
   };
 
   const loadSessionHistory = async (sessionId: string) => {
@@ -140,6 +210,13 @@ export default function HomePage() {
       setMessagesBySession((prev) => ({ ...prev, [sessionId]: normalized }));
       setActiveSessionId(sessionId);
       setSelectedSource(null);
+      setSessions((prev) =>
+        sortSessions(
+          prev.map((session) =>
+            session.id === sessionId ? { ...session, updatedAt: nowIso() } : session,
+          ),
+        ),
+      );
     } catch (error) {
       setErrorText(error instanceof Error ? error.message : "History loading failed.");
     } finally {
@@ -147,21 +224,72 @@ export default function HomePage() {
     }
   };
 
-  const upsertSession = (sessionId: string, titleSeed: string) => {
-    const title = shortTitleFromMessage(titleSeed);
-    setSessions((prev) => {
-      const exists = prev.find((s) => s.id === sessionId);
-      if (!exists) {
-        return [{ id: sessionId, title, updatedAt: nowIso() }, ...prev];
-      }
-      return prev
-        .map((s) =>
-          s.id === sessionId
-            ? { ...s, title: s.title === "New Session" ? title : s.title, updatedAt: nowIso() }
-            : s,
-        )
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  const patchSession = async (sessionId: string, payload: { title?: string; pinned?: boolean }) => {
+    const res = await fetch(`/api/chat/session/${encodeURIComponent(sessionId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
+    const data = await res.json();
+    if (!data?.success || !data?.session) {
+      throw new Error(data?.error || "Failed to update session.");
+    }
+    const updated = parseSession(data.session);
+    setSessions((prev) =>
+      sortSessions(prev.map((session) => (session.id === updated.id ? updated : session))),
+    );
+  };
+
+  const renameSession = async (session: Session) => {
+    const nextTitle = prompt("Enter a new session title:", session.title);
+    if (nextTitle === null) return;
+    const title = nextTitle.trim();
+    if (!title || title === session.title) return;
+
+    try {
+      await patchSession(session.id, { title });
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Rename failed.");
+    }
+  };
+
+  const togglePinned = async (session: Session) => {
+    try {
+      await patchSession(session.id, { pinned: !session.pinned });
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Pin update failed.");
+    }
+  };
+
+  const deleteSession = async (sessionId: string) => {
+    const confirmed = window.confirm(
+      "Delete this conversation and its stored history from AstraDB? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/chat/session/${encodeURIComponent(sessionId)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!data?.success) {
+        throw new Error(data?.error || "Delete failed.");
+      }
+
+      setSessions((prev) => prev.filter((session) => session.id !== sessionId));
+      setMessagesBySession((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+
+      if (activeSessionId === sessionId) {
+        setActiveSessionId("");
+        setSelectedSource(null);
+      }
+    } catch (error) {
+      setErrorText(error instanceof Error ? error.message : "Delete failed.");
+    }
   };
 
   const openCitationSource = (message: Message, citation: Citation) => {
@@ -183,7 +311,18 @@ export default function HomePage() {
     const message = input.trim();
     if (!message || sending) return;
 
-    const sessionId = activeSessionId || createSessionId();
+    setErrorText("");
+    setSending(true);
+
+    let sessionId = activeSessionId;
+    if (!sessionId) {
+      sessionId = await createNewSession(message);
+      if (!sessionId) {
+        setSending(false);
+        return;
+      }
+    }
+
     const userMsg: Message = {
       id: `u_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       role: "user",
@@ -192,14 +331,13 @@ export default function HomePage() {
     };
 
     setInput("");
-    setErrorText("");
-    setSending(true);
-    setActiveSessionId(sessionId);
-    upsertSession(sessionId, message);
     setMessagesBySession((prev) => ({
       ...prev,
       [sessionId]: [...(prev[sessionId] || []), userMsg],
     }));
+
+    const currentSession = sessions.find((item) => item.id === sessionId);
+    const shouldPromoteTitle = !currentSession || currentSession.title === "New Session";
 
     try {
       const res = await fetch("/api/chat/ask", {
@@ -237,7 +375,18 @@ export default function HomePage() {
         ...prev,
         [sessionId]: [...(prev[sessionId] || []), assistantMsg],
       }));
-      upsertSession(sessionId, message);
+
+      setSessions((prev) =>
+        sortSessions(
+          prev.map((session) =>
+            session.id === sessionId ? { ...session, updatedAt: nowIso() } : session,
+          ),
+        ),
+      );
+
+      if (shouldPromoteTitle) {
+        await patchSession(sessionId, { title: shortTitleFromMessage(message) });
+      }
 
       if (sources.length > 0) {
         setSelectedSource(sources[0]);
@@ -266,9 +415,41 @@ export default function HomePage() {
             <p>Safety and certification assistant</p>
           </div>
 
-          <button className={styles.primaryButton} onClick={createNewSession}>
+          <button className={styles.primaryButton} onClick={() => void createNewSession()}>
             + New Conversation
           </button>
+
+          <input
+            className={styles.sessionSearch}
+            type="text"
+            placeholder="Search conversations..."
+            value={sessionSearch}
+            onChange={(event) => setSessionSearch(event.target.value)}
+          />
+
+          <div className={styles.filterRow}>
+            <button
+              type="button"
+              className={`${styles.filterButton} ${sessionFilter === "all" ? styles.filterButtonActive : ""}`}
+              onClick={() => setSessionFilter("all")}
+            >
+              All
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterButton} ${sessionFilter === "recent" ? styles.filterButtonActive : ""}`}
+              onClick={() => setSessionFilter("recent")}
+            >
+              Recent
+            </button>
+            <button
+              type="button"
+              className={`${styles.filterButton} ${sessionFilter === "pinned" ? styles.filterButtonActive : ""}`}
+              onClick={() => setSessionFilter("pinned")}
+            >
+              Pinned
+            </button>
+          </div>
 
           <div className={styles.sidebarHeader}>
             <span>Conversations</span>
@@ -276,22 +457,40 @@ export default function HomePage() {
           </div>
 
           <div className={styles.sessionList}>
-            {sessions.length === 0 ? (
-              <div className={styles.emptyState}>No sessions yet.</div>
+            {loadingSessions ? <div className={styles.emptyState}>Loading sessions...</div> : null}
+            {!loadingSessions && filteredSessions.length === 0 ? (
+              <div className={styles.emptyState}>No sessions found.</div>
             ) : (
-              sessions.map((session) => (
-                <button
+              filteredSessions.map((session) => (
+                <div
                   key={session.id}
                   className={`${styles.sessionItem} ${
                     session.id === activeSessionId ? styles.sessionItemActive : ""
                   }`}
-                  onClick={() => loadSessionHistory(session.id)}
                 >
-                  <span className={styles.sessionTitle}>{session.title}</span>
-                  <span className={styles.sessionTime}>
-                    {new Date(session.updatedAt).toLocaleString()}
-                  </span>
-                </button>
+                  <button
+                    type="button"
+                    className={styles.sessionOpenButton}
+                    onClick={() => void loadSessionHistory(session.id)}
+                  >
+                    <span className={styles.sessionTitle}>{session.title}</span>
+                    <span className={styles.sessionTime}>
+                      {new Date(session.updatedAt).toLocaleString()}
+                    </span>
+                  </button>
+
+                  <div className={styles.sessionActions}>
+                    <button type="button" onClick={() => void togglePinned(session)}>
+                      {session.pinned ? "Unpin" : "Pin"}
+                    </button>
+                    <button type="button" onClick={() => void renameSession(session)}>
+                      Rename
+                    </button>
+                    <button type="button" onClick={() => void deleteSession(session.id)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -381,7 +580,7 @@ export default function HomePage() {
               placeholder="Ask a standards-based aviation question..."
               rows={3}
             />
-            <button onClick={sendMessage} disabled={sending || !input.trim()}>
+            <button onClick={() => void sendMessage()} disabled={sending || !input.trim()}>
               {sending ? "Thinking..." : "Send"}
             </button>
           </footer>

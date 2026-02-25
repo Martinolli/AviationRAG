@@ -119,6 +119,28 @@ async function handleRetrieve() {
   console.log(JSON.stringify({ success: true, messages: formattedData }));
 }
 
+async function handleDelete() {
+  const countQuery = `
+    SELECT COUNT(*) AS total
+    FROM aviation_conversation_history
+    WHERE session_id = ?;
+  `;
+  const countResult = await client.execute(countQuery, [sessionId], { prepare: true });
+  const totalValue = countResult.rows?.[0]?.total;
+  const deletedRows = Number(
+    typeof totalValue === "number" ? totalValue : (totalValue?.toString?.() || "0")
+  );
+
+  const deleteQuery = `
+    DELETE FROM aviation_conversation_history
+    WHERE session_id = ?;
+  `;
+  await client.execute(deleteQuery, [sessionId], { prepare: true });
+
+  logger.info(`Deleted chat history for session ${sessionId}. Rows removed: ${deletedRows}`);
+  console.log(JSON.stringify({ success: true, action: "delete", deleted_rows: deletedRows }));
+}
+
 async function main() {
   try {
     await client.connect();
@@ -131,6 +153,11 @@ async function main() {
 
     if (chatData.action === "retrieve") {
       await handleRetrieve();
+      return;
+    }
+
+    if (chatData.action === "delete") {
+      await handleDelete();
       return;
     }
 
