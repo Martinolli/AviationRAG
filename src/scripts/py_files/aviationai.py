@@ -6,6 +6,7 @@ import time
 import uuid
 import sys
 import re
+import unicodedata
 from openai import OpenAI, OpenAIError
 from dotenv import load_dotenv
 from faiss_indexer import FAISSIndexer
@@ -88,6 +89,14 @@ QUERY_STOPWORDS = {
     "on", "at", "by", "as", "it", "its", "your", "you", "me", "my", "our", "we", "their",
     "according", "document", "documents", "information", "presented"
 }
+SOURCE_TAG_PATTERN = re.compile(r"\[SOURCE filename=(.*?); chunk_id=(.*?)\]")
+ACCIDENT_KEYWORDS = {
+    "accident", "incident", "crash", "event", "fatality", "ntsb", "aaib", "investigation"
+}
+REGULATORY_KEYWORDS = {
+    "part", "cfr", "cs", "requirement", "requirements", "compliance", "certification",
+    "faa", "easa", "icao", "order", "advisory", "ac", "standard", "regulation", "airworthiness"
+}
 
 def num_tokens_from_string(string: str, encoding_name: str = "cl100k_base") -> int:
     encoding = tiktoken.get_encoding(encoding_name)
@@ -108,6 +117,19 @@ def extract_query_terms(query):
     for phrase in extract_quoted_phrases(query):
         cleaned = cleaned.replace(f'"{phrase}"', " ")
     return {tok for tok in tokenize_for_match(cleaned) if tok not in QUERY_STOPWORDS}
+
+
+def normalize_output_text(text):
+    if text is None:
+        return ""
+    value = unicodedata.normalize("NFKC", str(text))
+    # Replace common broken glyphs seen from mixed encodings.
+    value = value.replace("�", "'")
+    value = value.replace("\u2018", "'").replace("\u2019", "'")
+    value = value.replace("\u201c", '"').replace("\u201d", '"')
+    value = value.replace("\u2013", "-").replace("\u2014", "-")
+    value = re.sub(r"[ \t]+", " ", value)
+    return value.strip()
 
 
 def extract_quoted_phrases(query):
@@ -256,6 +278,83 @@ def select_top_passages_for_query(raw_text, query, max_passages=10):
         top = scored[:max_passages]
     return top
 
+
+def classify_query_intent(query):
+    tokens = extract_query_terms(query)
+    query_lower = query.lower()
+
+    is_accident = bool(tokens & ACCIDENT_KEYWORDS) or any(
+        key in query_lower for key in ["accident report", "incident report", "ntsb", "aaib"]
+    )
+    is_regulatory = bool(tokens & REGULATORY_KEYWORDS) or any(
+        key in query_lower for key in ["part ", "14cfr", "cs-23", "cs-25", "faa", "easa", "icao"]
+    )
+
+    return {
+        "is_accident_query": is_accident,
+        "is_regulatory_query": is_regulatory,
+    }
+
+
+def source_kind(filename):
+    name = (filename or "").lower()
+    if "accident_report" in name:
+        return "accident_report"
+    if "regulation_" in name:
+        return "regulation"
+    if "advisory_circular_" in name:
+        return "advisory"
+    if "standard_" in name or "sarp_" in name:
+        return "standard"
+    if "guide_" in name:
+        return "guide"
+    if "report_" in name:
+        return "report"
+    if "book_" in name or "paper_" in name:
+        return "reference"
+    if name.endswith(".pdf"):
+        return "reference"
+    return "other"
+
+
+def source_priority_for_intent(filename, intent):
+    kind = source_kind(filename)
+    is_accident_query = intent["is_accident_query"]
+    is_regulatory_query = intent["is_regulatory_query"]
+
+    if is_accident_query:
+        if kind == "accident_report":
+            return 100
+        if kind in {"regulation", "advisory", "standard", "guide", "report"}:
+            return 70
+        return 50
+
+    if is_regulatory_query:
+        if kind in {"regulation", "advisory", "standard", "guide"}:
+            return 100
+        if kind in {"report", "reference"}:
+            return 75
+        if kind == "accident_report":
+            return 10
+        return 50
+
+    # Conceptual/non-accident default: prefer foundational references, down-rank accident reports.
+    if kind in {"reference", "guide", "standard"}:
+        return 95
+    if kind in {"regulation", "advisory", "report"}:
+        return 80
+    if kind == "accident_report":
+        return 5
+    return 50
+
+
+def should_skip_source_for_intent(filename, intent):
+    kind = source_kind(filename)
+    # Unless explicitly accident-focused, avoid accident report chunks in default retrieval.
+    if kind == "accident_report" and not intent["is_accident_query"]:
+        return True
+    return False
+
 # ✅ Function to get embeddings
 def get_embedding(text):
     """Generate embeddings for a given query."""
@@ -353,6 +452,174 @@ def generate_response(query, context, model="gpt-4-turbo", strict_mode=False, ta
         return "I'm sorry, but I encountered an error while generating a response."
 
 
+def format_context_entries(entries):
+    return "\n".join(
+        f"[SOURCE filename={entry['filename']}; chunk_id={entry['chunk_id']}]\n{entry['text']}"
+        for entry in entries
+    )
+
+
+def extract_citations_from_context(context):
+    citations = []
+    seen = set()
+    for match in SOURCE_TAG_PATTERN.finditer(context):
+        filename = match.group(1).strip()
+        chunk_id = match.group(2).strip()
+        key = (filename, chunk_id)
+        if key in seen:
+            continue
+        seen.add(key)
+        citations.append({"filename": filename, "chunk_id": chunk_id})
+    return citations
+
+
+def build_retrieval_context(query, query_embedding, strict_mode=False, target_filename=None):
+    results = faiss_index.search(query_embedding, k=60 if strict_mode else 20)
+    context_entries = []
+    total_tokens = 0
+    max_tokens = 3500
+    max_chunks_per_file = 4
+    per_file_count = {}
+    seen_signatures = set()
+
+    if strict_mode and target_filename:
+        logging.info(f"Document-grounded mode enabled for: {target_filename}")
+        raw_text = extract_raw_text_from_source_file(target_filename)
+        raw_passages = select_top_passages_for_query(raw_text, query, max_passages=12) if raw_text else []
+
+        for _, passage_index, passage in raw_passages:
+            signature = " ".join(passage.lower().split())[:400]
+            if signature in seen_signatures:
+                continue
+
+            doc_tokens = num_tokens_from_string(passage)
+            if total_tokens + doc_tokens > max_tokens:
+                break
+
+            context_entries.append(
+                {
+                    "filename": target_filename,
+                    "chunk_id": f"raw_passage_{passage_index}",
+                    "text": passage,
+                }
+            )
+            total_tokens += doc_tokens
+            seen_signatures.add(signature)
+
+        # Fallback to preprocessed embeddings if raw source extraction is unavailable
+        if not context_entries:
+            file_chunks = [meta for meta in ALL_METADATA if meta.get("filename") == target_filename]
+            ranked_chunks = rank_chunks_by_lexical_overlap(file_chunks, query)
+            if not ranked_chunks:
+                ranked_chunks = [
+                    meta for meta, _ in results if meta.get("filename") == target_filename
+                ]
+
+            for metadata in ranked_chunks:
+                doc_text = metadata.get("text", "")
+                filename = metadata.get("filename", "unknown")
+                chunk_id = metadata.get("chunk_id", "unknown")
+                if not doc_text:
+                    continue
+
+                signature = " ".join(doc_text.lower().split())[:400]
+                if signature in seen_signatures:
+                    continue
+
+                doc_tokens = num_tokens_from_string(doc_text)
+                if total_tokens + doc_tokens > max_tokens:
+                    break
+
+                context_entries.append(
+                    {"filename": filename, "chunk_id": chunk_id, "text": doc_text}
+                )
+                total_tokens += doc_tokens
+                seen_signatures.add(signature)
+    else:
+        intent = classify_query_intent(query)
+        ranked_results = sorted(
+            enumerate(results),
+            key=lambda item: (
+                source_priority_for_intent(item[1][0].get("filename", ""), intent),
+                -item[0],  # keep earlier semantic order within same priority
+            ),
+            reverse=True,
+        )
+
+        for _, (metadata, score) in ranked_results:
+            doc_text = metadata.get("text", "")
+            filename = metadata.get("filename", "unknown")
+            chunk_id = metadata.get("chunk_id", "unknown")
+            if not doc_text:
+                continue
+            if should_skip_source_for_intent(filename, intent):
+                continue
+
+            signature = " ".join(doc_text.lower().split())[:400]
+            if signature in seen_signatures:
+                continue
+
+            file_count = per_file_count.get(filename, 0)
+            if file_count >= max_chunks_per_file:
+                continue
+
+            doc_tokens = num_tokens_from_string(doc_text)
+            if total_tokens + doc_tokens > max_tokens:
+                break
+
+            context_entries.append(
+                {"filename": filename, "chunk_id": chunk_id, "text": doc_text}
+            )
+            total_tokens += doc_tokens
+            seen_signatures.add(signature)
+            per_file_count[filename] = file_count + 1
+
+    context = format_context_entries(context_entries)
+    return context, context_entries
+
+
+def answer_query(query, model="gpt-4-turbo", strict_mode=None, target_filename=None):
+    if not query or not str(query).strip():
+        raise ValueError("Query cannot be empty.")
+
+    resolved_target = target_filename or detect_target_filename(query)
+    if strict_mode is None:
+        resolved_strict_mode = resolved_target is not None
+    else:
+        resolved_strict_mode = bool(strict_mode)
+
+    logging.info("Generating query embedding...")
+    query_embedding = get_embedding(query)
+    if query_embedding is None:
+        raise ValueError("Failed to generate query embedding")
+
+    logging.info("Searching FAISS for relevant documents...")
+    context, context_entries = build_retrieval_context(
+        query,
+        query_embedding,
+        strict_mode=resolved_strict_mode,
+        target_filename=resolved_target,
+    )
+
+    response = generate_response(
+        query,
+        context,
+        model=model,
+        strict_mode=resolved_strict_mode,
+        target_filename=resolved_target,
+    )
+    citations = extract_citations_from_context(context)
+    response = normalize_output_text(response)
+
+    return {
+        "answer": response,
+        "strict_mode": resolved_strict_mode,
+        "target_filename": resolved_target,
+        "citations": citations,
+        "sources": context_entries,
+    }
+
+
 # ✅ Function to handle chat loop
 def chat_loop():
     """Interactive chat loop for AviationAI."""
@@ -431,105 +698,8 @@ def chat_loop():
             continue
 
         try:
-            target_filename = detect_target_filename(query)
-            strict_mode = target_filename is not None
-
-            logging.info("Generating query embedding...")
-            query_embedding = get_embedding(query)
-            if query_embedding is None:
-                raise ValueError("Failed to generate query embedding")
-
-            logging.info("Searching FAISS for relevant documents...")
-            results = faiss_index.search(query_embedding, k=60 if strict_mode else 20)
-            context_texts = []
-            total_tokens = 0
-            max_tokens = 3500
-            max_chunks_per_file = 4
-            per_file_count = {}
-            seen_signatures = set()
-
-            if strict_mode:
-                logging.info(f"Document-grounded mode enabled for: {target_filename}")
-                raw_text = extract_raw_text_from_source_file(target_filename)
-                raw_passages = select_top_passages_for_query(raw_text, query, max_passages=12) if raw_text else []
-
-                for _, passage_index, passage in raw_passages:
-                    signature = " ".join(passage.lower().split())[:400]
-                    if signature in seen_signatures:
-                        continue
-
-                    doc_tokens = num_tokens_from_string(passage)
-                    if total_tokens + doc_tokens > max_tokens:
-                        break
-
-                    context_texts.append(
-                        f"[SOURCE filename={target_filename}; chunk_id=raw_passage_{passage_index}]"
-                        f"\n{passage}"
-                    )
-                    total_tokens += doc_tokens
-                    seen_signatures.add(signature)
-
-                # Fallback to preprocessed embeddings if raw source extraction is unavailable
-                if not context_texts:
-                    file_chunks = [meta for meta in ALL_METADATA if meta.get("filename") == target_filename]
-                    ranked_chunks = rank_chunks_by_lexical_overlap(file_chunks, query)
-                    if not ranked_chunks:
-                        ranked_chunks = [
-                            meta for meta, _ in results if meta.get("filename") == target_filename
-                        ]
-
-                    for metadata in ranked_chunks:
-                        doc_text = metadata.get("text", "")
-                        filename = metadata.get("filename", "unknown")
-                        chunk_id = metadata.get("chunk_id", "unknown")
-                        if not doc_text:
-                            continue
-
-                        signature = " ".join(doc_text.lower().split())[:400]
-                        if signature in seen_signatures:
-                            continue
-
-                        doc_tokens = num_tokens_from_string(doc_text)
-                        if total_tokens + doc_tokens > max_tokens:
-                            break
-
-                        context_texts.append(f"[SOURCE filename={filename}; chunk_id={chunk_id}]\n{doc_text}")
-                        total_tokens += doc_tokens
-                        seen_signatures.add(signature)
-            else:
-                for metadata, score in results:
-                    doc_text = metadata.get('text', '')
-                    filename = metadata.get('filename', 'unknown')
-                    chunk_id = metadata.get('chunk_id', 'unknown')
-                    if not doc_text:
-                        continue
-
-                    signature = " ".join(doc_text.lower().split())[:400]
-                    if signature in seen_signatures:
-                        continue
-
-                    file_count = per_file_count.get(filename, 0)
-                    if file_count >= max_chunks_per_file:
-                        continue
-
-                    doc_tokens = num_tokens_from_string(doc_text)
-                    if total_tokens + doc_tokens > max_tokens:
-                        break
-
-                    context_texts.append(f"[SOURCE filename={filename}; chunk_id={chunk_id}]\n{doc_text}")
-                    total_tokens += doc_tokens
-                    seen_signatures.add(signature)
-                    per_file_count[filename] = file_count + 1
-                 
-            context = "\n".join(context_texts)
-       
-            # Generate response
-            response = generate_response(
-                query,
-                context,
-                strict_mode=strict_mode,
-                target_filename=target_filename,
-            )
+            query_result = answer_query(query)
+            response = query_result["answer"]
             print("\nAviationAI:", response)
             # Store chat in AstraDB
             store_chat_in_db(session_id, query, response)
