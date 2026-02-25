@@ -13,15 +13,11 @@ const projectRoot = path.resolve(__dirname, "..", "..", "..");
 const envPath = path.resolve(projectRoot, ".env");
 
 dotenv.config({ path: envPath });
-const hasAppToken = Boolean(process.env.ASTRA_DB_APPLICATION_TOKEN);
-console.log("Environment variables loaded:", hasAppToken ? "OK" : "MISSING");
 
 const logDir = path.resolve(projectRoot, "logs");
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
-
-console.log(`Log directory: ${logDir}`);
 
 const logFileName = `store_chat_${format(new Date(), "yyyy-MM-dd")}.log`;
 const logFilePath = path.join(logDir, logFileName);
@@ -33,7 +29,6 @@ const logger = winston.createLogger({
     winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`)
   ),
   transports: [
-    new winston.transports.Console(),
     new winston.transports.File({
       filename: logFilePath,
       maxsize: 5242880,

@@ -221,11 +221,55 @@ def expand_abbreviations_in_text(text, abbreviation_dict):
 def extract_text_from_pdf_with_pdfplumber(pdf_path):
     try:
         with pdfplumber.open(pdf_path) as pdf:
-            text = ''.join([page.extract_text() + '\n' for page in pdf.pages])
+            text = ''.join([(page.extract_text() or "") + '\n' for page in pdf.pages])
             return text
     except Exception as e:
         print(f"Failed to process PDF {pdf_path}: {e}")
         return ""
+
+
+def extract_text_from_pdf_with_pypdf2(pdf_path):
+    """Extract text from PDF using PyPDF2 as an alternative parser."""
+    try:
+        with open(pdf_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            return "\n".join([(page.extract_text() or "") for page in reader.pages])
+    except Exception as e:
+        logging.warning("PyPDF2 extraction failed for %s: %s", pdf_path, e)
+        return ""
+
+
+def text_quality_score(text):
+    """Score extracted text quality using length and alphanumeric ratio."""
+    if not text:
+        return 0.0
+    stripped = text.strip()
+    if not stripped:
+        return 0.0
+
+    alnum_count = sum(ch.isalnum() for ch in stripped)
+    alnum_ratio = alnum_count / max(len(stripped), 1)
+    length_score = min(len(stripped) / 2000, 1.0)  # Normalize around 2k chars
+    return (0.7 * length_score) + (0.3 * alnum_ratio)
+
+
+def extract_text_from_pdf(pdf_path):
+    """
+    Try multiple PDF extraction strategies and keep the best result.
+
+    Returns:
+        tuple[str, str, float]: (text, extraction_method, quality_score)
+    """
+    candidates = []
+
+    text_pypdf2 = extract_text_from_pdf_with_pypdf2(pdf_path)
+    candidates.append(("pypdf2", text_pypdf2, text_quality_score(text_pypdf2)))
+
+    text_pdfplumber = extract_text_from_pdf_with_pdfplumber(pdf_path)
+    candidates.append(("pdfplumber", text_pdfplumber, text_quality_score(text_pdfplumber)))
+
+    method, text, score = max(candidates, key=lambda item: item[2])
+    return text, method, score
 
 def extract_keywords(documents, top_n=10):
     texts = [doc['text'] for doc in documents]
@@ -405,9 +449,12 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
 
         file_path = os.path.join(directory_path, filename)
         text = ''
+        extraction_method = "docx"
+        extraction_quality = 1.0
+
         if filename.endswith(".pdf"):
             logging.info(f"Extracting text from PDF: {filename}")
-            text = extract_text_from_pdf_with_pdfplumber(file_path)
+            text, extraction_method, extraction_quality = extract_text_from_pdf(file_path)
         elif filename.endswith(".docx"):
             logging.info(f"Extracting text from DOCX: {filename}")
             try:
@@ -425,6 +472,17 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         if not text:
             logging.warning(f"No text extracted from {filename}")
             continue
+
+        needs_review = False
+        if filename.endswith(".pdf") and extraction_quality < 0.20:
+            needs_review = True
+            logging.warning(
+                "Low-quality PDF extraction for %s (method=%s, score=%.3f). "
+                "Likely scanned/image PDF; consider OCR.",
+                filename,
+                extraction_method,
+                extraction_quality,
+            )
 
         logging.info(f"Processing {filename}...")
 
@@ -461,8 +519,7 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens_without_stopwords]
 
         if text_expanded_dir:
-            # Remove .docx extension before adding .txt
-            clean_filename = filename.replace('.docx', '')
+            clean_filename = os.path.splitext(filename)[0]
             output_file_path = os.path.join(text_expanded_dir, f'{clean_filename}.txt')
             with open(output_file_path, 'w', encoding='utf-8') as out_file:
                 out_file.write(raw_text)
@@ -470,8 +527,7 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             logging.info(f"Expanded text saved to: {output_file_path}")
                
         if text_output_dir:
-            # Remove .docx extension before adding .txt
-            clean_filename = filename.replace('.docx', '')
+            clean_filename = os.path.splitext(filename)[0]
             output_file_path = os.path.join(text_output_dir, f'{clean_filename}.txt')
             logging.info(f"Processed text saved to: {output_file_path}")
             with open(output_file_path, 'w', encoding='utf-8') as out_file:
@@ -485,6 +541,11 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         # Remove 'category' field if it already exists
         if 'category' in metadata:
             del metadata['category']
+
+        metadata['source_type'] = 'pdf' if filename.endswith('.pdf') else 'docx'
+        metadata['extraction_method'] = extraction_method
+        metadata['extraction_quality'] = round(extraction_quality, 3)
+        metadata['needs_manual_review'] = needs_review
 
         new_documents.append({
             'filename': filename,

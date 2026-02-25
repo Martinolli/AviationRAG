@@ -51,7 +51,9 @@ def store_chat_in_db(session_id, user_query, ai_response, print_success=False, l
         if log_success:
             logging.info(f"Storing chat for session: {session_id} | Query: {user_query[:50]}...")
         if result.stdout.strip():
-            logging.debug(result.stdout.strip())
+            parsed = _parse_json_output(result.stdout.strip())
+            if parsed == [] and "success" not in result.stdout:
+                logging.debug(result.stdout.strip())
     except subprocess.CalledProcessError as error:
         logging.error(f"Error storing chat: {error}")
         if error.stderr:
