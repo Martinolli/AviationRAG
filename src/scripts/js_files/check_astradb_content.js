@@ -24,8 +24,6 @@ if (fs.existsSync(envPath)) {
 console.log('Environment variables:');
 console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
 console.log('ASTRA_DB_APPLICATION_TOKEN:', process.env.ASTRA_DB_APPLICATION_TOKEN ? '[REDACTED]' : 'Not set');
-console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID ? '[REDACTED]' : 'Not set');
-console.log('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET ? '[REDACTED]' : 'Not set');
 console.log('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
 
 async function checkAstraDBContent() {
@@ -49,29 +47,46 @@ async function checkAstraDBContent() {
                 password 
             },
             keyspace: process.env.ASTRA_DB_KEYSPACE,
+            socketOptions: {
+                connectTimeout: 30000,
+                readTimeout: 120000,
+            },
         });
 
         // Connect to Astra DB
         await client.connect();
         console.log('Connected to Astra DB successfully!');
 
-        // Query to get all rows from the table
-        const query = 'SELECT * FROM aviation_documents';
-        const result = await client.execute(query, [], { fetchSize: 1000 });
+        const fullMode = process.argv.includes('--full');
+        const query = fullMode
+            ? 'SELECT chunk_id, filename, text, tokens, embedding FROM aviation_documents'
+            : 'SELECT chunk_id, filename FROM aviation_documents';
+        console.log(`Query mode: ${fullMode ? 'full' : 'lightweight'}`);
 
         let allRows = [];
-        for await (const row of result) {
-            // Convert embedding Buffer to array if it exists
-            if (row.embedding && row.embedding instanceof Buffer) {
-                const float32Array = new Float32Array(row.embedding.buffer, row.embedding.byteOffset, row.embedding.byteLength / 4);
-                row.embedding = Array.from(float32Array);
+
+        let pageState = null;
+        do {
+            const result = await client.execute(query, [], { fetchSize: 200, pageState });
+            for (const row of result.rows) {
+                if (row.embedding && row.embedding instanceof Buffer) {
+                    const float32Array = new Float32Array(
+                        row.embedding.buffer,
+                        row.embedding.byteOffset,
+                        row.embedding.byteLength / 4
+                    );
+                    row.embedding = Array.from(float32Array);
+                }
+                allRows.push(row);
             }
-            allRows.push(row);
-        }
+            pageState = result.pageState;
+        } while (pageState);
 
         console.log(`Total number of documents retrieved: ${allRows.length}`);
 
         // Save data to a JSON file
+        const outputDir = path.join(projectRoot, 'data', 'astra_db');
+        fs.mkdirSync(outputDir, { recursive: true });
         const outputPath = path.join(projectRoot, 'data', 'astra_db', 'astra_db_content.json');
         fs.writeFileSync(outputPath, JSON.stringify(allRows, null, 2));
         console.log(`Data saved to: ${outputPath}`);

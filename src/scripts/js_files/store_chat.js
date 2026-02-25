@@ -13,7 +13,8 @@ const projectRoot = path.resolve(__dirname, "..", "..", "..");
 const envPath = path.resolve(projectRoot, ".env");
 
 dotenv.config({ path: envPath });
-console.log("Environment variables loaded:", process.env.ASTRA_DB_CLIENT_ID ? "OK" : "MISSING");
+const hasAppToken = Boolean(process.env.ASTRA_DB_APPLICATION_TOKEN);
+console.log("Environment variables loaded:", hasAppToken ? "OK" : "MISSING");
 
 const logDir = path.resolve(projectRoot, "logs");
 if (!fs.existsSync(logDir)) {

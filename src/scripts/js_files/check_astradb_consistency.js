@@ -17,8 +17,6 @@ dotenv.config({ path: envPath });
 console.log('Environment variables:');
 console.log('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
 console.log('ASTRA_DB_APPLICATION_TOKEN:', process.env.ASTRA_DB_APPLICATION_TOKEN ? '[REDACTED]' : 'Not set');
-console.log('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID ? '[REDACTED]' : 'Not set');
-console.log('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET ? '[REDACTED]' : 'Not set');
 console.log('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
 
 async function checkConsistency() {

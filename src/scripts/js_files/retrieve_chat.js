@@ -51,8 +51,6 @@ logger.info(`Logging to: ${logFilePath}`);  // Add this for debugging
 // Log environment variables for debugging
 logger.info('ASTRA_DB_SECURE_BUNDLE_PATH:', process.env.ASTRA_DB_SECURE_BUNDLE_PATH);
 logger.info('ASTRA_DB_APPLICATION_TOKEN:', process.env.ASTRA_DB_APPLICATION_TOKEN ? '[REDACTED]' : 'Not set');
-logger.info('ASTRA_DB_CLIENT_ID:', process.env.ASTRA_DB_CLIENT_ID ? '[REDACTED]' : 'Not set');
-logger.info('ASTRA_DB_CLIENT_SECRET:', process.env.ASTRA_DB_CLIENT_SECRET ? '[REDACTED]' : 'Not set');
 logger.info('ASTRA_DB_KEYSPACE:', process.env.ASTRA_DB_KEYSPACE);
 
 const missing = getMissingAstraEnvVars();

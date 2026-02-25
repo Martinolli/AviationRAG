@@ -1,10 +1,16 @@
+"""
+Module for chunking aviation documents and saving them as JSON files.
+
+This module processes documents by splitting them into chunks with token limits,
+and saves the chunks with metadata for use in a RAG system.
+"""
 import os
 import json
 import logging
+import pickle
 import nltk
 from nltk.tokenize import sent_tokenize
 import tiktoken
-import pickle
 
 from config import CHUNKED_DIR, LOG_DIR, PKL_FILENAME
 
@@ -29,6 +35,7 @@ tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
 
 # Function to count tokens using OpenAI's tokenizer
 def count_tokens(text):
+    """Count the number of tokens in the given text using OpenAI's tokenizer."""
     return len(tokenizer.encode(text))
 
 # Function to check if a document has been processed already
@@ -39,6 +46,7 @@ def is_document_already_chunked(filename):
 
 # Function to chunk text by sentences and enforce token limits
 def chunk_text_by_sentences(text, max_tokens=500, overlap=50):
+    """Split text into chunks by sentences with a maximum token limit and overlap."""
     sentences = sent_tokenize(text)  # Tokenize into sentences
     chunks = []
     current_chunk = []
@@ -73,7 +81,7 @@ def validate_and_split_chunks(chunks, max_tokens):
     for chunk in chunks:
         token_count = count_tokens(chunk)
         if token_count > max_tokens:
-            logging.warning(f"Chunk exceeds token limit: {token_count} tokens. Splitting further.")
+            logging.warning("Chunk exceeds token limit: %s tokens. Splitting further.", token_count)
             # Split the chunk into smaller parts
             words = chunk.split()
             temp_chunk = []
@@ -94,24 +102,36 @@ def validate_and_split_chunks(chunks, max_tokens):
 
 # Function to process documents and save chunks as JSON
 def save_documents_as_chunks(documents, output_dir, max_tokens=500, overlap=50):
+    """Process documents, chunk them, and save as JSON files with metadata.
+    
+    Args:
+        documents: List of document dictionaries containing 'filename',
+        'text', 'metadata', and 'category'.
+        output_dir: Directory where the chunked JSON files will be saved.
+        max_tokens: Maximum token limit for each chunk (default: 500).
+        overlap: Number of words to overlap between chunks (default: 50).
+    """
     for doc in documents:
-        filename = doc['filename']
+        filename = doc.get('filename')
+        if not filename:
+            logging.warning("Skipping document without filename.")
+            continue
 
         # ✅ Skip document if it has already been processed
         if is_document_already_chunked(filename):
-            logging.info(f"Skipping already chunked document: {filename}")
+            logging.info("Skipping already chunked document: %s", filename)
             print(f"Skipping already chunked document: {filename}")
             continue
-        
-        text = doc['text']
+
+        text = doc.get('text', '')
+        if not isinstance(text, str):
+            text = str(text)
         metadata = doc.get('metadata', {})  # Get metadata if it exists, otherwise empty dict
         category = doc.get('category', '')  # Get category if it exists, otherwise empty string
 
-        chunks = chunk_text_by_sentences(text, max_tokens, overlap)
-        validated_chunks = validate_and_split_chunks(chunks, max_tokens)
-
+        validated_chunks = chunk_text_by_sentences(text, max_tokens, overlap)
         output_filename = os.path.join(output_dir, f"{os.path.splitext(filename)[0]}_chunks.json")
-        
+
         print(f"Processing and saving chunks for {filename}")
         chunk_data = {
             "filename": filename,
@@ -125,31 +145,32 @@ def save_documents_as_chunks(documents, output_dir, max_tokens=500, overlap=50):
                 } for i, chunk in enumerate(validated_chunks)
             ]
         }
-       
+
         with open(output_filename, 'w', encoding='utf-8') as f:
             json.dump(chunk_data, f, ensure_ascii=False, indent=2)
 
-        logging.info(f"Processed and saved chunks for {filename}")
+        logging.info("Processed and saved chunks for %s", filename)
 
 # Main routine
 def main():
+    """Load documents from PKL file, chunk them, and save as JSON files."""
     # Load your PKL file containing documents
     if not os.path.exists(pkl_file):
-        logging.error(f"Error: PKL file '{pkl_file}' not found!")
+        logging.error("Error: PKL file '%s' not found!", pkl_file)
         return
 
     try:
         with open(pkl_file, 'rb') as file:
             documents = pickle.load(file)
-        logging.info(f"Loaded {len(documents)} documents.")
-    except Exception as e:
-        logging.error(f"Failed to load PKL file: {e}")
+        logging.info("Loaded %d documents.", len(documents))
+    except (FileNotFoundError, pickle.UnpicklingError) as e:
+        logging.error("Failed to load PKL file: %s", e)
         return
 
     # Process and save chunks for all documents
     save_documents_as_chunks(documents, chunk_output_dir)
 
-    logging.info(f"All documents processed. Chunks saved in '{chunk_output_dir}'.")
+    logging.info("All documents processed. Chunks saved in '%s'.", chunk_output_dir)
     print(f"All documents processed. Chunks saved in '{chunk_output_dir}'.")
 
 if __name__ == '__main__':

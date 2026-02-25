@@ -759,8 +759,8 @@ store the embeddings in the AstraDB: aviation_rag_db/aviation_data/aviation_docu
             const client = new cassandra.Client({
                 cloud: { secureConnectBundle: process.env.ASTRA_DB_SECURE_BUNDLE_PATH },
                 credentials: {
-                    username: process.env.ASTRA_DB_CLIENT_ID,
-                    password: process.env.ASTRA_DB_CLIENT_SECRET,
+                    username: "token",
+                    password: process.env.ASTRA_DB_APPLICATION_TOKEN,
                 },
                 keyspace: process.env.ASTRA_DB_KEYSPACE,
             });
@@ -1019,8 +1019,7 @@ Copy `.env.example` to `.env` and fill in values before running scripts that use
 copy .env.example .env
 ```
 
-For Astra DB, use `ASTRA_DB_APPLICATION_TOKEN` (recommended).  
-`ASTRA_DB_CLIENT_ID` and `ASTRA_DB_CLIENT_SECRET` are kept only as legacy fallback.
+For Astra DB, use `ASTRA_DB_APPLICATION_TOKEN`.
 
 ### Quality checks
 
