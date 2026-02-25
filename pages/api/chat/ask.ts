@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { runAviationApiCommand } from "../../../src/utils/server/aviation_api_bridge";
+import { requireApiAuth } from "../../../src/utils/server/require_api_auth";
 
 type AskRequestBody = {
   session_id?: string;
@@ -14,6 +15,11 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  const session = await requireApiAuth(req, res);
+  if (!session) {
+    return;
+  }
+
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).json({ success: false, error: "Method Not Allowed" });
@@ -60,4 +66,3 @@ export default async function handler(
     });
   }
 }
-

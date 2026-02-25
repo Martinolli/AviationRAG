@@ -22,6 +22,10 @@ OPENAI_API_KEY=
 ASTRA_DB_SECURE_BUNDLE_PATH=
 ASTRA_DB_APPLICATION_TOKEN=
 ASTRA_DB_KEYSPACE=
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=
+APP_AUTH_EMAIL=
+APP_AUTH_PASSWORD=
 ```
 
 Run the pipeline and chat:
@@ -120,6 +124,10 @@ OPENAI_API_KEY=
 ASTRA_DB_SECURE_BUNDLE_PATH=
 ASTRA_DB_APPLICATION_TOKEN=
 ASTRA_DB_KEYSPACE=
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=
+APP_AUTH_EMAIL=
+APP_AUTH_PASSWORD=
 ```
 
 Notes:
@@ -211,12 +219,23 @@ This runs:
 npm run dev
 ```
 
+Open `http://localhost:3000/auth/signin` and sign in with:
+
+- `APP_AUTH_EMAIL`
+- `APP_AUTH_PASSWORD`
+
 ### Web API Endpoints (MVP)
 
 - `GET /api/health`
 - `POST /api/chat/ask`
   - body: `session_id?`, `message`, `strict_mode?`, `target_document?`, `model?`, `store?`
 - `GET /api/chat/history/{session_id}?limit=10`
+- `GET /api/chat/session?search=&filter=all&limit=50`
+- `POST /api/chat/session`
+- `PATCH /api/chat/session/{id}`
+- `DELETE /api/chat/session/{id}`
+
+Note: All `/api/chat/*` routes require an authenticated session.
 
 Example:
 

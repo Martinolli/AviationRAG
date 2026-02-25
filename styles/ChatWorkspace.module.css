@@ -29,6 +29,42 @@
   color: #b8d6ec;
 }
 
+.userBlock {
+  border: 1px solid rgba(184, 214, 236, 0.3);
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: rgba(10, 24, 37, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.78rem;
+}
+
+.userBlock span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userSignOut {
+  border: 1px solid rgba(184, 214, 236, 0.35);
+  border-radius: 7px;
+  background: rgba(10, 24, 37, 0.4);
+  color: #e6f1fa;
+  padding: 5px 8px;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.authLoading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #1f3b57;
+  font-weight: 600;
+}
+
 .primaryButton {
   border: none;
   border-radius: 10px;

@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { runAviationApiCommand } from "../../../../src/utils/server/aviation_api_bridge";
+import { requireApiAuth } from "../../../../src/utils/server/require_api_auth";
 
 type SessionUpdateBody = {
   title?: string;
@@ -14,6 +15,11 @@ function parseBoolean(rawValue: string | string[] | undefined, fallback: boolean
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const session = await requireApiAuth(req, res);
+  if (!session) {
+    return;
+  }
+
   const sessionId = String(req.query.id || "").trim();
   if (!sessionId) {
     return res.status(400).json({ success: false, error: "Path parameter 'id' is required." });
@@ -62,4 +68,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
   }
 }
-

@@ -1,4 +1,6 @@
 import Head from "next/head";
+import { useRouter } from "next/router";
+import { signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
 import styles from "../styles/ChatWorkspace.module.css";
 
@@ -73,6 +75,8 @@ function sortSessions(items: Session[]) {
 }
 
 export default function HomePage() {
+  const router = useRouter();
+  const { data: authSession, status: authStatus } = useSession();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   const [messagesBySession, setMessagesBySession] = useState<Record<string, Message[]>>({});
@@ -116,6 +120,10 @@ export default function HomePage() {
     setLoadingSessions(true);
     try {
       const res = await fetch("/api/chat/session?limit=200");
+      if (res.status === 401) {
+        await router.replace("/auth/signin");
+        return;
+      }
       const data = await res.json();
       if (!data?.success) {
         throw new Error(data?.error || "Failed to load sessions.");
@@ -130,10 +138,22 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    if (authStatus !== "authenticated") {
+      return;
+    }
     void loadSessions();
-  }, []);
+  }, [authStatus]);
 
   useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      void router.replace("/auth/signin");
+    }
+  }, [authStatus, router]);
+
+  useEffect(() => {
+    if (authStatus !== "authenticated") {
+      return;
+    }
     let alive = true;
     fetch("/api/health")
       .then((res) => res.json())
@@ -148,7 +168,7 @@ export default function HomePage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [authStatus]);
 
   const createNewSession = async (titleSeed = "New Session") => {
     setErrorText("");
@@ -398,6 +418,14 @@ export default function HomePage() {
     }
   };
 
+  if (authStatus !== "authenticated") {
+    return (
+      <main className={styles.authLoading}>
+        <p>{authStatus === "loading" ? "Checking authentication..." : "Redirecting to login..."}</p>
+      </main>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -413,6 +441,17 @@ export default function HomePage() {
           <div className={styles.brandBlock}>
             <h1>AviationRAG</h1>
             <p>Safety and certification assistant</p>
+          </div>
+
+          <div className={styles.userBlock}>
+            <span>{authSession?.user?.email || "Signed user"}</span>
+            <button
+              type="button"
+              className={styles.userSignOut}
+              onClick={() => void signOut({ callbackUrl: "/auth/signin" })}
+            >
+              Sign out
+            </button>
           </div>
 
           <button className={styles.primaryButton} onClick={() => void createNewSession()}>
@@ -589,4 +628,3 @@ export default function HomePage() {
     </>
   );
 }
-
