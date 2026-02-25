@@ -8,7 +8,6 @@ Features:
 
 """
 
-
 import subprocess
 import logging
 import time
@@ -30,12 +29,15 @@ log_file_path = LOG_DIR / "aviationrag.log"
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler(log_file_path, mode='w', encoding='utf-8'),  # Use UTF-8 encoding
-        logging.StreamHandler(sys.stdout)  # Print logs to console
-    ]
+        logging.FileHandler(
+            log_file_path, mode="w", encoding="utf-8"
+        ),  # Use UTF-8 encoding
+        logging.StreamHandler(sys.stdout),  # Print logs to console
+    ],
 )
+
 
 def run_script(command, script_name, max_retries=3):
     """Execute a script with logging, retries, and execution time tracking."""
@@ -44,7 +46,9 @@ def run_script(command, script_name, max_retries=3):
         try:
             attempt += 1
             start_time = time.time()
-            logging.info("Attempt %d/%d - Starting %s...", attempt, max_retries, script_name)
+            logging.info(
+                "Attempt %d/%d - Starting %s...", attempt, max_retries, script_name
+            )
             result = subprocess.run(
                 command,
                 check=True,
@@ -53,7 +57,11 @@ def run_script(command, script_name, max_retries=3):
                 cwd=PROJECT_ROOT,
             )
             execution_time = time.time() - start_time
-            logging.info("%s completed successfully in %.2f seconds.", script_name, execution_time)
+            logging.info(
+                "%s completed successfully in %.2f seconds.",
+                script_name,
+                execution_time,
+            )
             logging.info(result.stdout)
             return True, execution_time  # Success
         except subprocess.CalledProcessError as e:
@@ -63,46 +71,81 @@ def run_script(command, script_name, max_retries=3):
                 logging.info("Retrying %s in 5 seconds...", script_name)
                 time.sleep(5)  # Wait before retrying
             else:
-                logging.error("%s failed after %d attempts. Moving to next step.", script_name, max_retries)
+                logging.error(
+                    "%s failed after %d attempts. Moving to next step.",
+                    script_name,
+                    max_retries,
+                )
                 return False, 0  # Final failure
-                
+
     return False, 0  # This line is reached only if all retries failed
 
-def main(args):
+
+def main(cli_args):
+    """
+    Execute the AviationRAG processing pipeline.
+
+    Args:
+        cli_args: Command-line arguments containing optional step and verbose flags.
+    """
     logging.info("--- AviationRAG Processing Pipeline Started ---")
     python_exec = sys.executable
 
     steps = [
         ([python_exec, "src/scripts/py_files/read_documents.py"], "Read Documents"),
-        ([python_exec, "src/scripts/py_files/aviation_chunk_saver.py"], "Chunk Documents"),
-        ([python_exec, "src/scripts/py_files/extract_pkl_to_json.py"], "Extract PKL to JSON"),
-        ([python_exec, "src/scripts/py_files/check_pkl_content.py"], "Check PKL Content"),
-        (["node", "src/scripts/js_files/check_new_chunks.js"], "Generate New Embeddings"),
+        (
+            [python_exec, "src/scripts/py_files/aviation_chunk_saver.py"],
+            "Chunk Documents",
+        ),
+        (
+            [python_exec, "src/scripts/py_files/extract_pkl_to_json.py"],
+            "Extract PKL to JSON",
+        ),
+        (
+            [python_exec, "src/scripts/py_files/check_pkl_content.py"],
+            "Check PKL Content",
+        ),
+        (
+            ["node", "src/scripts/js_files/check_new_chunks.js"],
+            "Generate New Embeddings",
+        ),
         ([python_exec, "src/scripts/py_files/check_embeddings.py"], "Check Embeddings"),
-        (["node", "src/scripts/js_files/check_new_embeddings.js"], "Store New Embeddings in AstraDB"),
-        (["node", "src/scripts/js_files/check_astradb_content.js"], "Check AstraDB Content"),
-        (["node", "src/scripts/js_files/check_astradb_consistency.js"], "Check AstraDB Consistency"),
-        ([python_exec, "src/scripts/py_files/visualizing_data.py"], "Update Visualizing Data")
+        (
+            ["node", "src/scripts/js_files/check_new_embeddings.js"],
+            "Store New Embeddings in AstraDB",
+        ),
+        (
+            ["node", "src/scripts/js_files/check_astradb_content.js"],
+            "Check AstraDB Content",
+        ),
+        (
+            ["node", "src/scripts/js_files/check_astradb_consistency.js"],
+            "Check AstraDB Consistency",
+        ),
+        (
+            [python_exec, "src/scripts/py_files/visualizing_data.py"],
+            "Update Visualizing Data",
+        ),
     ]
-    
+
     failed_steps = []
     successful_steps = []
     total_time = 0
-    
+
     with tqdm(total=len(steps), desc="Pipeline Progress", unit="step") as pbar:
         for command, script_name in steps:
-            if args.step and script_name != args.step:
+            if cli_args.step and script_name != cli_args.step:
                 pbar.update(1)
                 continue
-            
+
             success, execution_time = run_script(command, script_name)
             total_time += execution_time
-            
+
             if success:
                 successful_steps.append((script_name, execution_time))
             else:
                 failed_steps.append(script_name)
-            
+
             pbar.update(1)
 
     logging.info("\n--- Pipeline Summary ---")
@@ -118,15 +161,18 @@ def main(args):
         logging.info("Pipeline completed successfully without errors!")
 
     logging.info("\nDetailed Step Execution Times:")
-    for step, time in successful_steps:
-        logging.info("%s: %.2f seconds", step, time)
+    for step, execution_time in successful_steps:
+        logging.info("%s: %.2f seconds", step, execution_time)
 
     logging.info("--- AviationRAG Processing Pipeline Finished ---")
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="AviationRAG Processing Pipeline")
     parser.add_argument("--step", help="Run a specific step in the pipeline")
-    parser.add_argument("--verbose", action="store_true", help="Increase output verbosity")
+    parser.add_argument(
+        "--verbose", action="store_true", help="Increase output verbosity"
+    )
     args = parser.parse_args()
 
     if args.verbose:
