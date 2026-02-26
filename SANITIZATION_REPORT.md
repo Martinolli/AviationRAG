@@ -98,3 +98,11 @@ Executed successfully:
 4. Replaced risky catch-all Vercel route rewrite with standard Next.js framework config in `vercel.json`.
 5. Added CI pipeline:
    - `.github/workflows/ci.yml` runs sanitize checks, build, and Playwright smoke test.
+6. Added authentication hardening:
+   - In-memory credential attempt limiting.
+   - Removed fallback credential email for production auth path.
+   - Optional hashed password verification via `APP_AUTH_PASSWORD_HASH` (`sha256:<hex>`).
+7. Added deployment-ready Python bridge split:
+   - `AVIATION_API_MODE=worker|http`
+   - `AVIATION_API_HTTP_URL`, `AVIATION_API_HTTP_TOKEN`
+   - Health endpoint now reports bridge mode readiness.

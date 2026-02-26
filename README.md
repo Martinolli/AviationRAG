@@ -25,7 +25,14 @@ ASTRA_DB_KEYSPACE=
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=
 APP_AUTH_EMAIL=
+# Use one:
 APP_AUTH_PASSWORD=
+APP_AUTH_PASSWORD_HASH=sha256:<hex_digest>
+AVIATION_API_MODE=worker
+AVIATION_API_HTTP_URL=
+AVIATION_API_HTTP_TOKEN=
+AVIATION_API_TIMEOUT_MS=180000
+PYTHON_EXECUTABLE=python
 ```
 
 Run the pipeline and chat:
@@ -127,13 +134,24 @@ ASTRA_DB_KEYSPACE=
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=
 APP_AUTH_EMAIL=
+# Use one:
 APP_AUTH_PASSWORD=
+APP_AUTH_PASSWORD_HASH=sha256:<hex_digest>
+AVIATION_API_MODE=worker
+AVIATION_API_HTTP_URL=
+AVIATION_API_HTTP_TOKEN=
+AVIATION_API_TIMEOUT_MS=180000
+PYTHON_EXECUTABLE=python
 ```
 
 Notes:
 
 - `ASTRA_DB_CLIENT_ID` / `ASTRA_DB_CLIENT_SECRET` are no longer used.
 - Keep `.env` out of version control.
+- Set either `APP_AUTH_PASSWORD` (plain, local/dev) or `APP_AUTH_PASSWORD_HASH` (`sha256:<hex>`).
+- Generate hash with: `npm run auth:hash -- "my-strong-password"`.
+- `AVIATION_API_MODE=worker` uses local Python worker process.
+- `AVIATION_API_MODE=http` calls external aviation command service using `AVIATION_API_HTTP_URL`.
 
 ## Run the Full Pipeline
 
@@ -222,7 +240,7 @@ npm run dev
 Open `http://localhost:3000/auth/signin` and sign in with:
 
 - `APP_AUTH_EMAIL`
-- `APP_AUTH_PASSWORD`
+- `APP_AUTH_PASSWORD` (or the plain password that matches `APP_AUTH_PASSWORD_HASH`)
 
 ### Web API Endpoints (MVP)
 

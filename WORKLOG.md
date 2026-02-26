@@ -14,7 +14,8 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `Done` API rate limiting and request validation.
    - `Done` Deployment routing config cleanup.
    - `Done` CI pipeline for build + smoke tests.
-   - `Pending` Python worker deployment architecture split/containerization decision.
+   - `Done` Python bridge architecture split support (`worker` + `http` mode).
+   - `Pending` External aviation command service deployment and cutover.
 3. `Pending` Step 3 upload workflow (UI + API + ingestion status).
 4. `Pending` Step 4 formula rendering in chat.
 5. `Pending` Step 5 final production-readiness checklist and release gate.
@@ -50,6 +51,18 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Added `name` + `autocomplete` attributes for browser autofill compatibility.
     - Removed dependency on controlled email/password state for auth submission.
     - `npm run build` passed after fix.
+11. Hardened authentication configuration:
+    - Removed implicit fallback login email for credentials auth.
+    - Added in-memory login attempt limiter for credentials provider.
+    - Added optional `APP_AUTH_PASSWORD_HASH` (`sha256:<hex>`) verification path.
+12. Implemented deployment-ready bridge split:
+    - Added HTTP bridge mode in `src/utils/server/aviation_api_bridge.ts`.
+    - New env controls: `AVIATION_API_MODE`, `AVIATION_API_HTTP_URL`, `AVIATION_API_HTTP_TOKEN`.
+    - Health endpoint now reports bridge mode and HTTP bridge readiness.
+13. Added auth hash utility:
+    - `tools/auth/hash-password.mjs`
+    - `npm run auth:hash -- \"my-password\"`
+14. Updated `.env.example` and `README.md` for new auth/bridge settings.
 
 ## Session Recovery Procedure
 
