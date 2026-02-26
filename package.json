@@ -8,7 +8,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:smoke": "playwright test --config=playwright.config.ts"
+    "test:smoke": "playwright test --config=playwright.config.ts",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "sanitize:check": "node tools/sanitize/precommit-check.mjs",
+    "sanitize:check:all": "node tools/sanitize/precommit-check.mjs --all"
   },
   "dependencies": {
     "@datastax/astra-db-ts": "^0.1.4",
@@ -33,8 +36,8 @@
   "devDependencies": {
     "@playwright/test": "^1.51.1",
     "@types/node": "^20.0.0",
-    "@types/react": "^18.2.0",
-    "typescript": "^5.0.0",
+    "@types/react": "18.3.28",
+    "typescript": "5.9.3",
     "vercel": "^32.3.0"
   }
 }

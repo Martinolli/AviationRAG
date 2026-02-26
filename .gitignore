@@ -30,7 +30,7 @@ Thumbs.db
 logs/
 chat/*.log
 chat_id/*.txt
-chat_id/session_index.json
+chat_id/*.json
 *.log
 *.tmp
 playwright-report/
