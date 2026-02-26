@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 :root {
   color-scheme: light;
@@ -13,12 +13,12 @@ body,
 #__next {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
   font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
-  background: radial-gradient(circle at 0% 0%, #dceeff 0%, #f5f8fb 35%, #eef3f6 100%);
+  background: #f7f7f8;
   color: #102033;
 }
 
@@ -37,4 +37,3 @@ input,
 textarea {
   font-family: inherit;
 }
-

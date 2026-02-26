@@ -85,11 +85,12 @@ export default function HomePage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [healthLabel, setHealthLabel] = useState("checking...");
-  const [showSources, setShowSources] = useState(true);
+  const [showSources, setShowSources] = useState(false);
   const [selectedSource, setSelectedSource] = useState<SourceSnippet | null>(null);
   const [errorText, setErrorText] = useState("");
   const [sessionSearch, setSessionSearch] = useState("");
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const activeMessages = useMemo(
     () => messagesBySession[activeSessionId] || [],
@@ -169,6 +170,20 @@ export default function HomePage() {
       alive = false;
     };
   }, [authStatus]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (window.innerWidth <= 980) {
+      setSidebarOpen(false);
+    }
+  }, []);
 
   const createNewSession = async (titleSeed = "New Session") => {
     setErrorText("");
@@ -318,6 +333,7 @@ export default function HomePage() {
     );
     if (source) {
       setSelectedSource(source);
+      setShowSources(true);
       return;
     }
     setSelectedSource({
@@ -325,6 +341,7 @@ export default function HomePage() {
       chunk_id: citation.chunk_id,
       text: "Source text is not available in this message payload.",
     });
+    setShowSources(true);
   };
 
   const sendMessage = async () => {
@@ -437,103 +454,122 @@ export default function HomePage() {
       </Head>
 
       <main className={styles.workspace}>
-        <aside className={styles.sidebar}>
-          <div className={styles.brandBlock}>
-            <h1>AviationRAG</h1>
-            <p>Safety and certification assistant</p>
-          </div>
+        {sidebarOpen ? (
+          <aside className={styles.sidebar}>
+            <div className={styles.sidebarTopRow}>
+              <div className={styles.brandBlock}>
+                <h1>AviationRAG</h1>
+                <p>Safety and certification assistant</p>
+              </div>
+              <button
+                type="button"
+                className={styles.sidebarToggle}
+                onClick={() => setSidebarOpen(false)}
+              >
+                Hide
+              </button>
+            </div>
 
-          <div className={styles.userBlock}>
-            <span>{authSession?.user?.email || "Signed user"}</span>
-            <button
-              type="button"
-              className={styles.userSignOut}
-              onClick={() => void signOut({ callbackUrl: "/auth/signin" })}
-            >
-              Sign out
+            <div className={styles.userBlock}>
+              <span>{authSession?.user?.email || "Signed user"}</span>
+              <button
+                type="button"
+                className={styles.userSignOut}
+                onClick={() => void signOut({ callbackUrl: "/auth/signin" })}
+              >
+                Sign out
+              </button>
+            </div>
+
+            <button className={styles.primaryButton} onClick={() => void createNewSession()}>
+              + New Conversation
             </button>
-          </div>
 
-          <button className={styles.primaryButton} onClick={() => void createNewSession()}>
-            + New Conversation
-          </button>
+            <input
+              className={styles.sessionSearch}
+              type="text"
+              placeholder="Search conversations..."
+              value={sessionSearch}
+              onChange={(event) => setSessionSearch(event.target.value)}
+            />
 
-          <input
-            className={styles.sessionSearch}
-            type="text"
-            placeholder="Search conversations..."
-            value={sessionSearch}
-            onChange={(event) => setSessionSearch(event.target.value)}
-          />
+            <div className={styles.filterRow}>
+              <button
+                type="button"
+                className={`${styles.filterButton} ${sessionFilter === "all" ? styles.filterButtonActive : ""}`}
+                onClick={() => setSessionFilter("all")}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterButton} ${sessionFilter === "recent" ? styles.filterButtonActive : ""}`}
+                onClick={() => setSessionFilter("recent")}
+              >
+                Recent
+              </button>
+              <button
+                type="button"
+                className={`${styles.filterButton} ${sessionFilter === "pinned" ? styles.filterButtonActive : ""}`}
+                onClick={() => setSessionFilter("pinned")}
+              >
+                Pinned
+              </button>
+            </div>
 
-          <div className={styles.filterRow}>
-            <button
-              type="button"
-              className={`${styles.filterButton} ${sessionFilter === "all" ? styles.filterButtonActive : ""}`}
-              onClick={() => setSessionFilter("all")}
-            >
-              All
-            </button>
-            <button
-              type="button"
-              className={`${styles.filterButton} ${sessionFilter === "recent" ? styles.filterButtonActive : ""}`}
-              onClick={() => setSessionFilter("recent")}
-            >
-              Recent
-            </button>
-            <button
-              type="button"
-              className={`${styles.filterButton} ${sessionFilter === "pinned" ? styles.filterButtonActive : ""}`}
-              onClick={() => setSessionFilter("pinned")}
-            >
-              Pinned
-            </button>
-          </div>
+            <div className={styles.sidebarHeader}>
+              <span>Conversations</span>
+              <span className={styles.statusPill}>{healthLabel}</span>
+            </div>
 
-          <div className={styles.sidebarHeader}>
-            <span>Conversations</span>
-            <span className={styles.statusPill}>{healthLabel}</span>
-          </div>
-
-          <div className={styles.sessionList}>
-            {loadingSessions ? <div className={styles.emptyState}>Loading sessions...</div> : null}
-            {!loadingSessions && filteredSessions.length === 0 ? (
-              <div className={styles.emptyState}>No sessions found.</div>
-            ) : (
-              filteredSessions.map((session) => (
-                <div
-                  key={session.id}
-                  className={`${styles.sessionItem} ${
-                    session.id === activeSessionId ? styles.sessionItemActive : ""
-                  }`}
-                >
-                  <button
-                    type="button"
-                    className={styles.sessionOpenButton}
-                    onClick={() => void loadSessionHistory(session.id)}
+            <div className={styles.sessionList}>
+              {loadingSessions ? <div className={styles.emptyState}>Loading sessions...</div> : null}
+              {!loadingSessions && filteredSessions.length === 0 ? (
+                <div className={styles.emptyState}>No sessions found.</div>
+              ) : (
+                filteredSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    className={`${styles.sessionItem} ${
+                      session.id === activeSessionId ? styles.sessionItemActive : ""
+                    }`}
                   >
-                    <span className={styles.sessionTitle}>{session.title}</span>
-                    <span className={styles.sessionTime}>
-                      {new Date(session.updatedAt).toLocaleString()}
-                    </span>
-                  </button>
+                    <button
+                      type="button"
+                      className={styles.sessionOpenButton}
+                      onClick={() => void loadSessionHistory(session.id)}
+                    >
+                      <span className={styles.sessionTitle}>{session.title}</span>
+                      <span className={styles.sessionTime}>
+                        {new Date(session.updatedAt).toLocaleString()}
+                      </span>
+                    </button>
 
-                  <div className={styles.sessionActions}>
-                    <button type="button" onClick={() => void togglePinned(session)}>
-                      {session.pinned ? "Unpin" : "Pin"}
-                    </button>
-                    <button type="button" onClick={() => void renameSession(session)}>
-                      Rename
-                    </button>
-                    <button type="button" onClick={() => void deleteSession(session.id)}>
-                      Delete
-                    </button>
+                    <div className={styles.sessionActions}>
+                      <button type="button" onClick={() => void togglePinned(session)}>
+                        {session.pinned ? "Unpin" : "Pin"}
+                      </button>
+                      <button type="button" onClick={() => void renameSession(session)}>
+                        Rename
+                      </button>
+                      <button type="button" onClick={() => void deleteSession(session.id)}>
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </aside>
+                ))
+              )}
+            </div>
+          </aside>
+        ) : null}
+        {sidebarOpen ? (
+          <button
+            type="button"
+            className={styles.sidebarBackdrop}
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
+          />
+        ) : null}
 
         <section className={styles.chatPanel}>
           <header className={styles.chatHeader}>
@@ -541,73 +577,67 @@ export default function HomePage() {
               <h2>Expert Chat</h2>
               <p>Grounded answers with citations for aviation documents and standards.</p>
             </div>
-            <button
-              className={styles.ghostButton}
-              onClick={() => setShowSources((v) => !v)}
-              type="button"
-            >
-              {showSources ? "Hide Sources" : "Show Sources"}
-            </button>
+            <div className={styles.headerActions}>
+              <button
+                className={styles.ghostButton}
+                onClick={() => setSidebarOpen((v) => !v)}
+                type="button"
+              >
+                {sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+              </button>
+              <button
+                className={styles.ghostButton}
+                onClick={() => setShowSources((v) => !v)}
+                type="button"
+              >
+                {showSources ? "Hide Sources" : "Show Sources"}
+              </button>
+            </div>
           </header>
 
           <div className={styles.chatBody}>
             <div className={styles.messageArea}>
-              {loadingHistory ? <p className={styles.metaText}>Loading history...</p> : null}
-              {activeMessages.length === 0 ? (
-                <div className={styles.welcomeCard}>
-                  <h3>Ask certification and flight-test questions</h3>
-                  <p>Try: "According to Part 23, what are the landing gear drop test requirements?"</p>
-                </div>
-              ) : (
-                activeMessages.map((message) => (
-                  <article
-                    key={message.id}
-                    className={`${styles.message} ${
-                      message.role === "user" ? styles.userMessage : styles.assistantMessage
-                    }`}
-                  >
-                    <div className={styles.messageMeta}>
-                      <span>{message.role === "user" ? "You" : "AviationAI"}</span>
-                      <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
-                    </div>
-                    <p className={styles.messageText}>{message.content}</p>
-                    {showSources && message.citations && message.citations.length > 0 ? (
-                      <div className={styles.citations}>
-                        {message.citations.map((citation, idx) => (
-                          <button
-                            type="button"
-                            className={styles.citationButton}
-                            key={`${citation.filename}_${citation.chunk_id}_${idx}`}
-                            onClick={() => openCitationSource(message, citation)}
-                          >
-                            [{citation.filename} | {citation.chunk_id}]
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </article>
-                ))
-              )}
-            </div>
-
-            {showSources ? (
-              <aside className={styles.sourcePanel}>
-                <h3>Source Viewer</h3>
-                {selectedSource ? (
-                  <>
-                    <div className={styles.sourceMeta}>
-                      <span>{selectedSource.filename}</span>
-                      <span>{selectedSource.chunk_id}</span>
-                    </div>
-                    <pre className={styles.sourceText}>{selectedSource.text}</pre>
-                  </>
+              <div className={styles.messageList}>
+                {loadingHistory ? <p className={styles.metaText}>Loading history...</p> : null}
+                {activeMessages.length === 0 ? (
+                  <div className={styles.welcomeCard}>
+                    <h3>Ask certification and flight-test questions</h3>
+                    <p>
+                      Try: "According to Part 23, what are the landing gear drop test requirements?"
+                    </p>
+                  </div>
                 ) : (
-                  <p className={styles.sourceEmpty}>
-                    Click a citation to open the exact passage used in the answer.
-                  </p>
+                  activeMessages.map((message) => (
+                    <article
+                      key={message.id}
+                      className={`${styles.message} ${
+                        message.role === "user" ? styles.userMessage : styles.assistantMessage
+                      }`}
+                    >
+                      <div className={styles.messageMeta}>
+                        <span>{message.role === "user" ? "You" : "AviationAI"}</span>
+                        <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                      <p className={styles.messageText}>{message.content}</p>
+                      {message.citations && message.citations.length > 0 ? (
+                        <div className={styles.citations}>
+                          {message.citations.map((citation, idx) => (
+                            <button
+                              type="button"
+                              className={styles.citationButton}
+                              key={`${citation.filename}_${citation.chunk_id}_${idx}`}
+                              onClick={() => openCitationSource(message, citation)}
+                            >
+                              [{citation.filename} | {citation.chunk_id}]
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </article>
+                  ))
                 )}
-              </aside>
-            ) : null}
+              </div>
+            </div>
           </div>
 
           {errorText ? <div className={styles.errorBar}>{errorText}</div> : null}
@@ -624,6 +654,36 @@ export default function HomePage() {
             </button>
           </footer>
         </section>
+
+        {showSources ? (
+          <button
+            type="button"
+            className={styles.drawerBackdrop}
+            onClick={() => setShowSources(false)}
+            aria-label="Close source drawer"
+          />
+        ) : null}
+
+        <aside className={`${styles.sourceDrawer} ${showSources ? styles.drawerOpen : ""}`}>
+          <div className={styles.drawerHeader}>
+            <h3>Source Viewer</h3>
+            <button type="button" className={styles.drawerClose} onClick={() => setShowSources(false)}>
+              Close
+            </button>
+          </div>
+
+          {selectedSource ? (
+            <article className={styles.sourceCard}>
+              <p className={styles.sourceTitle}>{selectedSource.filename}</p>
+              <p className={styles.sourceMeta}>{selectedSource.chunk_id}</p>
+              <pre className={styles.sourceText}>{selectedSource.text}</pre>
+            </article>
+          ) : (
+            <p className={styles.sourceEmpty}>
+              Click a citation to open the exact passage used in the answer.
+            </p>
+          )}
+        </aside>
       </main>
     </>
   );
