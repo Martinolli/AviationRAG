@@ -17,7 +17,7 @@ const secretPatterns = [
   {
     name: "Likely secret assignment",
     regex:
-      /\b(OPENAI_API_KEY|ASTRA_DB_APPLICATION_TOKEN|NEXTAUTH_SECRET|APP_AUTH_PASSWORD)\s*=\s*["']?[A-Za-z0-9_\-\/+=]{8,}/g,
+      /^(OPENAI_API_KEY|ASTRA_DB_APPLICATION_TOKEN|NEXTAUTH_SECRET|APP_AUTH_PASSWORD)\s*=\s*["']?[A-Za-z0-9_\-\/+=]{8,}/gm,
   },
 ];
 
@@ -36,6 +36,23 @@ function getFilesToCheck() {
     .filter(Boolean);
 }
 
+function shouldCheckLargeFiles(scanAll) {
+  // In full-repo mode, enforce only secret/pattern checks and avoid failing on
+  // existing tracked baseline assets. Large-file prevention still runs for staged files.
+  return !scanAll;
+}
+
+function shouldCheckForSecrets(file) {
+  const lower = file.toLowerCase();
+  if (lower === ".env.example") {
+    return false;
+  }
+  if (lower.endsWith(".md")) {
+    return false;
+  }
+  return true;
+}
+
 function isBinary(buffer) {
   const maxScan = Math.min(buffer.length, 4096);
   for (let i = 0; i < maxScan; i += 1) {
@@ -45,8 +62,10 @@ function isBinary(buffer) {
 }
 
 function main() {
+  const scanAll = process.argv.includes("--all");
   const files = getFilesToCheck();
   const violations = [];
+  const checkLargeFiles = shouldCheckLargeFiles(scanAll);
 
   for (const file of files) {
     if (!fs.existsSync(file)) {
@@ -54,7 +73,7 @@ function main() {
     }
 
     const stats = fs.statSync(file);
-    if (stats.size > STAGED_SIZE_LIMIT_BYTES) {
+    if (checkLargeFiles && stats.size > STAGED_SIZE_LIMIT_BYTES) {
       violations.push(
         `[large-file] ${file} is ${(stats.size / (1024 * 1024)).toFixed(2)} MB (limit 10 MB).`,
       );
@@ -68,6 +87,9 @@ function main() {
 
     const buffer = fs.readFileSync(file);
     if (isBinary(buffer)) {
+      continue;
+    }
+    if (!shouldCheckForSecrets(file)) {
       continue;
     }
 

@@ -1,11 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { runAviationApiCommand } from "../../../../src/utils/server/aviation_api_bridge";
 import { requireApiAuth } from "../../../../src/utils/server/require_api_auth";
+import {
+  enforceRateLimit,
+  normalizeOptionalText,
+  readSingleQueryValue,
+} from "../../../../src/utils/server/api_security";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  if (
+    !enforceRateLimit(req, res, {
+      namespace: "chat-history",
+      max: 120,
+      windowMs: 5 * 60 * 1000,
+    })
+  ) {
+    return;
+  }
+
   const session = await requireApiAuth(req, res);
   if (!session) {
     return;
@@ -16,16 +31,14 @@ export default async function handler(
     return res.status(405).json({ success: false, error: "Method Not Allowed" });
   }
 
-  const sessionId = String(req.query.session_id || "").trim();
+  const sessionId = normalizeOptionalText(req.query.session_id, 128);
   if (!sessionId) {
     return res
       .status(400)
       .json({ success: false, error: "Path parameter 'session_id' is required." });
   }
 
-  const limitRaw = Array.isArray(req.query.limit)
-    ? req.query.limit[0]
-    : req.query.limit;
+  const limitRaw = readSingleQueryValue(req.query.limit);
   const limitValue = Number(limitRaw);
   const limit = Number.isFinite(limitValue)
     ? Math.min(Math.max(Math.floor(limitValue), 1), 50)

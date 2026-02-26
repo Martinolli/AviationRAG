@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { runAviationApiCommand } from "../../../src/utils/server/aviation_api_bridge";
 import { requireApiAuth } from "../../../src/utils/server/require_api_auth";
+import { enforceRateLimit, normalizeOptionalText } from "../../../src/utils/server/api_security";
 
 type AskRequestBody = {
   session_id?: string;
@@ -15,6 +16,16 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
+  if (
+    !enforceRateLimit(req, res, {
+      namespace: "chat-ask",
+      max: 30,
+      windowMs: 5 * 60 * 1000,
+    })
+  ) {
+    return;
+  }
+
   const session = await requireApiAuth(req, res);
   if (!session) {
     return;
@@ -27,7 +38,7 @@ export default async function handler(
 
   try {
     const body: AskRequestBody = req.body || {};
-    const message = String(body.message || "").trim();
+    const message = normalizeOptionalText(body.message, 4000);
     if (!message) {
       return res.status(400).json({
         success: false,
@@ -38,16 +49,16 @@ export default async function handler(
     const args = ["ask", "--message", message];
 
     if (body.session_id) {
-      args.push("--session-id", String(body.session_id));
+      args.push("--session-id", normalizeOptionalText(body.session_id, 128));
     }
     if (typeof body.strict_mode === "boolean") {
       args.push("--strict-mode", String(body.strict_mode));
     }
     if (body.target_document) {
-      args.push("--target-document", String(body.target_document));
+      args.push("--target-document", normalizeOptionalText(body.target_document, 256));
     }
     if (body.model) {
-      args.push("--model", String(body.model));
+      args.push("--model", normalizeOptionalText(body.model, 128));
     }
     if (typeof body.store === "boolean") {
       args.push("--store", String(body.store));

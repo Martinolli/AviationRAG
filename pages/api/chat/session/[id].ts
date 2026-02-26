@@ -1,6 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { runAviationApiCommand } from "../../../../src/utils/server/aviation_api_bridge";
 import { requireApiAuth } from "../../../../src/utils/server/require_api_auth";
+import {
+  enforceRateLimit,
+  normalizeOptionalText,
+  readSingleQueryValue,
+} from "../../../../src/utils/server/api_security";
 
 type SessionUpdateBody = {
   title?: string;
@@ -9,18 +14,28 @@ type SessionUpdateBody = {
 };
 
 function parseBoolean(rawValue: string | string[] | undefined, fallback: boolean) {
-  const value = String(Array.isArray(rawValue) ? rawValue[0] : rawValue || "").trim().toLowerCase();
+  const value = readSingleQueryValue(rawValue).trim().toLowerCase();
   if (!value) return fallback;
   return value === "1" || value === "true" || value === "yes" || value === "on";
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (
+    !enforceRateLimit(req, res, {
+      namespace: "chat-session-id",
+      max: 80,
+      windowMs: 5 * 60 * 1000,
+    })
+  ) {
+    return;
+  }
+
   const session = await requireApiAuth(req, res);
   if (!session) {
     return;
   }
 
-  const sessionId = String(req.query.id || "").trim();
+  const sessionId = normalizeOptionalText(req.query.id, 128);
   if (!sessionId) {
     return res.status(400).json({ success: false, error: "Path parameter 'id' is required." });
   }
@@ -28,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     if (req.method === "PATCH") {
       const body: SessionUpdateBody = req.body || {};
-      const title = String(body.title || "").trim();
+      const title = normalizeOptionalText(body.title, 120);
       const args = ["session_upsert", "--session-id", sessionId];
 
       if (title) {
