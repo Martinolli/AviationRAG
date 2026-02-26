@@ -7,8 +7,6 @@ import styles from "../../styles/AuthSignIn.module.css";
 export default function SignInPage() {
   const router = useRouter();
   const { status } = useSession();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorText, setErrorText] = useState("");
 
@@ -23,8 +21,18 @@ export default function SignInPage() {
     setErrorText("");
     setLoading(true);
 
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") || "").trim();
+    const password = String(formData.get("password") || "");
+
+    if (!email || !password) {
+      setLoading(false);
+      setErrorText("Email and password are required.");
+      return;
+    }
+
     const result = await signIn("credentials", {
-      email: email.trim(),
+      email,
       password,
       redirect: false,
       callbackUrl: "/",
@@ -55,9 +63,9 @@ export default function SignInPage() {
             <label>
               Email
               <input
+                name="email"
                 type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                autoComplete="username"
                 required
               />
             </label>
@@ -65,9 +73,9 @@ export default function SignInPage() {
             <label>
               Password
               <input
+                name="password"
                 type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                autoComplete="current-password"
                 required
               />
             </label>
@@ -83,4 +91,3 @@ export default function SignInPage() {
     </>
   );
 }
-

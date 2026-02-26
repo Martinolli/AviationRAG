@@ -45,6 +45,11 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `npm run sanitize:check:all` passed.
    - `npm run build` passed.
    - `npm run test:smoke` passed.
+10. Fixed re-login reliability issue after logout:
+    - Updated `pages/auth/signin.tsx` to submit using `FormData` values.
+    - Added `name` + `autocomplete` attributes for browser autofill compatibility.
+    - Removed dependency on controlled email/password state for auth submission.
+    - `npm run build` passed after fix.
 
 ## Session Recovery Procedure
 
