@@ -33,6 +33,8 @@ chat_id/*.txt
 chat_id/session_index.json
 *.log
 *.tmp
+playwright-report/
+test-results/
 
 # Generated data artifacts
 data/embeddings/

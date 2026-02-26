@@ -2,37 +2,12 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { signOut, useSession } from "next-auth/react";
 import { useEffect, useMemo, useState } from "react";
+import AppShell from "../components/layout/AppShell";
+import SessionSidebar from "../components/sidebar/SessionSidebar";
+import ChatPanel from "../components/chat/ChatPanel";
+import SourceDrawer from "../components/sources/SourceDrawer";
 import styles from "../styles/ChatWorkspace.module.css";
-
-type Citation = {
-  filename: string;
-  chunk_id: string;
-};
-
-type SourceSnippet = {
-  filename: string;
-  chunk_id: string;
-  text: string;
-};
-
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: string;
-  citations?: Citation[];
-  sources?: SourceSnippet[];
-};
-
-type Session = {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  pinned: boolean;
-};
-
-type SessionFilter = "all" | "recent" | "pinned";
+import { Citation, Message, Session, SessionFilter, SourceSnippet } from "../types/chat";
 
 function normalizeDisplayText(value: string) {
   return String(value || "")
@@ -453,238 +428,55 @@ export default function HomePage() {
         />
       </Head>
 
-      <main className={styles.workspace}>
-        {sidebarOpen ? (
-          <aside className={styles.sidebar}>
-            <div className={styles.sidebarTopRow}>
-              <div className={styles.brandBlock}>
-                <h1>AviationRAG</h1>
-                <p>Safety and certification assistant</p>
-              </div>
-              <button
-                type="button"
-                className={styles.sidebarToggle}
-                onClick={() => setSidebarOpen(false)}
-              >
-                Hide
-              </button>
-            </div>
-
-            <div className={styles.userBlock}>
-              <span>{authSession?.user?.email || "Signed user"}</span>
-              <button
-                type="button"
-                className={styles.userSignOut}
-                onClick={() => void signOut({ callbackUrl: "/auth/signin" })}
-              >
-                Sign out
-              </button>
-            </div>
-
-            <button className={styles.primaryButton} onClick={() => void createNewSession()}>
-              + New Conversation
-            </button>
-
-            <input
-              className={styles.sessionSearch}
-              type="text"
-              placeholder="Search conversations..."
-              value={sessionSearch}
-              onChange={(event) => setSessionSearch(event.target.value)}
-            />
-
-            <div className={styles.filterRow}>
-              <button
-                type="button"
-                className={`${styles.filterButton} ${sessionFilter === "all" ? styles.filterButtonActive : ""}`}
-                onClick={() => setSessionFilter("all")}
-              >
-                All
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterButton} ${sessionFilter === "recent" ? styles.filterButtonActive : ""}`}
-                onClick={() => setSessionFilter("recent")}
-              >
-                Recent
-              </button>
-              <button
-                type="button"
-                className={`${styles.filterButton} ${sessionFilter === "pinned" ? styles.filterButtonActive : ""}`}
-                onClick={() => setSessionFilter("pinned")}
-              >
-                Pinned
-              </button>
-            </div>
-
-            <div className={styles.sidebarHeader}>
-              <span>Conversations</span>
-              <span className={styles.statusPill}>{healthLabel}</span>
-            </div>
-
-            <div className={styles.sessionList}>
-              {loadingSessions ? <div className={styles.emptyState}>Loading sessions...</div> : null}
-              {!loadingSessions && filteredSessions.length === 0 ? (
-                <div className={styles.emptyState}>No sessions found.</div>
-              ) : (
-                filteredSessions.map((session) => (
-                  <div
-                    key={session.id}
-                    className={`${styles.sessionItem} ${
-                      session.id === activeSessionId ? styles.sessionItemActive : ""
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      className={styles.sessionOpenButton}
-                      onClick={() => void loadSessionHistory(session.id)}
-                    >
-                      <span className={styles.sessionTitle}>{session.title}</span>
-                      <span className={styles.sessionTime}>
-                        {new Date(session.updatedAt).toLocaleString()}
-                      </span>
-                    </button>
-
-                    <div className={styles.sessionActions}>
-                      <button type="button" onClick={() => void togglePinned(session)}>
-                        {session.pinned ? "Unpin" : "Pin"}
-                      </button>
-                      <button type="button" onClick={() => void renameSession(session)}>
-                        Rename
-                      </button>
-                      <button type="button" onClick={() => void deleteSession(session.id)}>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </aside>
-        ) : null}
-        {sidebarOpen ? (
-          <button
-            type="button"
-            className={styles.sidebarBackdrop}
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
+      <AppShell
+        sidebarOpen={sidebarOpen}
+        showSources={showSources}
+        onCloseSidebar={() => setSidebarOpen(false)}
+        onCloseSources={() => setShowSources(false)}
+        sidebar={
+          <SessionSidebar
+            authEmail={authSession?.user?.email}
+            healthLabel={healthLabel}
+            loadingSessions={loadingSessions}
+            filteredSessions={filteredSessions}
+            activeSessionId={activeSessionId}
+            sessionSearch={sessionSearch}
+            sessionFilter={sessionFilter}
+            onClose={() => setSidebarOpen(false)}
+            onSignOut={() => void signOut({ callbackUrl: "/auth/signin" })}
+            onCreateSession={() => void createNewSession()}
+            onSessionSearchChange={setSessionSearch}
+            onSessionFilterChange={setSessionFilter}
+            onOpenSession={(sessionId) => void loadSessionHistory(sessionId)}
+            onTogglePinned={(session) => void togglePinned(session)}
+            onRenameSession={(session) => void renameSession(session)}
+            onDeleteSession={(sessionId) => void deleteSession(sessionId)}
           />
-        ) : null}
-
-        <section className={styles.chatPanel}>
-          <header className={styles.chatHeader}>
-            <div>
-              <h2>Expert Chat</h2>
-              <p>Grounded answers with citations for aviation documents and standards.</p>
-            </div>
-            <div className={styles.headerActions}>
-              <button
-                className={styles.ghostButton}
-                onClick={() => setSidebarOpen((v) => !v)}
-                type="button"
-              >
-                {sidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
-              </button>
-              <button
-                className={styles.ghostButton}
-                onClick={() => setShowSources((v) => !v)}
-                type="button"
-              >
-                {showSources ? "Hide Sources" : "Show Sources"}
-              </button>
-            </div>
-          </header>
-
-          <div className={styles.chatBody}>
-            <div className={styles.messageArea}>
-              <div className={styles.messageList}>
-                {loadingHistory ? <p className={styles.metaText}>Loading history...</p> : null}
-                {activeMessages.length === 0 ? (
-                  <div className={styles.welcomeCard}>
-                    <h3>Ask certification and flight-test questions</h3>
-                    <p>
-                      Try: "According to Part 23, what are the landing gear drop test requirements?"
-                    </p>
-                  </div>
-                ) : (
-                  activeMessages.map((message) => (
-                    <article
-                      key={message.id}
-                      className={`${styles.message} ${
-                        message.role === "user" ? styles.userMessage : styles.assistantMessage
-                      }`}
-                    >
-                      <div className={styles.messageMeta}>
-                        <span>{message.role === "user" ? "You" : "AviationAI"}</span>
-                        <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
-                      </div>
-                      <p className={styles.messageText}>{message.content}</p>
-                      {message.citations && message.citations.length > 0 ? (
-                        <div className={styles.citations}>
-                          {message.citations.map((citation, idx) => (
-                            <button
-                              type="button"
-                              className={styles.citationButton}
-                              key={`${citation.filename}_${citation.chunk_id}_${idx}`}
-                              onClick={() => openCitationSource(message, citation)}
-                            >
-                              [{citation.filename} | {citation.chunk_id}]
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </article>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          {errorText ? <div className={styles.errorBar}>{errorText}</div> : null}
-
-          <footer className={styles.composer}>
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask a standards-based aviation question..."
-              rows={3}
-            />
-            <button onClick={() => void sendMessage()} disabled={sending || !input.trim()}>
-              {sending ? "Thinking..." : "Send"}
-            </button>
-          </footer>
-        </section>
-
-        {showSources ? (
-          <button
-            type="button"
-            className={styles.drawerBackdrop}
-            onClick={() => setShowSources(false)}
-            aria-label="Close source drawer"
+        }
+        chatPanel={
+          <ChatPanel
+            sidebarOpen={sidebarOpen}
+            showSources={showSources}
+            loadingHistory={loadingHistory}
+            activeMessages={activeMessages}
+            errorText={errorText}
+            input={input}
+            sending={sending}
+            onToggleSidebar={() => setSidebarOpen((value) => !value)}
+            onToggleSources={() => setShowSources((value) => !value)}
+            onOpenCitation={openCitationSource}
+            onInputChange={setInput}
+            onSend={() => void sendMessage()}
           />
-        ) : null}
-
-        <aside className={`${styles.sourceDrawer} ${showSources ? styles.drawerOpen : ""}`}>
-          <div className={styles.drawerHeader}>
-            <h3>Source Viewer</h3>
-            <button type="button" className={styles.drawerClose} onClick={() => setShowSources(false)}>
-              Close
-            </button>
-          </div>
-
-          {selectedSource ? (
-            <article className={styles.sourceCard}>
-              <p className={styles.sourceTitle}>{selectedSource.filename}</p>
-              <p className={styles.sourceMeta}>{selectedSource.chunk_id}</p>
-              <pre className={styles.sourceText}>{selectedSource.text}</pre>
-            </article>
-          ) : (
-            <p className={styles.sourceEmpty}>
-              Click a citation to open the exact passage used in the answer.
-            </p>
-          )}
-        </aside>
-      </main>
+        }
+        sourceDrawer={
+          <SourceDrawer
+            showSources={showSources}
+            selectedSource={selectedSource}
+            onClose={() => setShowSources(false)}
+          />
+        }
+      />
     </>
   );
 }
