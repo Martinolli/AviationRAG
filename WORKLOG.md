@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-02-26  
+Last Updated: 2026-02-27  
 Active Branch: `hardening/sanitize-repo`
 
 ## Purpose
@@ -19,6 +19,41 @@ Persistent execution log for deployment hardening and product-readiness work so 
 3. `Pending` Step 3 upload workflow (UI + API + ingestion status).
 4. `Pending` Step 4 formula rendering in chat.
 5. `Pending` Step 5 final production-readiness checklist and release gate.
+
+## Cross-Check Snapshot
+
+### Step 1: Repository Sanitization
+
+1. `Done` Runtime artifact untracking and ignore rules.
+2. `Done` Pre-commit sanitization checks and hook wiring.
+3. `Done` Sanitization report and repeatable local checks.
+4. `Partial` Secret scanning tooling in CI (`gitleaks` / `trufflehog` still missing).
+5. `Pending` Git history cleanup for historical large generated blobs.
+
+### Step 2: Deployment Hardening
+
+1. `Done` API rate limiting and request normalization.
+2. `Done` Routing cleanup (`vercel.json` no longer rewrites all paths to index).
+3. `Done` CI baseline (`sanitize`, `build`, `smoke`).
+4. `Done` Auth hardening (attempt limiter + optional password hash mode).
+5. `Done` Bridge split support (`worker` and `http` mode in server bridge).
+6. `Pending` External aviation command service deployment and production cutover (`AVIATION_API_MODE=http`).
+7. `Pending` Real identity/SSO model (current credentials provider is improved but still basic).
+
+### Step 3: Upload Workflow
+
+1. `Pending` Web upload UI and ingestion status tracking.
+2. `Pending` Upload API + validation + queue/state pipeline.
+
+### Step 4: Formula Rendering
+
+1. `Pending` Markdown + math rendering (`remark-math`/`rehype-katex`) in chat responses.
+2. `Pending` Safety sanitization for rendered Markdown output.
+
+### Step 5: Release Gate
+
+1. `Pending` Remaining dependency vulnerability reduction (major upgrades needed for Next/LangChain lines).
+2. `Pending` Staging hardening checklist (secrets rotation confirmation, monitoring/alerts, cutover runbook).
 
 ## Progress Log
 
@@ -75,6 +110,7 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - `npm run sanitize:check` passed with new document additions staged.
     - `npm run build` passed.
     - `npm run test:smoke` passed.
+18. Added plan cross-check matrix to this file for daily status tracking and handoff continuity.
 
 ## Session Recovery Procedure
 
