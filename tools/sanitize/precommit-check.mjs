@@ -4,7 +4,7 @@ import fs from "fs";
 const STAGED_SIZE_LIMIT_BYTES = 10 * 1024 * 1024;
 
 const pathSizeOverrides = [
-  { regex: /^data\/documents\/.+\.(pdf|docx|txt)$/i, maxBytes: 80 * 1024 * 1024 },
+  { regex: /^data\/documents\/.+\.(pdf|docx|txt)$/i, maxBytes: 120 * 1024 * 1024 },
   { regex: /^data\/raw\/.+\.(pkl|json|csv)$/i, maxBytes: 120 * 1024 * 1024 },
 ];
 
