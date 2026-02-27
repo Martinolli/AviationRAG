@@ -15,7 +15,7 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `Done` Deployment routing config cleanup.
    - `Done` CI pipeline for build + smoke tests.
    - `Done` Python bridge architecture split support (`worker` + `http` mode).
-   - `Pending` External aviation command service deployment and cutover.
+   - `In Progress` External aviation command service deployment and cutover.
 3. `Pending` Step 3 upload workflow (UI + API + ingestion status).
 4. `Pending` Step 4 formula rendering in chat.
 5. `Pending` Step 5 final production-readiness checklist and release gate.
@@ -111,6 +111,12 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - `npm run build` passed.
     - `npm run test:smoke` passed.
 18. Added plan cross-check matrix to this file for daily status tracking and handoff continuity.
+19. Started Priority 1 cutover track:
+    - Added HTTP bridge contract spec:
+      - `docs/AVIATION_API_HTTP_BRIDGE_SPEC.md`
+    - Added staged cutover checklist:
+      - `docs/AVIATION_API_HTTP_BRIDGE_CUTOVER_CHECKLIST.md`
+    - Next action: implement/deploy external `/command` service and run checklist in staging.
 
 ## Session Recovery Procedure
 
