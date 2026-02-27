@@ -1,5 +1,6 @@
 import styles from "../../styles/ChatWorkspace.module.css";
-import { Session, SessionFilter } from "../../types/chat";
+import type { ChangeEvent } from "react";
+import { Session, SessionFilter, UploadJob } from "../../types/chat";
 
 type SessionSidebarProps = {
   authEmail?: string | null;
@@ -12,6 +13,10 @@ type SessionSidebarProps = {
   onClose: () => void;
   onSignOut: () => void;
   onCreateSession: () => void;
+  uploadingDocument: boolean;
+  latestUpload: UploadJob | null;
+  uploadErrorText: string;
+  onUploadDocument: (file: File) => void;
   onSessionSearchChange: (value: string) => void;
   onSessionFilterChange: (value: SessionFilter) => void;
   onOpenSession: (sessionId: string) => void;
@@ -31,6 +36,10 @@ export default function SessionSidebar({
   onClose,
   onSignOut,
   onCreateSession,
+  uploadingDocument,
+  latestUpload,
+  uploadErrorText,
+  onUploadDocument,
   onSessionSearchChange,
   onSessionFilterChange,
   onOpenSession,
@@ -38,6 +47,13 @@ export default function SessionSidebar({
   onRenameSession,
   onDeleteSession,
 }: SessionSidebarProps) {
+  const onFileInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    onUploadDocument(file);
+    event.currentTarget.value = "";
+  };
+
   return (
     <aside className={styles.sidebar} data-testid="session-sidebar">
       <div className={styles.sidebarTopRow}>
@@ -60,6 +76,26 @@ export default function SessionSidebar({
       <button className={styles.primaryButton} onClick={onCreateSession} type="button">
         + New Conversation
       </button>
+
+      <div className={styles.uploadCard}>
+        <label className={styles.uploadButton} aria-disabled={uploadingDocument}>
+          {uploadingDocument ? "Uploading..." : "Upload PDF/DOCX"}
+          <input
+            type="file"
+            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={onFileInputChange}
+            disabled={uploadingDocument}
+          />
+        </label>
+        {latestUpload ? (
+          <p className={styles.uploadStatus}>
+            {latestUpload.filename} - {latestUpload.status}: {latestUpload.message}
+          </p>
+        ) : (
+          <p className={styles.uploadStatus}>No recent uploads.</p>
+        )}
+        {uploadErrorText ? <p className={styles.uploadError}>{uploadErrorText}</p> : null}
+      </div>
 
       <input
         className={styles.sessionSearch}

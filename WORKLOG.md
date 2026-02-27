@@ -16,9 +16,9 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `Done` CI pipeline for build + smoke tests.
    - `Done` Python bridge architecture split support (`worker` + `http` mode).
    - `In Progress` External aviation command service deployment and cutover.
-3. `Pending` Step 3 upload workflow (UI + API + ingestion status).
-4. `Pending` Step 4 formula rendering in chat.
-5. `Pending` Step 5 final production-readiness checklist and release gate.
+3. `Done` Step 3 upload workflow (UI + API + ingestion status).
+4. `Done` Step 4 formula rendering in chat.
+5. `In Progress` Step 5 final production-readiness checklist and release gate.
 
 ## Cross-Check Snapshot
 
@@ -47,13 +47,13 @@ Persistent execution log for deployment hardening and product-readiness work so 
 
 ### Step 3: Upload Workflow
 
-1. `Pending` Web upload UI and ingestion status tracking.
-2. `Pending` Upload API + validation + queue/state pipeline.
+1. `Done` Web upload UI and ingestion status tracking.
+2. `Done` Upload API + validation + queue/state pipeline.
 
 ### Step 4: Formula Rendering
 
-1. `Pending` Markdown + math rendering (`remark-math`/`rehype-katex`) in chat responses.
-2. `Pending` Safety sanitization for rendered Markdown output.
+1. `Done` Markdown + math rendering (`remark-math`/`rehype-katex`) in chat responses.
+2. `Done` Safety sanitization for rendered Markdown output (`rehype-sanitize` pre-pass + no raw HTML).
 
 ### Step 5: Release Gate
 
@@ -129,6 +129,33 @@ Persistent execution log for deployment hardening and product-readiness work so 
 21. Updated runtime configuration/docs for bridge service:
     - `.env.example` adds `AVIATION_API_HTTP_BIND` and `AVIATION_API_HTTP_PORT`.
     - `README.md` documents running the optional HTTP bridge service.
+22. Implemented upload workflow (Step 3):
+    - Added upload API: `POST /api/documents/upload` with auth, rate limiting, type/size validation.
+    - Added upload status API: `GET /api/documents/status/{id}`.
+    - Added server-side upload job store with persisted status in `logs/upload_jobs.json`.
+    - Added queued ingestion runner for steps:
+      - `Read Documents`
+      - `Chunk Documents`
+      - `Generate New Embeddings`
+      - `Store New Embeddings in AstraDB`
+23. Implemented formula rendering (Step 4):
+    - Added assistant markdown rendering component with math support:
+      - `remark-math`
+      - `rehype-katex`
+      - `rehype-sanitize`
+    - Imported KaTeX CSS in `_app.tsx`.
+    - Updated chat styles for markdown blocks and formula display.
+24. Added sidebar upload UX:
+    - PDF/DOCX upload control.
+    - Status and error feedback card.
+    - Client polling loop for ingestion state progression.
+25. Added configuration/docs for upload pipeline:
+    - `.env.example`: `DOCUMENT_UPLOAD_MAX_MB`, `DOCUMENT_UPLOAD_AUTO_INGEST`, `DOCUMENT_UPLOAD_STEP_TIMEOUT_MS`
+    - `README.md`: upload env vars + API endpoints + math rendering note.
+26. Validation after Step 3/4 implementation:
+    - `npm run sanitize:check` passed.
+    - `npm run build` passed.
+    - `npm run test:smoke` passed.
 
 ## Session Recovery Procedure
 

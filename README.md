@@ -54,6 +54,8 @@ node src/scripts/js_files/check_astra.js
 - Astra DB auth uses `ASTRA_DB_APPLICATION_TOKEN` (token auth only).
 - Document ingestion supports both `.docx` and `.pdf`.
 - Chat supports document-grounded responses with citations for document-specific questions.
+- Web app supports PDF/DOCX upload with ingestion status tracking.
+- Chat renders Markdown + math formulas (`$...$`, `$$...$$`) in assistant responses.
 
 ## Core Features
 
@@ -142,6 +144,9 @@ AVIATION_API_HTTP_URL=
 AVIATION_API_HTTP_TOKEN=
 AVIATION_API_TIMEOUT_MS=180000
 PYTHON_EXECUTABLE=python
+DOCUMENT_UPLOAD_MAX_MB=25
+DOCUMENT_UPLOAD_AUTO_INGEST=true
+DOCUMENT_UPLOAD_STEP_TIMEOUT_MS=1200000
 ```
 
 Notes:
@@ -155,6 +160,10 @@ Notes:
 - Local reference HTTP bridge can run with:
   - `python src\scripts\py_files\aviationai_http_bridge.py`
   - default bind/port from env: `AVIATION_API_HTTP_BIND` / `AVIATION_API_HTTP_PORT`
+- Upload workflow controls:
+  - `DOCUMENT_UPLOAD_MAX_MB`: max upload size in MB (default `25`)
+  - `DOCUMENT_UPLOAD_AUTO_INGEST`: run ingestion automatically after upload (`true`/`false`)
+  - `DOCUMENT_UPLOAD_STEP_TIMEOUT_MS`: timeout per ingestion step in milliseconds
 
 ## Run the Full Pipeline
 
@@ -271,6 +280,8 @@ AVIATION_API_HTTP_TOKEN=<shared_token_if_enabled>
 - `POST /api/chat/session`
 - `PATCH /api/chat/session/{id}`
 - `DELETE /api/chat/session/{id}`
+- `POST /api/documents/upload` (multipart field name: `file`)
+- `GET /api/documents/status/{id}`
 
 Note: All `/api/chat/*` routes require an authenticated session.
 

@@ -1,13 +1,21 @@
 import Head from "next/head";
 import { useRouter } from "next/router";
 import { signOut, useSession } from "next-auth/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell from "../components/layout/AppShell";
 import SessionSidebar from "../components/sidebar/SessionSidebar";
 import ChatPanel from "../components/chat/ChatPanel";
 import SourceDrawer from "../components/sources/SourceDrawer";
 import styles from "../styles/ChatWorkspace.module.css";
-import { Citation, Message, Session, SessionFilter, SourceSnippet } from "../types/chat";
+import {
+  Citation,
+  Message,
+  Session,
+  SessionFilter,
+  SourceSnippet,
+  UploadJob,
+  UploadStatus,
+} from "../types/chat";
 
 function normalizeDisplayText(value: string) {
   return String(value || "")
@@ -94,6 +102,8 @@ function sortSessions(items: Session[]) {
   });
 }
 
+const terminalUploadStatuses = new Set<UploadStatus>(["available", "needs_review", "failed"]);
+
 export default function HomePage() {
   const router = useRouter();
   const { data: authSession, status: authStatus } = useSession();
@@ -111,6 +121,10 @@ export default function HomePage() {
   const [sessionSearch, setSessionSearch] = useState("");
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [latestUpload, setLatestUpload] = useState<UploadJob | null>(null);
+  const [uploadErrorText, setUploadErrorText] = useState("");
+  const uploadPollTokenRef = useRef(0);
 
   const activeMessages = useMemo(
     () => messagesBySession[activeSessionId] || [],
@@ -204,6 +218,87 @@ export default function HomePage() {
       setSidebarOpen(false);
     }
   }, []);
+
+  useEffect(
+    () => () => {
+      uploadPollTokenRef.current += 1;
+    },
+    [],
+  );
+
+  const sleep = (ms: number) =>
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, ms);
+    });
+
+  const pollUploadStatus = async (uploadId: string) => {
+    const token = ++uploadPollTokenRef.current;
+    const maxAttempts = 140;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      if (token !== uploadPollTokenRef.current) return;
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(2500);
+      if (token !== uploadPollTokenRef.current) return;
+
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const res = await fetch(`/api/documents/status/${encodeURIComponent(uploadId)}`);
+        if (res.status === 401) {
+          await router.replace("/auth/signin");
+          return;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        const data = await res.json();
+        if (!data?.success || !data?.job) {
+          continue;
+        }
+
+        const nextJob: UploadJob = data.job;
+        setLatestUpload(nextJob);
+        if (terminalUploadStatuses.has(nextJob.status)) {
+          return;
+        }
+      } catch {
+        // Ignore transient polling errors.
+      }
+    }
+  };
+
+  const uploadDocument = async (file: File) => {
+    setUploadErrorText("");
+    setUploadingDocument(true);
+    uploadPollTokenRef.current += 1;
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/documents/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.status === 401) {
+        await router.replace("/auth/signin");
+        return;
+      }
+
+      const data = await res.json();
+      if (!data?.success || !data?.job) {
+        throw new Error(data?.error || "Upload failed.");
+      }
+
+      const job: UploadJob = data.job;
+      setLatestUpload(job);
+      if (data.upload_id) {
+        void pollUploadStatus(String(data.upload_id));
+      }
+    } catch (error) {
+      setUploadErrorText(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
 
   const createNewSession = async (titleSeed = "New Session") => {
     setErrorText("");
@@ -467,9 +562,13 @@ export default function HomePage() {
             activeSessionId={activeSessionId}
             sessionSearch={sessionSearch}
             sessionFilter={sessionFilter}
+            uploadingDocument={uploadingDocument}
+            latestUpload={latestUpload}
+            uploadErrorText={uploadErrorText}
             onClose={() => setSidebarOpen(false)}
             onSignOut={() => void signOut({ callbackUrl: "/auth/signin" })}
             onCreateSession={() => void createNewSession()}
+            onUploadDocument={(file) => void uploadDocument(file)}
             onSessionSearchChange={setSessionSearch}
             onSessionFilterChange={setSessionFilter}
             onOpenSession={(sessionId) => void loadSessionHistory(sessionId)}

@@ -1,5 +1,6 @@
 import styles from "../../styles/ChatWorkspace.module.css";
 import { Citation, Message } from "../../types/chat";
+import MessageMarkdown from "./MessageMarkdown";
 
 type MessageListProps = {
   loadingHistory: boolean;
@@ -32,7 +33,11 @@ export default function MessageList({
               <span>{message.role === "user" ? "You" : "AviationAI"}</span>
               <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
             </div>
-            <p className={styles.messageText}>{message.content}</p>
+            {message.role === "assistant" ? (
+              <MessageMarkdown content={message.content} />
+            ) : (
+              <p className={styles.messageText}>{message.content}</p>
+            )}
             {message.citations && message.citations.length > 0 ? (
               <div className={styles.citations}>
                 {message.citations.map((citation, idx) => (
