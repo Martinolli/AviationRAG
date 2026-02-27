@@ -156,6 +156,19 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - `npm run sanitize:check` passed.
     - `npm run build` passed.
     - `npm run test:smoke` passed.
+27. Fixed ingestion detection blocker for newly added large PDFs:
+    - Root cause: `read_documents.py` failed on large extracted text (`spaCy` max length) and returned exit code `0`, so pipeline looked successful while silently skipping remaining files.
+    - Added robust `read_documents.py` changes:
+      - Chunked NLP processing for long texts (`READ_DOC_NLP_CHUNK_CHARS`, default `180000`).
+      - Periodic checkpoint persistence to `data/raw/aviation_corpus.pkl` (`READ_DOC_CHECKPOINT_EVERY`, default `1`).
+      - Quieter, configurable logging (`READ_DOC_LOG_LEVEL`, default `INFO`) and noisy parser logger suppression.
+      - Abbreviation CSV encoding fallback (`utf-8` -> `cp1252` -> `latin-1`).
+      - Proper non-zero process exit on fatal errors (`sys.exit(1)`).
+28. Re-ran ingestion for newly added documents:
+    - `Read Documents` completed and all 6 new PDFs were added to corpus.
+    - `Chunk Documents` processed all 6 new PDFs.
+    - `Generate New Embeddings` generated `1290` new chunk embeddings.
+    - `Store New Embeddings in AstraDB` inserted `1290` embeddings successfully.
 
 ## Session Recovery Procedure
 

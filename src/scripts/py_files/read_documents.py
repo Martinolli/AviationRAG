@@ -14,6 +14,8 @@ import wordninja
 from sklearn.feature_extraction.text import TfidfVectorizer
 import PyPDF2
 import logging
+import tempfile
+import sys
 
 from config import (
     ABBREVIATIONS_CSV,
@@ -40,13 +42,16 @@ STOP_WORDS = set(stopwords.words('english'))
 import docx
 
 log_file_path = LOG_DIR / "read_documents.log"
+LOG_LEVEL = os.getenv("READ_DOC_LOG_LEVEL", "INFO").upper()
+CHECKPOINT_EVERY = max(1, int(os.getenv("READ_DOC_CHECKPOINT_EVERY", "1")))
+NLP_CHUNK_CHARS = max(50000, int(os.getenv("READ_DOC_NLP_CHUNK_CHARS", "180000")))
 
 # Ensure the log directory exists
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Configure logging properly
 logging.basicConfig(
-    level=logging.DEBUG,  # Change to DEBUG to capture everything
+    level=getattr(logging, LOG_LEVEL, logging.INFO),
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
         logging.FileHandler(log_file_path, mode='w'),  # Ensure file is written
@@ -55,6 +60,8 @@ logging.basicConfig(
 )
 
 logging.info("Logging initialized successfully.")
+for noisy_logger_name in ("pdfminer", "pdfplumber", "PIL", "urllib3"):
+    logging.getLogger(noisy_logger_name).setLevel(logging.WARNING)
 
 # Ensure directories exist
 for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, PKL_FILENAME.parent]:
@@ -107,9 +114,16 @@ nlp.add_pipe("aviation_ner", after="ner")
 def load_abbreviation_dict():
     abbreviation_dict = {}
     try:
-        with open(ABBREVIATIONS_CSV, mode='r', encoding='utf-8') as infile:
-            reader = csv.reader(infile)
-            abbreviation_dict = {rows[0].strip(): rows[1].strip() for rows in reader if len(rows) >= 2}
+        for encoding in ('utf-8', 'cp1252', 'latin-1'):
+            try:
+                with open(ABBREVIATIONS_CSV, mode='r', encoding=encoding) as infile:
+                    reader = csv.reader(infile)
+                    abbreviation_dict = {
+                        rows[0].strip(): rows[1].strip() for rows in reader if len(rows) >= 2
+                    }
+                break
+            except UnicodeDecodeError:
+                continue
     except FileNotFoundError:
         logging.error(f"Error: The file '{ABBREVIATIONS_CSV}' was not found.")
     except Exception as e:
@@ -179,34 +193,75 @@ def extract_section_references(text):
     return references if references else ["No References Found"]
 
 def preprocess_text_with_sentences(text):
-    doc = nlp(text)
     sentences = []
-    
-    for sent in doc.sents:
-        cleaned_sentence = ' '.join(
-            token.lemma_.lower() for token in sent
-            if (token.is_alpha or token.like_num or re.match(r'^\d+(\.\d+)*$', token.text))  # Preserve numbers
-            and token.text.lower() not in STOP_WORDS
-        )
-        if cleaned_sentence:
-            sentences.append(cleaned_sentence)
+
+    for doc in iter_nlp_docs(text):
+        for sent in doc.sents:
+            cleaned_sentence = ' '.join(
+                token.lemma_.lower() for token in sent
+                if (token.is_alpha or token.like_num or re.match(r'^\d+(\.\d+)*$', token.text))  # Preserve numbers
+                and token.text.lower() not in STOP_WORDS
+            )
+            if cleaned_sentence:
+                sentences.append(cleaned_sentence)
     
     return ' '.join(sentences)
 
 def extract_personal_names(text):
-    doc = nlp(text)
-    return [ent.text for ent in doc.ents if ent.label_ == 'PERSON']
+    names = []
+    for doc in iter_nlp_docs(text):
+        names.extend([ent.text for ent in doc.ents if ent.label_ == 'PERSON'])
+    return names
 
 def extract_entities_and_pos_tags(text):
-    doc = nlp(text)
-    entities = [(ent.text, ent.label_) for ent in doc.ents]
+    entities = []
+    pos_tags = []
+    for doc in iter_nlp_docs(text):
+        entities.extend([(ent.text, ent.label_) for ent in doc.ents])
+        pos_tags.extend([(token.text, token.pos_) for token in doc])
     # References as entities
     section_references = extract_section_references(text)
     for ref in section_references:
         entities.append((ref, "SECTION_REF"))
-    pos_tags = [(token.text, token.pos_) for token in doc]
 
     return entities, pos_tags
+
+def split_text_for_nlp(text, max_chars=NLP_CHUNK_CHARS):
+    if not text:
+        return []
+
+    if len(text) <= max_chars:
+        return [text]
+
+    chunks = []
+    start = 0
+    text_len = len(text)
+
+    while start < text_len:
+        end = min(start + max_chars, text_len)
+        if end < text_len:
+            split_idx = max(
+                text.rfind("\n", start, end),
+                text.rfind(". ", start, end),
+                text.rfind(" ", start, end),
+            )
+            if split_idx > start + int(max_chars * 0.5):
+                end = split_idx + 1
+
+        chunks.append(text[start:end])
+        start = end
+
+    return chunks
+
+def iter_nlp_docs(text):
+    safe_limit = max(1000, nlp.max_length - 1000)
+    chunk_size = min(NLP_CHUNK_CHARS, safe_limit)
+
+    for text_chunk in split_text_for_nlp(text, max_chars=chunk_size):
+        cleaned_chunk = text_chunk.strip()
+        if not cleaned_chunk:
+            continue
+        yield nlp(cleaned_chunk)
 
 def expand_abbreviations_in_text(text, abbreviation_dict):
     words = text.split()
@@ -347,6 +402,14 @@ def extract_metadata(file_path):
     
     return metadata
 
+def persist_documents_snapshot(documents, output_path=PKL_FILENAME):
+    """Persist progress atomically so long runs can resume safely after interruption."""
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(delete=False, dir=output_path.parent, suffix=".tmp") as tmp_file:
+        pickle.dump(documents, tmp_file)
+        tmp_path = tmp_file.name
+    os.replace(tmp_path, output_path)
+
 def classify_document(text):
     keywords = {
         'safety': [
@@ -432,7 +495,13 @@ def classify_document(text):
     scores = {category: sum(1 for word in words if word in text_lower) for category, words in keywords.items()}
     return max(scores, key=scores.get)
 
-def read_documents_from_directory(directory_path, text_output_dir=None, text_expanded_dir=None, existing_documents=None):
+def read_documents_from_directory(
+    directory_path,
+    text_output_dir=None,
+    text_expanded_dir=None,
+    existing_documents=None,
+    checkpoint_callback=None,
+):
     logging.info(f"Starting to read documents from {directory_path}")
     if existing_documents is None:
         existing_documents = []
@@ -451,11 +520,12 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         text = ''
         extraction_method = "docx"
         extraction_quality = 1.0
+        extension = os.path.splitext(filename)[1].lower()
 
-        if filename.endswith(".pdf"):
+        if extension == ".pdf":
             logging.info(f"Extracting text from PDF: {filename}")
             text, extraction_method, extraction_quality = extract_text_from_pdf(file_path)
-        elif filename.endswith(".docx"):
+        elif extension == ".docx":
             logging.info(f"Extracting text from DOCX: {filename}")
             try:
                 doc = Document(file_path)
@@ -474,7 +544,7 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
             continue
 
         needs_review = False
-        if filename.endswith(".pdf") and extraction_quality < 0.20:
+        if extension == ".pdf" and extraction_quality < 0.20:
             needs_review = True
             logging.warning(
                 "Low-quality PDF extraction for %s (method=%s, score=%.3f). "
@@ -511,8 +581,17 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
 
         entities, pos_tags = extract_entities_and_pos_tags(preprocessed_text)
 
-        tokens = [token.text.lower() for token in nlp(preprocessed_text) 
-          if (token.is_alpha or token.like_num or re.match(r'^\d+(\.\d+)*$', token.text) or re.match(r'^[A-Za-z]+\s\d+$', token.text) or re.match(r'^§\s*\d+(\.\d+)*$', token.text))]
+        tokens = []
+        for doc_chunk in iter_nlp_docs(preprocessed_text):
+            tokens.extend([token.text.lower() for token in doc_chunk
+                if (
+                    token.is_alpha
+                    or token.like_num
+                    or re.match(r'^\d+(\.\d+)*$', token.text)
+                    or re.match(r'^[A-Za-z]+\s\d+$', token.text)
+                    or re.match(r'^§\s*\d+(\.\d+)*$', token.text)
+                )
+            ])
 
         tokens_without_stopwords = [token for token in tokens if token not in STOP_WORDS]
 
@@ -542,7 +621,7 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         if 'category' in metadata:
             del metadata['category']
 
-        metadata['source_type'] = 'pdf' if filename.endswith('.pdf') else 'docx'
+        metadata['source_type'] = 'pdf' if extension == '.pdf' else 'docx'
         metadata['extraction_method'] = extraction_method
         metadata['extraction_quality'] = round(extraction_quality, 3)
         metadata['needs_manual_review'] = needs_review
@@ -562,6 +641,9 @@ def read_documents_from_directory(directory_path, text_output_dir=None, text_exp
         # Debugging output
         logging.info(f"Stored Section References for {filename}: {section_references}")
 
+        if checkpoint_callback and (len(new_documents) % CHECKPOINT_EVERY == 0):
+            checkpoint_callback(existing_documents + new_documents)
+
     return existing_documents + new_documents
 
 def main():
@@ -573,10 +655,21 @@ def main():
             
         if documents is None:
             logging.info("Reading documents from directory...")
-            documents = read_documents_from_directory(DOCUMENTS_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR)
+            documents = read_documents_from_directory(
+                DOCUMENTS_DIR,
+                TEXT_OUTPUT_DIR,
+                TEXT_EXPANDED_DIR,
+                checkpoint_callback=persist_documents_snapshot,
+            )
         else:
             logging.info("Appending new documents to the existing list...")
-            documents = read_documents_from_directory(DOCUMENTS_DIR, TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, documents)
+            documents = read_documents_from_directory(
+                DOCUMENTS_DIR,
+                TEXT_OUTPUT_DIR,
+                TEXT_EXPANDED_DIR,
+                documents,
+                checkpoint_callback=persist_documents_snapshot,
+            )
 
         # Debug: Check documents before keyword extraction
             logging.debug(f"Number of documents before keyword extraction: {len(documents)}")
@@ -591,16 +684,16 @@ def main():
         download_nltk_data()
 
         # Save the updated list
-        with open(PKL_FILENAME, 'wb') as file:
-            pickle.dump(documents, file)
+        persist_documents_snapshot(documents)
 
         logging.info(f"Total documents: {len(documents)}")
     except Exception as e:
         logging.exception("An error occurred in main:")
         logging.info(f"An error occurred: {e}")
+        sys.exit(1)
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
+    logging.getLogger().setLevel(getattr(logging, LOG_LEVEL, logging.INFO))
     logging.info("Starting document processing script")
     main()
     logging.info("Document processing script completed")
