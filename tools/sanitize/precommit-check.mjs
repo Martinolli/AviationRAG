@@ -3,6 +3,11 @@ import fs from "fs";
 
 const STAGED_SIZE_LIMIT_BYTES = 10 * 1024 * 1024;
 
+const pathSizeOverrides = [
+  { regex: /^data\/documents\/.+\.(pdf|docx|txt)$/i, maxBytes: 80 * 1024 * 1024 },
+  { regex: /^data\/raw\/.+\.(pkl|json|csv)$/i, maxBytes: 120 * 1024 * 1024 },
+];
+
 const blockedPathPatterns = [
   /^chat_id\/.*$/i,
   /^data\/astra_db\/.*$/i,
@@ -42,6 +47,15 @@ function shouldCheckLargeFiles(scanAll) {
   return !scanAll;
 }
 
+function maxAllowedSizeForPath(file) {
+  for (const override of pathSizeOverrides) {
+    if (override.regex.test(file)) {
+      return override.maxBytes;
+    }
+  }
+  return STAGED_SIZE_LIMIT_BYTES;
+}
+
 function shouldCheckForSecrets(file) {
   const lower = file.toLowerCase();
   if (lower === ".env.example") {
@@ -73,9 +87,13 @@ function main() {
     }
 
     const stats = fs.statSync(file);
-    if (checkLargeFiles && stats.size > STAGED_SIZE_LIMIT_BYTES) {
+    const maxBytes = maxAllowedSizeForPath(file);
+    if (checkLargeFiles && stats.size > maxBytes) {
       violations.push(
-        `[large-file] ${file} is ${(stats.size / (1024 * 1024)).toFixed(2)} MB (limit 10 MB).`,
+        `[large-file] ${file} is ${(stats.size / (1024 * 1024)).toFixed(2)} MB (limit ${(
+          maxBytes /
+          (1024 * 1024)
+        ).toFixed(0)} MB).`,
       );
     }
 

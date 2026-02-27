@@ -28,6 +28,51 @@ function shortTitleFromMessage(message: string) {
   return cleaned.split(" ").slice(0, 7).join(" ");
 }
 
+function normalizeHistoryRows(rows: any[]): Message[] {
+  const normalized: Message[] = [];
+
+  rows.forEach((row: any) => {
+    const timestamp = String(
+      row?.timestamp || row?.created_at || row?.createdAt || nowIso(),
+    );
+
+    const userQuery = String(row?.user_query || row?.userQuery || row?.question || "").trim();
+    const aiResponse = String(row?.ai_response || row?.aiResponse || row?.answer || "").trim();
+    const role = String(row?.role || "").trim().toLowerCase();
+    const roleContent = String(row?.content || row?.message || "").trim();
+
+    if (userQuery) {
+      normalized.push({
+        id: `${timestamp}_u_${Math.random().toString(36).slice(2, 8)}`,
+        role: "user",
+        content: normalizeDisplayText(userQuery),
+        timestamp,
+      });
+    }
+
+    if (aiResponse) {
+      normalized.push({
+        id: `${timestamp}_a_${Math.random().toString(36).slice(2, 8)}`,
+        role: "assistant",
+        content: normalizeDisplayText(aiResponse),
+        timestamp,
+      });
+    }
+
+    if (!userQuery && !aiResponse && roleContent) {
+      const mappedRole: "user" | "assistant" = role === "user" ? "user" : "assistant";
+      normalized.push({
+        id: `${timestamp}_${mappedRole.slice(0, 1)}_${Math.random().toString(36).slice(2, 8)}`,
+        role: mappedRole,
+        content: normalizeDisplayText(roleContent),
+        timestamp,
+      });
+    }
+  });
+
+  return normalized;
+}
+
 function parseSession(raw: any): Session {
   const updatedAt = String(raw?.updated_at || raw?.updatedAt || nowIso());
   const createdAt = String(raw?.created_at || raw?.createdAt || updatedAt);
@@ -195,27 +240,7 @@ export default function HomePage() {
       }
 
       const rows = Array.isArray(data.messages) ? [...data.messages].reverse() : [];
-      const normalized: Message[] = [];
-
-      rows.forEach((row: any) => {
-        const timestamp = String(row.timestamp || nowIso());
-        if (row.user_query) {
-          normalized.push({
-            id: `${timestamp}_u_${Math.random().toString(36).slice(2, 8)}`,
-            role: "user",
-            content: normalizeDisplayText(String(row.user_query)),
-            timestamp,
-          });
-        }
-        if (row.ai_response) {
-          normalized.push({
-            id: `${timestamp}_a_${Math.random().toString(36).slice(2, 8)}`,
-            role: "assistant",
-            content: normalizeDisplayText(String(row.ai_response)),
-            timestamp,
-          });
-        }
-      });
+      const normalized = normalizeHistoryRows(rows);
 
       setMessagesBySession((prev) => ({ ...prev, [sessionId]: normalized }));
       setActiveSessionId(sessionId);

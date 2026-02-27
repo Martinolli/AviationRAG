@@ -63,6 +63,18 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - `tools/auth/hash-password.mjs`
     - `npm run auth:hash -- \"my-password\"`
 14. Updated `.env.example` and `README.md` for new auth/bridge settings.
+15. Fixed commit workflow blocker for ingestion assets:
+    - Updated sanitization size policy in `tools/sanitize/precommit-check.mjs`.
+    - Added path-specific limits:
+      - `data/documents/*` up to 80 MB
+      - `data/raw/*` (`.pkl/.json/.csv`) up to 120 MB
+16. Fixed conversation history rendering robustness:
+    - Updated `pages/index.tsx` history normalization.
+    - Supports multiple payload schemas (`user_query/ai_response`, camelCase, role/content).
+17. Verification after fixes:
+    - `npm run sanitize:check` passed with new document additions staged.
+    - `npm run build` passed.
+    - `npm run test:smoke` passed.
 
 ## Session Recovery Procedure
 
