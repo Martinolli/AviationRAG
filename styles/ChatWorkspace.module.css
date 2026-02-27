@@ -336,14 +336,14 @@
 .userMessage {
   align-self: flex-end;
   background: #edf2fb;
-  border: 1px solid rgba(41, 72, 128, 0.2);
+  border: none /* 1px solid rgba(41, 72, 128, 0.2); */;
   color: #16283e;
 }
 
 .assistantMessage {
   align-self: flex-start;
   background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: none /* 1px solid rgba(15, 23, 42, 0.12); */;
   color: #16283e;
 }
 
