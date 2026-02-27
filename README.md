@@ -152,6 +152,9 @@ Notes:
 - Generate hash with: `npm run auth:hash -- "my-strong-password"`.
 - `AVIATION_API_MODE=worker` uses local Python worker process.
 - `AVIATION_API_MODE=http` calls external aviation command service using `AVIATION_API_HTTP_URL`.
+- Local reference HTTP bridge can run with:
+  - `python src\scripts\py_files\aviationai_http_bridge.py`
+  - default bind/port from env: `AVIATION_API_HTTP_BIND` / `AVIATION_API_HTTP_PORT`
 
 ## Run the Full Pipeline
 
@@ -241,6 +244,22 @@ Open `http://localhost:3000/auth/signin` and sign in with:
 
 - `APP_AUTH_EMAIL`
 - `APP_AUTH_PASSWORD` (or the plain password that matches `APP_AUTH_PASSWORD_HASH`)
+
+### External HTTP Bridge (optional)
+
+For deploy targets where local process spawning is restricted, run the reference bridge service:
+
+```powershell
+python src\scripts\py_files\aviationai_http_bridge.py
+```
+
+Then configure app env:
+
+```env
+AVIATION_API_MODE=http
+AVIATION_API_HTTP_URL=http://127.0.0.1:8010
+AVIATION_API_HTTP_TOKEN=<shared_token_if_enabled>
+```
 
 ### Web API Endpoints (MVP)
 

@@ -6,6 +6,7 @@ Status: Pending execution
 ## Phase A: Service Preparation
 
 1. Implement `/command` endpoint according to `AVIATION_API_HTTP_BRIDGE_SPEC.md`.
+   - Reference implementation available at `src/scripts/py_files/aviationai_http_bridge.py`.
 2. Implement token auth (`Authorization: Bearer`).
 3. Implement server-side request validation.
 4. Implement action-level logging with correlation ID (`id`).

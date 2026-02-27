@@ -40,6 +40,11 @@ Persistent execution log for deployment hardening and product-readiness work so 
 6. `Pending` External aviation command service deployment and production cutover (`AVIATION_API_MODE=http`).
 7. `Pending` Real identity/SSO model (current credentials provider is improved but still basic).
 
+### Deferred Issues
+
+1. `Deferred` Historical conversation recovery in web UI remains intermittently inconsistent for some sessions in real runs.
+2. `Plan` Keep this tracked while proceeding with deployment hardening; revisit with payload-level tracing after HTTP bridge cutover baseline is complete.
+
 ### Step 3: Upload Workflow
 
 1. `Pending` Web upload UI and ingestion status tracking.
@@ -117,6 +122,13 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Added staged cutover checklist:
       - `docs/AVIATION_API_HTTP_BRIDGE_CUTOVER_CHECKLIST.md`
     - Next action: implement/deploy external `/command` service and run checklist in staging.
+20. Added reference external HTTP bridge service implementation:
+    - `src/scripts/py_files/aviationai_http_bridge.py`
+    - Supports `/health` and `/command` with optional bearer token auth.
+    - Uses same action handlers as worker mode to preserve payload compatibility.
+21. Updated runtime configuration/docs for bridge service:
+    - `.env.example` adds `AVIATION_API_HTTP_BIND` and `AVIATION_API_HTTP_PORT`.
+    - `README.md` documents running the optional HTTP bridge service.
 
 ## Session Recovery Procedure
 
