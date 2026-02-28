@@ -1,3 +1,5 @@
+"""Configuration module for project paths and directories."""
+
 from pathlib import Path
 
 # File location: <project_root>/src/scripts/py_files/config.py
