@@ -1,3 +1,8 @@
+"""HTTP bridge server for Aviation RAG API communication.
+
+This module provides an HTTP server that acts as a bridge between HTTP clients
+and the Aviation AI worker, handling requests for chat, history, and session management.
+"""
 import hmac
 import json
 import os
@@ -16,14 +21,24 @@ from aviationai_worker import (
 
 
 def now_iso():
+    """Return the current UTC time as an ISO 8601 formatted string."""
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def bridge_token():
+    """Retrieve and return the HTTP bridge authentication token from environment variables."""
     return str(os.getenv("AVIATION_API_HTTP_TOKEN", "")).strip()
 
 
 def auth_ok(header_value):
+    """Validate the authorization header against the configured token.
+    
+    Args:
+        header_value: The Authorization header value to validate.
+        
+    Returns:
+        bool: True if the header is valid or no token is configured, False otherwise.
+    """
     token = bridge_token()
     if not token:
         return True
@@ -58,6 +73,11 @@ def dispatch(request_id, payload):
 
 
 class Handler(BaseHTTPRequestHandler):
+    """HTTP request handler for the Aviation RAG API bridge.
+    
+    Handles GET and POST requests for health checks and command execution,
+    including authentication and JSON payload processing.
+    """
     server_version = "AviationBridge/1.0"
 
     def _write_json(self, status_code, payload):
@@ -83,6 +103,7 @@ class Handler(BaseHTTPRequestHandler):
         return auth_ok(auth_header)
 
     def do_GET(self):
+        """Handle GET requests for health check endpoint."""
         if self.path != "/health":
             self._write_json(404, {"success": False, "error": "Not Found"})
             return
@@ -97,6 +118,7 @@ class Handler(BaseHTTPRequestHandler):
         )
 
     def do_POST(self):
+        """Handle POST requests for command execution with authentication."""
         if self.path != "/command":
             self._write_json(404, {"success": False, "error": "Not Found"})
             return
@@ -107,7 +129,7 @@ class Handler(BaseHTTPRequestHandler):
 
         try:
             payload = self._read_json()
-        except Exception:
+        except (json.JSONDecodeError, UnicodeDecodeError, ValueError):
             self._write_json(400, {"success": False, "error": "Invalid JSON payload"})
             return
 
@@ -134,7 +156,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._write_json(400, result)
                 return
             self._write_json(200, result)
-        except Exception as error:
+        except (KeyError, ValueError, TypeError) as error:
             self._write_json(
                 500,
                 {
@@ -150,6 +172,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main():
+    """Start the HTTP bridge server for Aviation RAG API communication."""
     bind = str(os.getenv("AVIATION_API_HTTP_BIND", "127.0.0.1")).strip() or "127.0.0.1"
     port = int(os.getenv("AVIATION_API_HTTP_PORT", "8010"))
 
