@@ -1,15 +1,16 @@
-"""
-Module for reading and processing various document formats, including PDF and DOCX.
-Provides functions for extracting text, metadata, and performing NLP tasks.
-Key functionalities include:
-- Text extraction from PDFs using multiple strategies (pdfplumber and PyPDF2)
-- Text preprocessing (abbreviation expansion, word splitting, filtering)
-- NLP processing (entity recognition, POS tagging, lemmatization)
-- Metadata extraction from PDFs and DOCX files
-- Document classification based on keyword matching
-- Checkpointing progress to allow resuming long runs safely
-Designed to be robust against various document formats and extraction quality issues,
-with detailed logging for debugging and monitoring.
+"""Read and process aviation-related documents.
+
+This module provides utilities to:
+
+- extract text from PDFs (via pdfplumber and PyPDF2) and DOCX files
+- clean and normalize raw text, including abbreviation expansion and word splitting
+- perform NLP tasks such as entity recognition, POS tagging, and lemmatization
+- extract document metadata
+- classify documents with simple keyword-based heuristics
+- checkpoint long-running processing so it can be safely resumed
+
+The implementation is designed to be robust to noisy OCR and heterogeneous
+document formats, with structured logging for observability and debugging.
 """
 
 import csv
@@ -20,7 +21,7 @@ import re
 import sys
 import tempfile
 import warnings
-
+import docx
 import nltk
 import pdfplumber
 import PyPDF2
@@ -75,7 +76,7 @@ for directory in [TEXT_OUTPUT_DIR, TEXT_EXPANDED_DIR, PKL_FILENAME.parent]:
     os.makedirs(directory, exist_ok=True)  # No need to log this for every run
 
 
-# Donwload NLTK data
+# Download NLTK data
 def download_nltk_data():
     """Downloads required NLTK data only if not already installed.
     Args: None
@@ -92,7 +93,6 @@ def download_nltk_data():
 
 
 download_nltk_data()
-
 
 # Create custom pipeline component for aviation NER
 @spacy.Language.component("aviation_ner")
@@ -936,6 +936,15 @@ def read_documents_from_directory(
 
 
 def main():
+    """
+    Function main: Orchestrates the document processing workflow. It checks for existing processed documents
+    in a pickle file and either loads them or processes new documents from the specified directory.
+    It applies keyword extraction, downloads necessary NLTK data, and saves the updated list
+    of documents back to the pickle file. The function includes error handling
+    to log exceptions and ensure that the script exits gracefully in case of errors.
+    Args: None
+    Returns: None (the function performs processing and saves results but does not return a value).
+    """
     try:
         documents = None
         if os.path.exists(PKL_FILENAME):
