@@ -1,3 +1,5 @@
+"""Module for managing chat sessions and storing/retrieving chat history from AstraDB."""
+
 import json
 import logging
 import subprocess
@@ -15,39 +17,44 @@ def _now_iso():
 
 
 def _extract_json_object(output):
+    """Extract the first JSON object from a string."""
     first_brace = output.find("{")
     if first_brace != -1:
         output = output[first_brace:]
     try:
         return json.loads(output)
     except json.JSONDecodeError as error:
-        logging.error(f"JSON parsing error: {error}. Raw output: {output}")
+        logging.error("JSON parsing error: %s. Raw output: %s", error, output)
         return None
 
 
 def _ensure_chat_id_dir():
+    """Ensure the chat ID directory exists."""
     CHAT_ID_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _load_json(path, fallback):
+    """Load JSON data from a file, returning a fallback value on error."""
     try:
         if not path.exists():
             return fallback
         with open(path, "r", encoding="utf-8") as file:
             loaded = json.load(file)
         return loaded if isinstance(loaded, type(fallback)) else fallback
-    except Exception as error:
-        logging.error(f"Error reading {path}: {error}")
+    except (FileNotFoundError, json.JSONDecodeError, IOError) as error:
+        logging.error("Error reading %s: %s", path, error)
         return fallback
 
 
 def _save_json(path, payload):
+    """Save JSON data to a file."""
     _ensure_chat_id_dir()
     with open(path, "w", encoding="utf-8") as file:
         json.dump(payload, file, indent=4, ensure_ascii=False)
 
 
 def _load_legacy_titles():
+    """Load legacy session titles from the metadata file."""
     raw = _load_json(SESSION_METADATA_FILE, {})
     titles = {}
     for session_id, value in raw.items():
@@ -63,10 +70,12 @@ def _load_legacy_titles():
 
 
 def _save_legacy_titles(titles):
+    """Save legacy session titles to the metadata file."""
     _save_json(SESSION_METADATA_FILE, titles)
 
 
 def _load_session_index():
+    """Load session index from the index file."""
     raw = _load_json(SESSION_INDEX_FILE, {})
     index = {}
     for session_id, value in raw.items():
@@ -84,10 +93,12 @@ def _load_session_index():
 
 
 def _save_session_index(index):
+    """Save session index to the index file."""
     _save_json(SESSION_INDEX_FILE, index)
 
 
 def _build_session_object(session_id, title, index_entry):
+    """Build a session object combining title and index metadata."""
     created_at = index_entry.get("created_at", "")
     updated_at = index_entry.get("updated_at", "")
     if not created_at:
@@ -104,6 +115,7 @@ def _build_session_object(session_id, title, index_entry):
 
 
 def upsert_session_metadata(session_id, title=None, pinned=None):
+    """Upsert session metadata with optional title and pinned status."""
     session_id = str(session_id or "").strip()
     if not session_id:
         raise ValueError("session_id is required")
@@ -135,6 +147,7 @@ def upsert_session_metadata(session_id, title=None, pinned=None):
 
 
 def list_sessions(search="", filter_mode="all", limit=50):
+    """List sessions with optional search and filtering."""
     limit_value = max(1, min(int(limit), 200))
     search_value = str(search or "").strip().lower()
     mode = str(filter_mode or "all").strip().lower()
@@ -175,6 +188,7 @@ def list_sessions(search="", filter_mode="all", limit=50):
 
 
 def delete_session_metadata(session_id):
+    """Delete session metadata for the given session_id."""
     session_id = str(session_id or "").strip()
     if not session_id:
         return False
@@ -223,21 +237,21 @@ def store_chat_in_db(session_id, user_query, ai_response, print_success=False, l
         if print_success:
             print("Chat stored successfully in AstraDB!")
         if log_success:
-            logging.info(f"Storing chat for session: {session_id} | Query: {user_query[:50]}...")
+            logging.info("Storing chat for session: %s | Query: %s...", session_id, user_query[:50])
         if result.stdout.strip():
             parsed = _extract_json_object(result.stdout.strip())
             if not parsed and "success" not in result.stdout:
                 logging.debug(result.stdout.strip())
     except subprocess.CalledProcessError as error:
-        logging.error(f"Error storing chat: {error}")
+        logging.error("Error storing chat: %s", error)
         if error.stderr:
-            logging.error(f"Store chat stderr: {error.stderr.strip()}")
+            logging.error("Store chat stderr: %s", error.stderr.strip())
 
 
 def retrieve_chat_from_db(session_id, limit=5, warn_on_empty_session=False):
     """Retrieve session chat history via the Node.js AstraDB bridge."""
     script_path = JS_SCRIPTS_DIR / "store_chat.js"
-    logging.info(f"Retrieving chat messages for session: {session_id}")
+    logging.info("Retrieving chat messages for session: %s", session_id)
 
     if not session_id.strip():
         if warn_on_empty_session:
@@ -261,12 +275,12 @@ def retrieve_chat_from_db(session_id, limit=5, warn_on_empty_session=False):
         parsed = _extract_json_object(result.stdout.strip())
         if isinstance(parsed, dict) and parsed.get("success", False):
             return parsed.get("messages", [])
-        logging.error(f"Chat retrieval failed. Parsed output: {parsed}")
+        logging.error("Chat retrieval failed. Parsed output: %s", parsed)
         return []
     except subprocess.CalledProcessError as error:
-        logging.error(f"Error retrieving chat: {error}")
+        logging.error("Error retrieving chat: %s", error)
         if error.stderr:
-            logging.error(f"Retrieve chat stderr: {error.stderr.strip()}")
+            logging.error("Retrieve chat stderr: %s", error.stderr.strip())
         return []
 
 
@@ -291,7 +305,7 @@ def delete_chat_session_in_db(session_id):
             return int(parsed.get("deleted_rows", 0))
         return 0
     except subprocess.CalledProcessError as error:
-        logging.error(f"Error deleting session in DB: {error}")
+        logging.error("Error deleting session in DB: %s", error)
         if error.stderr:
-            logging.error(f"Delete session stderr: {error.stderr.strip()}")
+            logging.error("Delete session stderr: %s", error.stderr.strip())
         return 0
