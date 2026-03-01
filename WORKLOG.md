@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-02-27  
+Last Updated: 2026-03-01  
 Active Branch: `hardening/sanitize-repo`
 
 ## Purpose
@@ -176,6 +176,21 @@ Persistent execution log for deployment hardening and product-readiness work so 
 30. Adjusted sanitize guardrail for larger valid source PDFs:
     - `tools/sanitize/precommit-check.mjs`
     - `data/documents/*` file-size limit raised from `80 MB` to `120 MB`.
+31. Investigated embedding-count inconsistency after llama-parse rollout:
+    - Observed report: local `5433` vs Astra `5000`.
+    - Verified true DB counts with paginated and count queries:
+      - local embeddings: `5433`
+      - Astra table rows: `5433`
+    - Root cause: `src/scripts/js_files/check_astradb_consistency.js` was reading only one Cassandra page (default first page, commonly `5000` rows).
+32. Fixed consistency checker and llama-parse guardrails:
+    - `src/scripts/js_files/check_astradb_consistency.js`
+      - Added explicit paging loop.
+      - Added O(1) chunk-id lookup map for comparisons.
+      - Fixed DB embedding buffer conversion for robust numeric comparison.
+    - `src/scripts/py_files/read_documents.py`
+      - Made llama-parse integration optional and lazy-initialized.
+      - Added env toggle: `READ_DOC_ENABLE_LLAMA_PARSE` (default `true`).
+      - Added safe fallback when `llama_parse` package or `LLAMA_CLOUD_API_KEY` is missing.
 
 ## Session Recovery Procedure
 

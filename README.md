@@ -147,6 +147,8 @@ PYTHON_EXECUTABLE=python
 DOCUMENT_UPLOAD_MAX_MB=25
 DOCUMENT_UPLOAD_AUTO_INGEST=true
 DOCUMENT_UPLOAD_STEP_TIMEOUT_MS=1200000
+READ_DOC_ENABLE_LLAMA_PARSE=true
+LLAMA_CLOUD_API_KEY=
 ```
 
 Notes:
@@ -164,6 +166,10 @@ Notes:
   - `DOCUMENT_UPLOAD_MAX_MB`: max upload size in MB (default `25`)
   - `DOCUMENT_UPLOAD_AUTO_INGEST`: run ingestion automatically after upload (`true`/`false`)
   - `DOCUMENT_UPLOAD_STEP_TIMEOUT_MS`: timeout per ingestion step in milliseconds
+- Optional PDF parsing enhancement:
+  - `READ_DOC_ENABLE_LLAMA_PARSE=true|false`
+  - `LLAMA_CLOUD_API_KEY=<key>`
+  - If unavailable, ingestion automatically falls back to local PDF parsers.
 
 ## Run the Full Pipeline
 

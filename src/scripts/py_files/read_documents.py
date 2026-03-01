@@ -35,7 +35,10 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from spellchecker import SpellChecker
-from llama_parse import LlamaParse
+try:
+    from llama_parse import LlamaParse
+except ImportError:  # pragma: no cover - optional dependency
+    LlamaParse = None
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
@@ -54,6 +57,9 @@ log_file_path = LOG_DIR / "read_documents.log"
 LOG_LEVEL = os.getenv("READ_DOC_LOG_LEVEL", "INFO").upper()
 CHECKPOINT_EVERY = max(1, int(os.getenv("READ_DOC_CHECKPOINT_EVERY", "1")))
 NLP_CHUNK_CHARS = max(50000, int(os.getenv("READ_DOC_NLP_CHUNK_CHARS", "180000")))
+READ_DOC_ENABLE_LLAMA_PARSE = (
+    os.getenv("READ_DOC_ENABLE_LLAMA_PARSE", "true").strip().lower() == "true"
+)
 
 # Ensure the log directory exists
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -97,13 +103,49 @@ def download_nltk_data():
 
 download_nltk_data()
 
-# Initialize LlamaParse with API key and settings
+llama_parser = None
+llama_parser_init_attempted = False
 
-llama_parser = LlamaParse(
-    api_key=os.environ.get("LLAMA_CLOUD_API_KEY"),
-    result_type="markdown",     # or "json" if you want richer structure
-    num_workers=4,
-)
+
+def get_llama_parser():
+    """
+    Lazily initialize LlamaParse only when explicitly enabled and properly configured.
+    Returns:
+        LlamaParse | None: parser instance when available, otherwise None.
+    """
+    global llama_parser, llama_parser_init_attempted  # pylint: disable=global-statement
+
+    if llama_parser_init_attempted:
+        return llama_parser
+
+    llama_parser_init_attempted = True
+
+    if not READ_DOC_ENABLE_LLAMA_PARSE:
+        logging.info("LlamaParse disabled by READ_DOC_ENABLE_LLAMA_PARSE=false.")
+        return None
+
+    if LlamaParse is None:
+        logging.warning(
+            "LlamaParse is enabled but package 'llama_parse' is not installed. Skipping."
+        )
+        return None
+
+    api_key = os.environ.get("LLAMA_CLOUD_API_KEY", "").strip()
+    if not api_key:
+        logging.info("LLAMA_CLOUD_API_KEY not set. Skipping LlamaParse extraction.")
+        return None
+
+    try:
+        llama_parser = LlamaParse(
+            api_key=api_key,
+            result_type="markdown",
+            num_workers=4,
+        )
+    except Exception as err:  # pylint: disable=broad-except
+        logging.warning("Failed to initialize LlamaParse: %s", err)
+        llama_parser = None
+
+    return llama_parser
 
 # Create custom pipeline component for aviation NER
 @spacy.Language.component("aviation_ner")
@@ -438,7 +480,10 @@ def extract_text_from_pdf_with_llamaparse(pdf_path: str) -> str:
     Returns:     str: Extracted text from the PDF, or an empty string if extraction fails.    
     """
     try:
-        docs = llama_parser.load_data(pdf_path)  # returns list of Document
+        parser = get_llama_parser()
+        if parser is None:
+            return ""
+        docs = parser.load_data(pdf_path)  # returns list of Document
         return "\n\n".join(d.text for d in docs)
     except Exception as e:
         logging.warning("LlamaParse extraction failed for %s: %s", pdf_path, e)
@@ -472,7 +517,7 @@ def extract_text_from_pdf(pdf_path):
     candidates = []
 
     # LlamaParse (if key configured)
-    if os.environ.get("LLAMA_CLOUD_API_KEY"):
+    if READ_DOC_ENABLE_LLAMA_PARSE:
         text_llama = extract_text_from_pdf_with_llamaparse(pdf_path)
         if text_llama:
             candidates.append(("llamaparse", text_llama, text_quality_score(text_llama)))

@@ -47,22 +47,37 @@ async function checkConsistency() {
         console.log('Reading embeddings from:', embeddingsPath);
         const localEmbeddings = JSON.parse(await fs.readFile(embeddingsPath, 'utf8'));
         
-        // Query Astra DB
-        const query = 'SELECT chunk_id, filename, text, tokens, embedding FROM aviation_documents';
-        const result = await client.execute(query);
+        // Query Astra DB with explicit paging (single execute() can return only one page).
+        const query = 'SELECT chunk_id, embedding FROM aviation_documents';
+        const dbRows = [];
+        let pageState = null;
+        do {
+            // eslint-disable-next-line no-await-in-loop
+            const page = await client.execute(query, [], { fetchSize: 200, pageState });
+            dbRows.push(...page.rows);
+            pageState = page.pageState;
+        } while (pageState);
 
         console.log(`Local embeddings count: ${localEmbeddings.length}`);
-        console.log(`Astra DB embeddings count: ${result.rowLength}`);
+        console.log(`Astra DB embeddings count: ${dbRows.length}`);
 
         let matchCount = 0;
         let mismatchCount = 0;
+        const dbByChunkId = new Map(dbRows.map((row) => [row.chunk_id, row]));
 
         for (const localItem of localEmbeddings) {
-            const dbItem = result.rows.find(row => row.chunk_id === localItem.chunk_id);
+            const dbItem = dbByChunkId.get(localItem.chunk_id);
             
             if (dbItem) {
                 const localEmbedding = new Float32Array(localItem.embedding);
-                const dbEmbedding = new Float32Array(dbItem.embedding.buffer);
+                const dbBuffer = Buffer.isBuffer(dbItem.embedding)
+                    ? dbItem.embedding
+                    : Buffer.from(dbItem.embedding);
+                const dbEmbedding = new Float32Array(
+                    dbBuffer.buffer,
+                    dbBuffer.byteOffset,
+                    dbBuffer.byteLength / Float32Array.BYTES_PER_ELEMENT
+                );
 
                 if (compareEmbeddings(localEmbedding, dbEmbedding)) {
                     matchCount++;
