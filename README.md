@@ -279,6 +279,7 @@ AVIATION_API_HTTP_TOKEN=<shared_token_if_enabled>
 ### Web API Endpoints (MVP)
 
 - `GET /api/health`
+  - append `?deep=1` to validate live bridge ping in `http` mode
 - `POST /api/chat/ask`
   - body: `session_id?`, `message`, `strict_mode?`, `target_document?`, `model?`, `store?`
 - `GET /api/chat/history/{session_id}?limit=10`
@@ -302,6 +303,7 @@ curl -X POST http://localhost:3000/api/chat/ask `
 For product/UI scope and phased requirements, see:
 
 - [WEB_APP_REQUIREMENTS_V1.md](./docs/WEB_APP_REQUIREMENTS_V1.md)
+- [VERCEL_ONLINE_SETUP.md](./docs/VERCEL_ONLINE_SETUP.md)
 
 ## Troubleshooting
 

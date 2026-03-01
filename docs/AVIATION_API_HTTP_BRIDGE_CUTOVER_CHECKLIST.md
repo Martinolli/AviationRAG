@@ -23,6 +23,10 @@ Status: Pending execution
 3. Verify `/api/health` returns:
    - `bridge_mode: "http"`
    - `checks.aviation_http_url_set: true`
+4. Verify deep bridge ping:
+   - `GET /api/health?deep=1`
+   - `checks.aviation_http_ping: true`
+   - no `deep_check_error`
 
 ## Phase C: Validation
 

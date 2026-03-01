@@ -39,6 +39,7 @@ Persistent execution log for deployment hardening and product-readiness work so 
 5. `Done` Bridge split support (`worker` and `http` mode in server bridge).
 6. `Pending` External aviation command service deployment and production cutover (`AVIATION_API_MODE=http`).
 7. `Pending` Real identity/SSO model (current credentials provider is improved but still basic).
+8. `Done` Added deep bridge diagnostics in app health endpoint for cutover validation.
 
 ### Deferred Issues
 
@@ -203,6 +204,15 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Verification:
       - Session listing now prioritizes indexed/recent sessions correctly.
       - `npm run build` passed.
+34. Improved HTTP cutover observability in web API:
+    - `pages/api/health.ts`
+      - Added deep mode query (`GET /api/health?deep=1`).
+      - Added real HTTP bridge `ping` check through `/command`.
+      - Added `checks.aviation_http_ping`, `deep_check_requested`, and `deep_check_error`.
+35. Added Vercel online deployment runbook and checklist alignment:
+    - Added `docs/VERCEL_ONLINE_SETUP.md` with production/preview env var setup and verification.
+    - Updated `docs/AVIATION_API_HTTP_BRIDGE_CUTOVER_CHECKLIST.md` with deep health validation.
+    - Updated `README.md` to reference Vercel setup doc and deep health usage.
 
 ## Session Recovery Procedure
 
