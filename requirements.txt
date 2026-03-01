@@ -22,3 +22,4 @@ tiktoken
 tqdm
 wordcloud
 wordninja
+llama-parse
