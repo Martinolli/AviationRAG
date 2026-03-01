@@ -40,7 +40,15 @@ logging.basicConfig(
 
 
 def run_script(command, script_name, max_retries=3):
-    """Execute a script with logging, retries, and execution time tracking."""
+    """Execute a script with logging, retries, and execution time tracking.
+    Args:
+        command: List of command arguments to execute the script.
+        script_name: A friendly name for the script being executed (for logging).
+        max_retries: Maximum number of retries if the script fails.
+    Returns:
+        A tuple (success: bool, execution_time: float) indicating whether the script
+        executed successfully and how long it took.    
+    """
     attempt = 0
     while attempt < max_retries:
         try:
@@ -87,6 +95,8 @@ def main(cli_args):
 
     Args:
         cli_args: Command-line arguments containing optional step and verbose flags.
+    Returns:
+        None
     """
     logging.info("--- AviationRAG Processing Pipeline Started ---")
     python_exec = sys.executable
