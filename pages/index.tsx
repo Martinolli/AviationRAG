@@ -336,6 +336,9 @@ export default function HomePage() {
 
       const rows = Array.isArray(data.messages) ? [...data.messages].reverse() : [];
       const normalized = normalizeHistoryRows(rows);
+      if (normalized.length === 0) {
+        setErrorText("No stored messages were found for this conversation.");
+      }
 
       setMessagesBySession((prev) => ({ ...prev, [sessionId]: normalized }));
       setActiveSessionId(sessionId);

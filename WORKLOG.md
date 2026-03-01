@@ -42,8 +42,11 @@ Persistent execution log for deployment hardening and product-readiness work so 
 
 ### Deferred Issues
 
-1. `Deferred` Historical conversation recovery in web UI remains intermittently inconsistent for some sessions in real runs.
-2. `Plan` Keep this tracked while proceeding with deployment hardening; revisit with payload-level tracing after HTTP bridge cutover baseline is complete.
+1. `In Progress` Historical conversation recovery in web UI:
+   - `Done` Identified stale legacy title-only sessions sorting to top without real history.
+   - `Done` Applied timestamp fallback fix so stale sessions sort to bottom.
+   - `Done` Added explicit UI feedback when a selected session has no stored messages.
+   - `Pending` Final user validation in browser real run.
 
 ### Step 3: Upload Workflow
 
@@ -191,6 +194,15 @@ Persistent execution log for deployment hardening and product-readiness work so 
       - Made llama-parse integration optional and lazy-initialized.
       - Added env toggle: `READ_DOC_ENABLE_LLAMA_PARSE` (default `true`).
       - Added safe fallback when `llama_parse` package or `LLAMA_CLOUD_API_KEY` is missing.
+33. Addressed chat history recovery inconsistency:
+    - `src/scripts/py_files/chat_db.py`
+      - Legacy sessions without index metadata no longer get `updated_at=now`.
+      - Added deterministic fallback timestamp (`1970-01-01T00:00:00Z`) so stale sessions sort to bottom.
+    - `pages/index.tsx`
+      - Added explicit message when selected session has no stored history.
+    - Verification:
+      - Session listing now prioritizes indexed/recent sessions correctly.
+      - `npm run build` passed.
 
 ## Session Recovery Procedure
 

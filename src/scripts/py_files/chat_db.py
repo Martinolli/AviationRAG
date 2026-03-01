@@ -10,6 +10,7 @@ from config import CHAT_ID_DIR, JS_SCRIPTS_DIR
 
 SESSION_METADATA_FILE = CHAT_ID_DIR / "session_metadata.json"
 SESSION_INDEX_FILE = CHAT_ID_DIR / "session_index.json"
+UNKNOWN_SESSION_TIMESTAMP = "1970-01-01T00:00:00Z"
 
 
 def _now_iso():
@@ -101,8 +102,12 @@ def _build_session_object(session_id, title, index_entry):
     """Build a session object combining title and index metadata."""
     created_at = index_entry.get("created_at", "")
     updated_at = index_entry.get("updated_at", "")
+    if not created_at and not updated_at:
+        # Legacy title-only sessions (no index entry) should sort to the end.
+        created_at = UNKNOWN_SESSION_TIMESTAMP
+        updated_at = UNKNOWN_SESSION_TIMESTAMP
     if not created_at:
-        created_at = updated_at or _now_iso()
+        created_at = updated_at
     if not updated_at:
         updated_at = created_at
     return {
