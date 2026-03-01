@@ -35,6 +35,7 @@ from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import word_tokenize
 from sklearn.feature_extraction.text import TfidfVectorizer
 from spellchecker import SpellChecker
+from llama_parse import LlamaParse
 
 # Load spaCy's English model
 nlp = spacy.load("en_core_web_sm")
@@ -67,6 +68,8 @@ logging.basicConfig(
     ],
 )
 
+# Log the initialization of logging
+
 logging.info("Logging initialized successfully.")
 for noisy_logger_name in ("pdfminer", "pdfplumber", "PIL", "urllib3"):
     logging.getLogger(noisy_logger_name).setLevel(logging.WARNING)
@@ -93,6 +96,14 @@ def download_nltk_data():
 
 
 download_nltk_data()
+
+# Initialize LlamaParse with API key and settings
+
+llama_parser = LlamaParse(
+    api_key=os.environ.get("LLAMA_CLOUD_API_KEY"),
+    result_type="markdown",     # or "json" if you want richer structure
+    num_workers=4,
+)
 
 # Create custom pipeline component for aviation NER
 @spacy.Language.component("aviation_ner")
@@ -420,6 +431,18 @@ def extract_text_from_pdf_with_pypdf2(pdf_path):
         logging.warning("PyPDF2 extraction failed for %s: %s", pdf_path, e)
         return ""
 
+def extract_text_from_pdf_with_llamaparse(pdf_path: str) -> str:
+    """
+    Extract text from PDF using LlamaParse, which may provide better results for scanned/image PDFs.
+    Args:    pdf_path (str): Path to the PDF file.
+    Returns:     str: Extracted text from the PDF, or an empty string if extraction fails.    
+    """
+    try:
+        docs = llama_parser.load_data(pdf_path)  # returns list of Document
+        return "\n\n".join(d.text for d in docs)
+    except Exception as e:
+        logging.warning("LlamaParse extraction failed for %s: %s", pdf_path, e)
+        return ""
 
 def text_quality_score(text):
     """
@@ -447,6 +470,14 @@ def extract_text_from_pdf(pdf_path):
         tuple[str, str, float]: (text, extraction_method, quality_score)
     """
     candidates = []
+
+    # LlamaParse (if key configured)
+    if os.environ.get("LLAMA_CLOUD_API_KEY"):
+        text_llama = extract_text_from_pdf_with_llamaparse(pdf_path)
+        if text_llama:
+            candidates.append(("llamaparse", text_llama, text_quality_score(text_llama)))
+
+    # Existing local parsers
 
     text_pypdf2 = extract_text_from_pdf_with_pypdf2(pdf_path)
     candidates.append(("pypdf2", text_pypdf2, text_quality_score(text_pypdf2)))
