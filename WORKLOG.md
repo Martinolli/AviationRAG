@@ -279,6 +279,13 @@ Persistent execution log for deployment hardening and product-readiness work so 
 15. End-of-day sync state:
     - `main` is synchronized with origin and contains the latest Vercel/auth/bridge fixes.
     - Ready to continue tomorrow from bridge public reachability + final Vercel env validation.
+16. Restored missing bridge/docs assets on `main`:
+    - Restored from `hardening/sanitize-repo`:
+      - `src/scripts/py_files/aviationai_http_bridge.py`
+      - `docs/AVIATION_API_HTTP_BRIDGE_CUTOVER_CHECKLIST.md`
+      - `docs/AVIATION_API_HTTP_BRIDGE_SPEC.md`
+      - `docs/VERCEL_ONLINE_SETUP.md`
+    - Root cause: prior updates were selectively backported to `main` instead of full branch merge, so branch-only files were absent on `main`.
 
 ## Session Recovery Procedure
 
