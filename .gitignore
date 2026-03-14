@@ -1,8 +1,10 @@
 # Node / frontend
 node_modules/
 .next/
+.next_backup_*/
 out/
 .vercel/
+.githooks/
 
 # Python caches and environments
 __pycache__/
