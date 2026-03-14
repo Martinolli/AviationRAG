@@ -74,6 +74,8 @@ Notes:
 2. Generate password hash locally:
    - `npm run auth:hash -- "your-password"`
 3. If your bridge requires static egress allow-listing, use Vercel documented IP strategy or place bridge behind authenticated public endpoint.
+4. Run preflight env validation locally before Vercel deploy:
+   - `npm run deploy:check:vercel-http`
 
 ## 3. Trigger Vercel redeploy
 

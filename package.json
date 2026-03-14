@@ -12,7 +12,9 @@
     "hooks:install": "git config core.hooksPath .githooks",
     "sanitize:check": "node tools/sanitize/precommit-check.mjs",
     "sanitize:check:all": "node tools/sanitize/precommit-check.mjs --all",
-    "auth:hash": "node tools/auth/hash-password.mjs"
+    "auth:hash": "node tools/auth/hash-password.mjs",
+    "deploy:check:local-http": "node tools/deploy/check-env.mjs --profile local-http --file .env",
+    "deploy:check:vercel-http": "node tools/deploy/check-env.mjs --profile vercel-http --file .env"
   },
   "dependencies": {
     "@datastax/astra-db-ts": "^0.1.4",

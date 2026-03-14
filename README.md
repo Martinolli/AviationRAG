@@ -249,6 +249,18 @@ This runs:
 - Python unit smoke tests
 - JavaScript syntax checks
 
+## Deployment Env Checks
+
+Validate environment configuration before running or deploying:
+
+```powershell
+# Local app + local HTTP bridge
+npm run deploy:check:local-http
+
+# Vercel-ready HTTP bridge profile
+npm run deploy:check:vercel-http
+```
+
 ## Frontend Development
 
 ```powershell

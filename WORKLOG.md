@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-03-01  
+Last Updated: 2026-03-14  
 Active Branch: `hardening/sanitize-repo`
 
 ## Purpose
@@ -213,6 +213,21 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Added `docs/VERCEL_ONLINE_SETUP.md` with production/preview env var setup and verification.
     - Updated `docs/AVIATION_API_HTTP_BRIDGE_CUTOVER_CHECKLIST.md` with deep health validation.
     - Updated `README.md` to reference Vercel setup doc and deep health usage.
+
+### 2026-03-14
+
+36. Added deployment preflight env validation script for HTTP bridge modes:
+    - Added `tools/deploy/check-env.mjs`.
+    - New profiles:
+      - `local-http` (local app + local bridge)
+      - `vercel-http` (Vercel-ready checks, HTTPS/public bridge required)
+    - Validates required env vars, mode consistency, URL constraints, and warns on weak auth patterns.
+37. Added npm scripts for deploy preflight:
+    - `npm run deploy:check:local-http`
+    - `npm run deploy:check:vercel-http`
+38. Updated deployment docs:
+    - `README.md` adds "Deployment Env Checks" section.
+    - `docs/VERCEL_ONLINE_SETUP.md` includes preflight command before Vercel deploy.
 
 ## Session Recovery Procedure
 
