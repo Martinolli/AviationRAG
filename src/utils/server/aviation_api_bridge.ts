@@ -6,6 +6,7 @@ interface JsonObject {
   [key: string]: JsonValue;
 }
 interface JsonArray extends Array<JsonValue> {}
+type BridgeMode = "worker" | "http";
 
 type PendingRequest = {
   resolve: (value: JsonObject) => void;
@@ -27,6 +28,11 @@ function nextRequestId(): string {
 function parseBoolean(value: string): boolean {
   const normalized = String(value).trim().toLowerCase();
   return normalized === "true" || normalized === "1" || normalized === "yes" || normalized === "on";
+}
+
+function currentBridgeMode(): BridgeMode {
+  const raw = String(process.env.AVIATION_API_MODE || "worker").trim().toLowerCase();
+  return raw === "http" ? "http" : "worker";
 }
 
 function parseArgsToPayload(args: string[]): JsonObject {
@@ -140,13 +146,68 @@ function ensureWorker(): ChildProcessWithoutNullStreams {
   return workerProcess;
 }
 
+async function runHttpBridgeCommand(payload: JsonObject, timeoutMs: number): Promise<JsonObject> {
+  const baseUrl = String(process.env.AVIATION_API_HTTP_URL || "").trim();
+  if (!baseUrl) {
+    throw new Error("AVIATION_API_MODE is http but AVIATION_API_HTTP_URL is not set.");
+  }
+
+  const token = String(process.env.AVIATION_API_HTTP_TOKEN || "").trim();
+  const endpoint = baseUrl.endsWith("/")
+    ? `${baseUrl}command`
+    : `${baseUrl}/command`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    const text = await response.text();
+    let parsed: JsonObject = {};
+    if (text) {
+      try {
+        parsed = JSON.parse(text) as JsonObject;
+      } catch {
+        parsed = { success: false, error: `Invalid JSON from HTTP bridge: ${text}` };
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        `HTTP bridge request failed (${response.status}): ${String(parsed.error || response.statusText)}`,
+      );
+    }
+
+    if (parsed.success === false) {
+      throw new Error(String(parsed.error || "Aviation API HTTP bridge error"));
+    }
+
+    return parsed;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function runAviationApiCommand(args: string[]): Promise<JsonObject> {
   const payload = parseArgsToPayload(args);
-  const processRef = ensureWorker();
   const requestId = nextRequestId();
   payload.id = requestId;
 
   const timeoutMs = Number(process.env.AVIATION_API_TIMEOUT_MS || 180000);
+  if (currentBridgeMode() === "http") {
+    return runHttpBridgeCommand(payload, timeoutMs);
+  }
+
+  const processRef = ensureWorker();
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       pendingRequests.delete(requestId);
