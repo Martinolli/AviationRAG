@@ -1,6 +1,6 @@
 # AviationRAG – Performance and Logic Review
 
-Summary of quick, low-touch refactors to improve responsiveness and stability, plus logical issues observed while scanning the current codebase. File paths are relative to the repo root.
+Summary of quick, low-touch refactors to improve responsiveness and stability, plus logical issues observed while scanning the current codebase (line numbers captured from commit `865e714`, March 2026). File paths are relative to the repo root.
 
 ## Performance-focused refactors
 
@@ -16,7 +16,7 @@ Summary of quick, low-touch refactors to improve responsiveness and stability, p
 
 3) HTTP bridge timeouts and request fan-out  
    * File: `src/utils/server/aviation_api_bridge.ts` (lines 149–198, 200–231).  
-   * Issue: The HTTP mode uses a single `fetch` with a fixed timeout and no retry/backoff; slow document ingestion or cold starts can easily hit the default 180s timeout with no partial progress.  
+   * Issue: The HTTP mode uses a single `fetch` with a fixed timeout and no retry/backoff; slow document ingestion or cold starts can easily hit the default 180s timeout (from `AVIATION_API_TIMEOUT_MS`, default 180000 ms) with no partial progress.  
    * Refactor: Add short connection/read timeouts with limited retries, and stream responses when available. For the worker mode, consider a readiness probe and bounded queue to avoid unbounded `pendingRequests` growth during spikes.
 
 4) Document ingestion / raw source extraction caching  
