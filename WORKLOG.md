@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-03-14  
+Last Updated: 2026-03-15  
 Active Branch: `main`
 Source Branch for Historical Entries: `hardening/sanitize-repo`
 
@@ -286,6 +286,19 @@ Persistent execution log for deployment hardening and product-readiness work so 
       - `docs/AVIATION_API_HTTP_BRIDGE_SPEC.md`
       - `docs/VERCEL_ONLINE_SETUP.md`
     - Root cause: prior updates were selectively backported to `main` instead of full branch merge, so branch-only files were absent on `main`.
+
+### 2026-03-15
+
+1. Verified local bridge/app path is healthy:
+    - Local bridge `/health` returns success.
+    - Local app `GET /api/health?deep=1` returns `bridge_mode: "http"` and `aviation_http_ping: true`.
+2. Confirmed Vercel blocker root cause:
+    - Vercel app still shows `deep_check_error: "fetch failed"`.
+    - `AVIATION_API_HTTP_URL` value `https://aviation-api-http-bridge.com` does not resolve publicly (DNS failure).
+3. Next action checkpoint for tomorrow:
+    - Provision a real public HTTPS bridge endpoint (or secure tunnel) for `/health` and `/command`.
+    - Update Vercel `AVIATION_API_HTTP_URL` and redeploy.
+    - Re-validate `https://aviation-rag.vercel.app/api/health?deep=1` expecting `aviation_http_ping: true`.
 
 ## Session Recovery Procedure
 
