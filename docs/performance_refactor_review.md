@@ -43,11 +43,10 @@ Summary of quick, low-touch refactors to improve responsiveness and stability, p
 
 3) Boolean flags can flip in worker when HTTP callers send strings  
    * File: `src/scripts/py_files/aviationai_worker.py` (lines 54–69).  
-   * Problem: `store` and `strict_mode` are read directly from the payload and passed through `bool(...)`; when HTTP callers send `"false"` as a string, `bool("false")` becomes `True`, causing unintended storage and strict-mode behavior.  
+   * Problem: `store` and `strict_mode` are read directly from the payload and passed through `bool(...)`; when HTTP callers send `"false"` as a string, `bool("false")` becomes `true`, causing unintended storage and strict-mode behavior.  
    * Fix: Normalize booleans with a dedicated parser (mirroring `parseBoolean` in `aviation_api_bridge.ts`) before use.
 
 4) Cassandra query uses string-interpolated LIMIT  
    * File: `src/scripts/js_files/store_chat.js` (lines 102–118).  
    * Problem: The LIMIT value is interpolated into the query string. Although it is clamped, it still bypasses prepared statements and prevents query plan reuse.  
    * Fix: Use a prepared statement with a bound limit or move the limit logic into application code after fetching a bounded number of rows via paging.
-
