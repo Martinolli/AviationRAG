@@ -246,6 +246,38 @@ Persistent execution log for deployment hardening and product-readiness work so 
 43. Repository hygiene pass:
     - Added `.next_backup_*/` to `.gitignore` to avoid accidental backup artifact noise.
     - Working tree returned to clean state for continued Vercel setup work.
+44. Brought `main` branch to Vercel-compatible baseline:
+    - Fixed invalid `vercel.json` schema on `main` (`routes[0].pages` removed).
+    - `vercel.json` now uses standard Next.js config (`{ "framework": "nextjs" }`).
+45. Backported auth hardening to `main` for production login reliability:
+    - `src/utils/server/auth_options.ts`
+      - Added `APP_AUTH_PASSWORD_HASH` (`sha256:<hex>`) support with timing-safe compare.
+      - Kept optional `APP_AUTH_PASSWORD` fallback.
+      - Added credentials attempt limiter.
+    - `pages/auth/signin.tsx`
+      - Restored `FormData` submission path.
+      - Added explicit `name` + `autocomplete` attributes.
+46. Backported HTTP bridge runtime support to `main`:
+    - `src/utils/server/aviation_api_bridge.ts`
+      - Added dual bridge mode support (`worker` + `http`).
+      - Added HTTP `/command` call path using:
+        - `AVIATION_API_MODE=http`
+        - `AVIATION_API_HTTP_URL`
+        - `AVIATION_API_HTTP_TOKEN`
+    - `pages/api/health.ts`
+      - Added bridge mode reporting.
+      - Added deep check (`GET /api/health?deep=1`) with bridge ping diagnostics.
+47. Vercel deployment status checkpoint:
+    - App deploy now reaches `bridge_mode: "http"` on hosted health check.
+    - Current blocker remains external bridge reachability from Vercel (`deep_check_error: "fetch failed"`).
+    - Required next action: set `AVIATION_API_HTTP_URL` to a publicly reachable HTTPS bridge endpoint.
+48. Restored missing tracking file on `main`:
+    - Re-added `WORKLOG.md` to repository after it disappeared from branch history.
+49. Repository hygiene updates on `main`:
+    - Added `.next_backup_*/` and `.githooks/` to `.gitignore` to avoid local artifact noise.
+50. End-of-day sync state:
+    - `main` is synchronized with origin and contains the latest Vercel/auth/bridge fixes.
+    - Ready to continue tomorrow from bridge public reachability + final Vercel env validation.
 
 ## Session Recovery Procedure
 
