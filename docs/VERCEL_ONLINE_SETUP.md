@@ -104,4 +104,3 @@ If bridge service is unstable:
 1. Set `AVIATION_API_MODE=worker` only for local/non-Vercel deployments.
 2. For Vercel production, keep `http` mode and rollback bridge deployment to the last stable version.
 3. Re-run `/api/health?deep=1` before restoring traffic.
-
