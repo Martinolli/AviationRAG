@@ -10,6 +10,9 @@
     "lint": "next lint",
     "test:smoke": "playwright test --config=playwright.config.ts"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "dependencies": {
     "@datastax/astra-db-ts": "^0.1.4",
     "@langchain/community": "0.0.27",
@@ -24,7 +27,6 @@
     "langchain": "^0.3.10",
     "next": "^14.1.0",
     "next-auth": "^4.24.13",
-    "node": "^22.13.0",
     "openai": "^4.77.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
