@@ -217,39 +217,40 @@ Persistent execution log for deployment hardening and product-readiness work so 
 
 ### 2026-03-14
 
-36. Added deployment preflight env validation script for HTTP bridge modes:
+1. Added deployment preflight env validation script for HTTP bridge modes:
     - Added `tools/deploy/check-env.mjs`.
     - New profiles:
       - `local-http` (local app + local bridge)
       - `vercel-http` (Vercel-ready checks, HTTPS/public bridge required)
     - Validates required env vars, mode consistency, URL constraints, and warns on weak auth patterns.
-37. Added npm scripts for deploy preflight:
+  
+2. Added npm scripts for deploy preflight:
     - `npm run deploy:check:local-http`
     - `npm run deploy:check:vercel-http`
-38. Updated deployment docs:
+3. Updated deployment docs:
     - `README.md` adds "Deployment Env Checks" section.
     - `docs/VERCEL_ONLINE_SETUP.md` includes preflight command before Vercel deploy.
-39. Added CI secret scanning gate:
+4. Added CI secret scanning gate:
     - Updated `.github/workflows/ci.yml` with `secret-scan` job.
     - Added `gitleaks` working-tree scan (`detect --source . --no-git --redact`).
     - `build-and-smoke` now depends on successful secret scan.
-40. Recovered branch alignment after accidental context switch:
+5. Recovered branch alignment after accidental context switch:
     - Confirmed active workline remains `hardening/sanitize-repo` (`c8138858` baseline).
     - Saved temporary uncommitted work from `copilot/deploy-project-on-vercel` into stash for safety.
-41. Revalidated authentication hardening path:
+6. Revalidated authentication hardening path:
     - Confirmed `pages/auth/signin.tsx` uses robust `FormData` submission with explicit `name` + `autocomplete`.
     - Confirmed `src/utils/server/auth_options.ts` uses `APP_AUTH_PASSWORD_HASH` with timing-safe compare.
-42. Resolved runtime `fetch failed` in chat area:
+7. Resolved runtime `fetch failed` in chat area:
     - Root cause: app configured with `AVIATION_API_MODE=http` while local bridge was not running.
     - Verified via `GET /api/health?deep=1` (`deep_check_error: "fetch failed"`).
     - Restored bridge availability and confirmed chat path recovery.
-43. Repository hygiene pass:
+8. Repository hygiene pass:
     - Added `.next_backup_*/` to `.gitignore` to avoid accidental backup artifact noise.
     - Working tree returned to clean state for continued Vercel setup work.
-44. Brought `main` branch to Vercel-compatible baseline:
+9. Brought `main` branch to Vercel-compatible baseline:
     - Fixed invalid `vercel.json` schema on `main` (`routes[0].pages` removed).
     - `vercel.json` now uses standard Next.js config (`{ "framework": "nextjs" }`).
-45. Backported auth hardening to `main` for production login reliability:
+10. Backported auth hardening to `main` for production login reliability:
     - `src/utils/server/auth_options.ts`
       - Added `APP_AUTH_PASSWORD_HASH` (`sha256:<hex>`) support with timing-safe compare.
       - Kept optional `APP_AUTH_PASSWORD` fallback.
@@ -257,7 +258,7 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - `pages/auth/signin.tsx`
       - Restored `FormData` submission path.
       - Added explicit `name` + `autocomplete` attributes.
-46. Backported HTTP bridge runtime support to `main`:
+11. Backported HTTP bridge runtime support to `main`:
     - `src/utils/server/aviation_api_bridge.ts`
       - Added dual bridge mode support (`worker` + `http`).
       - Added HTTP `/command` call path using:
@@ -267,15 +268,15 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - `pages/api/health.ts`
       - Added bridge mode reporting.
       - Added deep check (`GET /api/health?deep=1`) with bridge ping diagnostics.
-47. Vercel deployment status checkpoint:
+12. Vercel deployment status checkpoint:
     - App deploy now reaches `bridge_mode: "http"` on hosted health check.
     - Current blocker remains external bridge reachability from Vercel (`deep_check_error: "fetch failed"`).
     - Required next action: set `AVIATION_API_HTTP_URL` to a publicly reachable HTTPS bridge endpoint.
-48. Restored missing tracking file on `main`:
+13. Restored missing tracking file on `main`:
     - Re-added `WORKLOG.md` to repository after it disappeared from branch history.
-49. Repository hygiene updates on `main`:
+14. Repository hygiene updates on `main`:
     - Added `.next_backup_*/` and `.githooks/` to `.gitignore` to avoid local artifact noise.
-50. End-of-day sync state:
+15. End-of-day sync state:
     - `main` is synchronized with origin and contains the latest Vercel/auth/bridge fixes.
     - Ready to continue tomorrow from bridge public reachability + final Vercel env validation.
 
