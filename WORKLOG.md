@@ -27,7 +27,7 @@ Persistent execution log for deployment hardening and product-readiness work so 
 1. `Done` Runtime artifact untracking and ignore rules.
 2. `Done` Pre-commit sanitization checks and hook wiring.
 3. `Done` Sanitization report and repeatable local checks.
-4. `Partial` Secret scanning tooling in CI (`gitleaks` / `trufflehog` still missing).
+4. `Partial` Secret scanning tooling in CI (`gitleaks` added, `trufflehog` still pending if required).
 5. `Pending` Git history cleanup for historical large generated blobs.
 
 ### Step 2: Deployment Hardening
@@ -228,6 +228,10 @@ Persistent execution log for deployment hardening and product-readiness work so 
 38. Updated deployment docs:
     - `README.md` adds "Deployment Env Checks" section.
     - `docs/VERCEL_ONLINE_SETUP.md` includes preflight command before Vercel deploy.
+39. Added CI secret scanning gate:
+    - Updated `.github/workflows/ci.yml` with `secret-scan` job.
+    - Added `gitleaks` working-tree scan (`detect --source . --no-git --redact`).
+    - `build-and-smoke` now depends on successful secret scan.
 
 ## Session Recovery Procedure
 
