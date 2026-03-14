@@ -1,6 +1,7 @@
 # Node / frontend
 node_modules/
 .next/
+.next_backup_*/
 out/
 .vercel/
 

@@ -232,6 +232,19 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Updated `.github/workflows/ci.yml` with `secret-scan` job.
     - Added `gitleaks` working-tree scan (`detect --source . --no-git --redact`).
     - `build-and-smoke` now depends on successful secret scan.
+40. Recovered branch alignment after accidental context switch:
+    - Confirmed active workline remains `hardening/sanitize-repo` (`c8138858` baseline).
+    - Saved temporary uncommitted work from `copilot/deploy-project-on-vercel` into stash for safety.
+41. Revalidated authentication hardening path:
+    - Confirmed `pages/auth/signin.tsx` uses robust `FormData` submission with explicit `name` + `autocomplete`.
+    - Confirmed `src/utils/server/auth_options.ts` uses `APP_AUTH_PASSWORD_HASH` with timing-safe compare.
+42. Resolved runtime `fetch failed` in chat area:
+    - Root cause: app configured with `AVIATION_API_MODE=http` while local bridge was not running.
+    - Verified via `GET /api/health?deep=1` (`deep_check_error: "fetch failed"`).
+    - Restored bridge availability and confirmed chat path recovery.
+43. Repository hygiene pass:
+    - Added `.next_backup_*/` to `.gitignore` to avoid accidental backup artifact noise.
+    - Working tree returned to clean state for continued Vercel setup work.
 
 ## Session Recovery Procedure
 
