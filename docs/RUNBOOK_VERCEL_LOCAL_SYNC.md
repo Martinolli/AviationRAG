@@ -39,22 +39,22 @@ Use two terminals:
 
 1. Start bridge:
 
-```powershell
-python src\scripts\py_files\aviationai_http_bridge.py
-```
+   ```powershell
+   python src\scripts\py_files\aviationai_http_bridge.py
+   ```
 
 2. Start app:
 
-```powershell
-npm run dev
-```
+   ```powershell
+   npm run dev
+   ```
 
 3. Validate:
 
-```powershell
-Invoke-WebRequest http://127.0.0.1:8010/health
-Invoke-WebRequest http://127.0.0.1:3000/api/health?deep=1
-```
+   ```powershell
+   Invoke-WebRequest http://127.0.0.1:8010/health
+   Invoke-WebRequest http://127.0.0.1:3000/api/health?deep=1
+   ```
 
 Expected: `aviation_http_ping: true`
 
@@ -109,4 +109,3 @@ Expected fields:
 1. Save current tunnel/bridge URL used in Vercel.
 2. Record latest health check output in `WORKLOG.md`.
 3. Confirm branch is clean (`git status -sb`).
-
