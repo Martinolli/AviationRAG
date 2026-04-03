@@ -343,6 +343,14 @@ Persistent execution log for deployment hardening and product-readiness work so 
 3. Added npm script:
    - `npm run bridge:check`
 4. Updated `docs/VERCEL_ONLINE_SETUP.md` with preflight checker usage before Vercel redeploy.
+5. Added quick-reference sync guide for local vs Vercel bridge configuration:
+   - `docs/RUNBOOK_VERCEL_LOCAL_SYNC.md`
+   - includes:
+     - env split mapping
+     - local startup sequence
+     - bridge preflight command
+     - Vercel validation sequence
+     - error-to-fix table for common failures
 
 ## Session Recovery Procedure
 

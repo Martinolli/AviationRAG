@@ -248,6 +248,7 @@ curl -X POST http://localhost:3000/api/chat/ask `
 For product/UI scope and phased requirements, see:
 
 - [WEB_APP_REQUIREMENTS_V1.md](./docs/WEB_APP_REQUIREMENTS_V1.md)
+- [RUNBOOK_VERCEL_LOCAL_SYNC.md](./docs/RUNBOOK_VERCEL_LOCAL_SYNC.md)
 
 ## Troubleshooting
 
