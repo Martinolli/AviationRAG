@@ -20,6 +20,12 @@ Persistent execution log for deployment hardening and product-readiness work so 
 3. `Done` Step 3 upload workflow (UI + API + ingestion status).
 4. `Done` Step 4 formula rendering in chat.
 5. `In Progress` Step 5 final production-readiness checklist and release gate.
+6. `Planned` Step 6 RAG retrieval quality upgrade (post-bridge stabilization):
+   - `Planned` 6.1 Structure-aware document parsing for PDF-heavy sources.
+   - `Planned` 6.2 Heading/section-aware chunking and table/note chunk separation.
+   - `Planned` 6.3 Metadata schema enrichment for compliance filtering.
+   - `Planned` 6.4 Hybrid retrieval (dense + lexical + metadata filters).
+   - `Planned` 6.5 Mode-specific response templates and evaluation harness.
 
 ## Cross-Check Snapshot
 
@@ -64,6 +70,24 @@ Persistent execution log for deployment hardening and product-readiness work so 
 
 1. `Pending` Remaining dependency vulnerability reduction (major upgrades needed for Next/LangChain lines).
 2. `Pending` Staging hardening checklist (secrets rotation confirmation, monitoring/alerts, cutover runbook).
+
+### Step 6: Retrieval Strategy Upgrade (Planned)
+
+1. `Planned` Parsing upgrade:
+   - Move from extractor-only flow to structure-aware parsing for headings/sections/tables.
+   - Keep multi-parser fallback model for difficult documents.
+2. `Planned` Chunking redesign:
+   - Section/subsection aligned chunks.
+   - Dedicated chunks for tables, cautions/notes, and exact-citation passages.
+3. `Planned` Metadata enrichment:
+   - Add authority, doc class, revision/effective date, status, section path, and page spans.
+4. `Planned` Retrieval modernization:
+   - Keep current semantic layer, add lexical/BM25 branch and metadata filtering.
+   - Add deterministic reranking rules for regulatory identifier exact matches.
+5. `Planned` Response policy split:
+   - Separate compliance, regulatory citation, safety analysis, and internal procedure modes.
+6. `Planned` Evaluation harness:
+   - Build benchmark set for exact paragraph retrieval, revision correctness, and insufficient-evidence behavior.
 
 ## Progress Log
 
@@ -299,6 +323,13 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Provision a real public HTTPS bridge endpoint (or secure tunnel) for `/health` and `/command`.
     - Update Vercel `AVIATION_API_HTTP_URL` and redeploy.
     - Re-validate `https://aviation-rag.vercel.app/api/health?deep=1` expecting `aviation_http_ping: true`.
+
+### 2026-04-03
+
+1. Reviewed `Brain_Storming_ChatGPT_AviationRAG.txt` and validated feasibility against current codebase.
+2. Accepted strategic direction as post-cutover plan:
+   - prioritize parsing/chunking/metadata/retrieval upgrades over storage replacement.
+3. Added Step 6 planned roadmap to this file with phased execution items.
 
 ### 2026-04-03
 
