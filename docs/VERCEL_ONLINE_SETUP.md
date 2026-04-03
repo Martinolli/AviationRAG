@@ -37,6 +37,11 @@ Validate bridge is reachable:
 
 1. `GET https://<bridge-host>/health` returns `success: true`.
 2. `POST https://<bridge-host>/command` with bearer token and action `ping` returns `success: true`.
+3. Optional preflight checker from repository root:
+
+```powershell
+npm run bridge:check -- --url https://<bridge-host> --token <bridge-token>
+```
 
 ## 2. Configure Vercel project environment variables
 

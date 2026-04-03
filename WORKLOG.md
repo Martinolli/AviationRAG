@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-03-15  
+Last Updated: 2026-04-03  
 Active Branch: `main`
 Source Branch for Historical Entries: `hardening/sanitize-repo`
 
@@ -299,6 +299,19 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Provision a real public HTTPS bridge endpoint (or secure tunnel) for `/health` and `/command`.
     - Update Vercel `AVIATION_API_HTTP_URL` and redeploy.
     - Re-validate `https://aviation-rag.vercel.app/api/health?deep=1` expecting `aviation_http_ping: true`.
+
+### 2026-04-03
+
+1. Resumed from Vercel bridge reachability blocker checkpoint.
+2. Added repeatable bridge preflight verification utility:
+   - `tools/bridge/check-http-bridge.mjs`
+   - validates:
+     - `GET /health`
+     - `POST /command` with `{"action":"ping"}`
+   - consumes `--url` / `--token` args (or `AVIATION_API_HTTP_URL` / `AVIATION_API_HTTP_TOKEN` env fallback).
+3. Added npm script:
+   - `npm run bridge:check`
+4. Updated `docs/VERCEL_ONLINE_SETUP.md` with preflight checker usage before Vercel redeploy.
 
 ## Session Recovery Procedure
 
