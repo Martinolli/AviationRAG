@@ -16,7 +16,7 @@ The next phase should not restart the project. It should consolidate the existin
 ### Current Strategic Status
 
 | Area | Status | Interpretation |
-|---|---:|---|
+| --- | ---: | --- |
 | Repository sanitization | Partial / mostly done | Runtime artifacts and hooks are addressed, but historical cleanup remains. |
 | Deployment hardening | Advanced / near cutover | HTTP bridge architecture exists; public endpoint cutover remains the major blocker. |
 | Upload workflow | Done | UI/API/status pipeline exists. Needs governance and approval controls later. |
@@ -487,7 +487,7 @@ Status: `Planned`
 Recommended modes:
 
 | Mode | Use case |
-|---|---|
+| --- | --- |
 | `general` | Broad aviation explanation. |
 | `strict_document` | User asks according to a specific document. |
 | `regulatory_compliance` | Regulations, certification, airworthiness, compliance evidence. |
@@ -580,7 +580,7 @@ Create benchmark sets:
 Minimum initial benchmark size:
 
 | Category | Initial target |
-|---|---:|
+| --- | ---: |
 | Regulatory/compliance | 25 |
 | Document-specific | 25 |
 | General aviation | 20 |
@@ -848,7 +848,7 @@ Add unit tests for mode classification and citation validation.
 ## 7. Risks and Controls
 
 | Risk | Impact | Control |
-|---|---:|---|
+| --- | ---: | --- |
 | Public repo contains large or sensitive aviation documents | High | Data governance, history scan, private storage/Git LFS policy. |
 | RAG retrieves wrong source but answer sounds confident | Critical | Retrieval evaluation, citation validation, evidence level, strict not-found behavior. |
 | Compliance answer lacks exact source support | Critical | Regulatory mode must require citation and quote exact wording when possible. |
@@ -877,7 +877,7 @@ Add unit tests for mode classification and citation validation.
 ## 9. Recommended Branching
 
 | Work type | Branch name example |
-|---|---|
+| --- | --- |
 | Production cutover | `release/production-cutover` |
 | Documentation baseline | `docs/architecture-governance` |
 | Backend skeleton | `refactor/backend-package-skeleton` |
