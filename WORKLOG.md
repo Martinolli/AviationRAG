@@ -483,6 +483,37 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `npm run sanitize:check:all` passed.
    - `npm run build` passed.
 
+### 2026-05-12
+
+1. Continued `PLANWORKLOG.md` Phase C.1 only: backend package skeleton.
+2. Created future-oriented package structure under `src/aviationrag/`:
+   - package root with `__init__.py`, `README.md`, and minimal `config.py`
+   - `ingestion/`
+   - `retrieval/`
+   - `generation/`
+   - `storage/`
+   - `evaluation/`
+   - `api/`
+   - `utils/`
+3. Added README ownership notes for each package area.
+4. No runtime logic was moved.
+5. No behavior changes were introduced:
+   - `src/scripts/py_files/aviationrag_manager.py` remains the active ingestion orchestrator.
+   - `src/scripts/py_files/aviationai.py` remains the active answer/retrieval runtime.
+   - `src/scripts/py_files/config.py` remains the active runtime config source.
+   - Worker and HTTP bridge integration remain unchanged.
+6. Updated `PLANWORKLOG.md` C.1 status to show the skeleton exists while migration tasks remain pending.
+7. Updated `docs/ARCHITECTURE.md` to clarify that `src/aviationrag/` is now a skeleton only, not active runtime ownership.
+8. Remaining blockers:
+   - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+   - Retrieval evaluation is not implemented.
+   - Response policy is not enforced.
+   - Package migration has not started yet.
+9. Validation after skeleton creation:
+   - `npm run sanitize:check:all` passed.
+   - `npm run build` passed.
+   - `python -m compileall src` passed.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

@@ -204,6 +204,7 @@ public/                     Static web assets
 src/interface/              Streamlit and interface experiments
 src/scripts/js_files/       Node.js Astra/embedding/check helper scripts
 src/scripts/py_files/       Python ingestion, retrieval, chat, bridge scripts
+src/aviationrag/            Future backend package skeleton, not runtime source yet
 src/utils/server/           Next.js server utilities and bridge adapter
 styles/                     CSS modules and global styles
 tests/                      Python and Playwright smoke tests
@@ -227,7 +228,7 @@ assets/pictures/
 
 ## Known Architectural Debt
 
-1. Backend orchestration is still script-based rather than package-based.
+1. Backend orchestration is still script-based; `src/aviationrag/` exists only as a package skeleton.
 2. Python and Node responsibilities are mixed across ingestion, storage, and bridge flows.
 3. Metadata is limited and not yet compliance-grade.
 4. There is no document manifest with stable document IDs, file hashes, lifecycle states, or approval status.
@@ -240,7 +241,7 @@ assets/pictures/
 
 ## Planned Architecture Direction
 
-The planned backend package structure from `PLANWORKLOG.md` is future work. It is not implemented yet and should not be treated as current architecture.
+The backend package skeleton from `PLANWORKLOG.md` now exists as `src/aviationrag/`. It is a migration anchor only. Runtime behavior has not moved from the legacy scripts, and the modules below should not be treated as active runtime owners yet.
 
 ```text
 src/aviationrag/

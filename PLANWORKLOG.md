@@ -248,7 +248,7 @@ Acceptance criteria:
 
 #### C.1 Create backend package structure
 
-Status: `Planned`
+Status: `In Progress` / `Package skeleton added`
 
 Target structure:
 
@@ -289,7 +289,7 @@ src/aviationrag/
 
 Tasks:
 
-- [ ] Create package skeleton.
+- [x] Create package skeleton.
 - [ ] Move shared config into package.
 - [ ] Keep old script paths as wrappers.
 - [ ] Avoid breaking `aviationrag_manager.py`.
