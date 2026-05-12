@@ -224,15 +224,15 @@ Acceptance criteria:
 
 #### B.3 Documentation baseline
 
-Status: `Planned`
+Status: `In Progress` / `Baseline docs added`
 
 Tasks:
 
-- [ ] Add or update `docs/ARCHITECTURE.md`.
+- [x] Add or update `docs/ARCHITECTURE.md`.
 - [ ] Add or update `docs/ROADMAP.md`.
-- [ ] Add `docs/DATA_GOVERNANCE.md`.
-- [ ] Add `docs/EVALUATION_PLAN.md`.
-- [ ] Add `docs/RESPONSE_POLICY.md`.
+- [x] Add `docs/DATA_GOVERNANCE.md`.
+- [x] Add `docs/EVALUATION_PLAN.md`.
+- [x] Add `docs/RESPONSE_POLICY.md`.
 
 Acceptance criteria:
 

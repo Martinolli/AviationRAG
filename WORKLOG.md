@@ -461,6 +461,28 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `npm run sanitize:check:all` passed.
    - `npm run build` passed.
 
+### 2026-05-12
+
+1. Continued `PLANWORKLOG.md` Phase B.3 only: documentation baseline.
+2. Created foundational baseline docs:
+   - `docs/ARCHITECTURE.md`
+   - `docs/DATA_GOVERNANCE.md`
+   - `docs/EVALUATION_PLAN.md`
+   - `docs/RESPONSE_POLICY.md`
+3. Updated `PLANWORKLOG.md` B.3 status to show the requested baseline docs were added.
+4. No runtime behavior changes were made:
+   - No backend refactor.
+   - No retrieval logic changes.
+   - No prompt changes.
+   - No chunking, embedding, metadata, or deployment behavior changes.
+5. Remaining blockers:
+   - Production bridge remains externally blocked until a real public HTTPS bridge endpoint is provisioned, configured in Vercel, and redeployed.
+   - Retrieval evaluation is documented but not implemented.
+   - Response policy is documented but not enforced by a validator or structured answer schema.
+6. Validation after documentation edits:
+   - `npm run sanitize:check:all` passed.
+   - `npm run build` passed.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
