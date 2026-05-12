@@ -158,7 +158,7 @@ Acceptance criteria:
 
 #### A.2 Release gate checklist
 
-Status: `Pending`
+Status: `In Progress` / `Blocked`
 
 Tasks:
 
@@ -175,7 +175,7 @@ Tasks:
 
 Acceptance criteria:
 
-- [ ] A single release checklist file exists under `docs/`.
+- [x] A single release checklist file exists under `docs/`.
 - [ ] Every release gate item is checked or explicitly waived with reason.
 
 ---

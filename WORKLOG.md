@@ -429,6 +429,38 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Update Vercel `AVIATION_API_HTTP_URL` to that base URL and redeploy.
    - Re-run `https://aviation-rag.vercel.app/api/health?deep=1` expecting `checks.aviation_http_ping=true`.
 
+### 2026-05-12
+
+1. Continued `PLANWORKLOG.md` Phase A.2 only: production-readiness release gate checklist.
+2. Added release gate checklist:
+   - `docs/PRODUCTION_RELEASE_GATE.md`
+3. Recorded current gate status:
+   - Release decision: `Blocked`.
+   - Phase A.1 public bridge/Vercel cutover remains the primary release blocker.
+   - Upload flow and history/session retrieval still require manual authenticated verification.
+   - Secret rotation still requires operator confirmation.
+   - Gitleaks CI still requires GitHub Actions confirmation because local `gitleaks` is not installed.
+4. Verification run for checklist evidence:
+   - `npm run sanitize:check:all` passed.
+   - `npm run build` passed.
+   - `npm run test:smoke` passed.
+   - `git ls-files .env .env.* secure-connect-*.zip` returned only `.env.example`.
+5. Known non-blocking smoke-test warning:
+   - Next.js reports future `allowedDevOrigins` configuration may be needed for cross-origin dev requests from `127.0.0.1`.
+6. Next action:
+   - Return to Phase A.1 blocker resolution: provide a real public bridge endpoint, update Vercel env, redeploy, and re-run production deep health.
+7. Finalized checklist structure against Phase A.2 requirements:
+   - Secrets and environment.
+   - Build/test validation.
+   - Bridge validation.
+   - App validation.
+   - Deployment validation.
+   - Known limitations.
+   - Go / No-Go status.
+8. Revalidated after final checklist update:
+   - `npm run sanitize:check:all` passed.
+   - `npm run build` passed.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
