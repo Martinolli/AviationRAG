@@ -387,6 +387,48 @@ Persistent execution log for deployment hardening and product-readiness work so 
 9. Next action:
    - Pull/rebase latest `origin/main` after committing sanitation changes.
 
+### 2026-05-12
+
+1. Continued `PLANWORKLOG.md` Phase A.1 only: HTTP bridge public reachability and Vercel cutover validation.
+2. Local bridge checks:
+   - Initial `GET http://127.0.0.1:8010/health` failed: connection refused.
+   - Root cause found in local `.env`: `AVIATION_API_HTTP_BIND` is malformed.
+   - Retest with process-only override `AVIATION_API_HTTP_BIND=127.0.0.1` passed:
+     - `GET http://127.0.0.1:8010/health`: `success=true`.
+     - `POST http://127.0.0.1:8010/command` with `{"action":"ping"}`: `success=true`, `action="ping"`.
+3. Local app deep health check:
+   - Initial `GET http://127.0.0.1:3000/api/health?deep=1` failed because the app was not running.
+   - After starting the local bridge with the process-only bind override and starting `npm run dev`, `GET http://127.0.0.1:3000/api/health?deep=1` passed:
+     - `success=true`
+     - `bridge_mode="http"`
+     - `checks.aviation_http_url_set=true`
+     - `checks.aviation_http_ping=true`
+     - `deep_check_error=null`
+4. Public bridge checks:
+   - Local `.env` currently points `AVIATION_API_HTTP_URL` to `http://127.0.0.1:8010`; no public bridge URL is configured locally.
+   - Previously documented public candidate `https://aviation-api-http-bridge.com` still fails:
+     - `GET /health`: DNS failure, `No such host is known`.
+     - `POST /command` ping: DNS failure, `No such host is known`.
+5. Vercel production deep health check:
+   - `GET https://aviation-rag.vercel.app/api/health?deep=1` returned HTTP `200` with:
+     - `success=true`
+     - `bridge_mode="http"`
+     - `checks.aviation_http_url_set=true`
+     - `checks.aviation_http_ping=false`
+     - `deep_check_requested=true`
+     - `deep_check_error="Bridge returned non-JSON response (503)."`
+6. Blocker status:
+   - Phase A.1 remains `Blocked`.
+   - Local bridge/app path is valid when the local bind env var is corrected.
+   - Production is configured for HTTP bridge mode, but Vercel is not reaching a healthy aviation bridge `/command` endpoint.
+   - Current production failure changed from earlier DNS/fetch failure to a reachable non-JSON `503` response, which indicates the configured Vercel bridge URL is still not a valid/healthy bridge service endpoint.
+7. Next action:
+   - Fix local `.env` `AVIATION_API_HTTP_BIND` formatting.
+   - Provision or identify the real public HTTPS bridge base URL.
+   - Validate public `GET /health` and authenticated `POST /command` ping with `npm run bridge:check -- --url <public-bridge-url> --token <token>`.
+   - Update Vercel `AVIATION_API_HTTP_URL` to that base URL and redeploy.
+   - Re-run `https://aviation-rag.vercel.app/api/health?deep=1` expecting `checks.aviation_http_ping=true`.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
