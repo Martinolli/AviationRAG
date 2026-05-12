@@ -4,10 +4,14 @@ node_modules/
 .next_backup_*/
 out/
 .vercel/
-.githooks/
+.githooks/post-checkout
+.githooks/post-commit
+.githooks/post-merge
+.githooks/pre-push
 
 # Python caches and environments
 __pycache__/
+*.pyc
 *.py[cod]
 *.pyo
 *.pyd
@@ -27,27 +31,29 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+secure-connect-*.zip
+
+# Runtime chat/session state
+logs/
+chat_id/
+chat/
 
 # Logs and temporary files
-logs/
-chat/*.log
-chat_id/*.txt
-chat_id/session_index.json
 *.log
 *.tmp
 playwright-report/
 test-results/
 
-# Generated data artifacts
+# Local/private source documents and generated corpora
+data/documents/
+data/raw/
+data/processed/
 data/embeddings/
 data/astra_db/
-data/raw/scraped/
-data/processed/chunked_documents/
-data/processed/ProcessedText/
-data/processed/ProcessedTextExpanded/
-data/processed/aviation_corpus.json
-data/processed/updated_aviation_corpus.pkl
-data/processed/updated_aviation_corpus.csv
+
+# Keep optional sample data only
+!data/sample_documents/
+!data/sample_documents/.gitkeep
 
 # Generated visualizations
 assets/pictures/
@@ -72,5 +78,3 @@ wheels/
 .installed.cfg
 *.egg
 
-# Astra DB secure bundle
-secure-connect-*.zip

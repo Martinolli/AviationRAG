@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+set -e
+
+node tools/sanitize/precommit-check.mjs

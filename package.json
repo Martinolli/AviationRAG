@@ -9,7 +9,10 @@
     "start": "next start",
     "lint": "next lint",
     "test:smoke": "playwright test --config=playwright.config.ts",
-    "bridge:check": "node tools/bridge/check-http-bridge.mjs"
+    "bridge:check": "node tools/bridge/check-http-bridge.mjs",
+    "hooks:install": "git config core.hooksPath .githooks",
+    "sanitize:check": "node tools/sanitize/precommit-check.mjs",
+    "sanitize:check:all": "node tools/sanitize/precommit-check.mjs --all"
   },
   "dependencies": {
     "@datastax/astra-db-ts": "^0.1.4",

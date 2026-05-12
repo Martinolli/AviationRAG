@@ -352,6 +352,41 @@ Persistent execution log for deployment hardening and product-readiness work so 
      - Vercel validation sequence
      - error-to-fix table for common failures
 
+### 2026-05-12
+
+1. Started repository sanitation pass on `main`:
+   - Local branch was behind `origin/main` by 7 commits.
+   - Runtime file `chat_id/session_metadata.json` was modified locally.
+2. Removed runtime/generated/private folders from Git tracking using `git rm --cached` while preserving local files on disk:
+   - `chat_id/`
+   - `chat/`
+   - `logs/`
+   - `data/documents/`
+   - `data/raw/`
+   - `data/processed/`
+   - `data/embeddings/`
+   - `data/astra_db/`
+   - `assets/pictures/`
+3. Updated `.gitignore` to exclude runtime state, local/private source documents, generated corpora, visualizations, env/secrets, and Python/Node artifacts.
+4. Added `data/sample_documents/.gitkeep` as the only optional sample data placeholder.
+5. Verified/restored sanitization infrastructure from `origin/hardening/sanitize-repo`:
+   - `SANITIZATION_REPORT.md`
+   - `.githooks/pre-commit`
+   - `tools/sanitize/precommit-check.mjs`
+   - `.github/workflows/ci.yml`
+6. Added npm sanitation scripts:
+   - `hooks:install`
+   - `sanitize:check`
+   - `sanitize:check:all`
+7. Installed local hooks with `npm run hooks:install`.
+8. Validation results:
+   - `npm run sanitize:check:all` passed.
+   - `npm run build` passed.
+   - `npm run test:smoke` passed.
+   - No validation was skipped.
+9. Next action:
+   - Pull/rebase latest `origin/main` after committing sanitation changes.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
