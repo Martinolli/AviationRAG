@@ -51,6 +51,8 @@ Current state:
 7. Source documents are currently local/private by policy.
 8. No document manifest is implemented yet.
 9. `src/aviationrag/models.py` provides early dataclass anchors only; it is not used by runtime ingestion or retrieval.
+10. A fake sample manifest fixture exists at `data/sample_documents/sample_manifest.jsonl` for schema/test examples only.
+11. A fake sample chunk fixture exists at `data/sample_documents/sample_chunks.jsonl` for schema/test examples only.
 
 ## 4. Document Identity Model
 
@@ -130,6 +132,13 @@ Near-term recommendation:
 2. Treat `data/manifest/` as private/generated when it contains real document metadata.
 3. Commit only tiny fake/sample manifest fixtures under `data/sample_documents/` if needed for tests or docs.
 4. Defer SQLite or Astra implementation until the manifest writer and lifecycle rules are designed.
+
+Committed sample fixtures:
+
+1. `data/sample_documents/sample_manifest.jsonl`
+2. `data/sample_documents/sample_chunks.jsonl`
+
+These fixtures contain fake metadata and synthetic chunk text only. They are safe to commit and are not used by runtime ingestion, retrieval, embeddings, Astra storage, or the bridge.
 
 ## 6. Proposed Manifest Record Schema
 

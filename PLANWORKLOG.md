@@ -369,6 +369,7 @@ Status: `Schema planning complete` / `Implementation planned`
 Tasks:
 
 - [x] Define document manifest and metadata schema in `docs/DOCUMENT_MANIFEST_SCHEMA.md`.
+- [x] Add fake sample manifest fixture under `data/sample_documents/`.
 - [ ] Create `data/manifest/documents.jsonl` or database-backed equivalent.
 - [ ] Assign stable `document_id` for every source document.
 - [ ] Store file hash.

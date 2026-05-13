@@ -576,6 +576,35 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Retrieval evaluation is not implemented.
    - Response policy is not enforced.
 
+### 2026-05-13
+
+1. Continued `PLANWORKLOG.md` Phase D.1b only: fake sample manifest fixture.
+2. Created `data/sample_documents/sample_manifest.jsonl` with five fake records only:
+   - FAA-style advisory circular sample.
+   - EASA-style certification specification sample.
+   - Fake internal procedure sample for `AeroWorks Example Co.`
+   - Fictional accident report sample.
+   - Manufacturing quality sample.
+3. Created `data/sample_documents/sample_chunks.jsonl` with four short synthetic chunk records tied to fake sample manifest records.
+4. Added `tests/test_sample_manifest_fixture.py` to validate JSONL syntax, required fields, unique IDs, sample-only URIs, hash format, and chunk references.
+5. Updated `docs/DOCUMENT_MANIFEST_SCHEMA.md` to mention the fake fixture files and clarify they are safe to commit and not used by runtime ingestion.
+6. Updated `PLANWORKLOG.md` to mark the fake sample manifest fixture complete while keeping manifest writer/integration tasks planned.
+7. No ingestion runtime behavior changed.
+8. No real documents were added.
+9. No embeddings were regenerated.
+10. Validation after fixture creation:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `npm run build` passed.
+11. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest writer is not implemented.
+    - Manifest is not integrated with ingestion.
+    - Retrieval evaluation is not implemented.
+    - Response policy is not enforced.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
