@@ -546,6 +546,36 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Response policy is not enforced.
    - Metadata migration has not started.
 
+### 2026-05-13
+
+1. Continued `PLANWORKLOG.md` Phase D.1a only: document manifest and metadata schema planning.
+2. Created `docs/DOCUMENT_MANIFEST_SCHEMA.md` covering:
+   - document identity model
+   - manifest storage options
+   - proposed manifest and chunk metadata schemas
+   - lifecycle and approval states
+   - source authority and document type classifications
+   - extraction quality fields
+   - versioning, traceability, Git/data governance alignment, future phases, and open questions
+3. Updated `PLANWORKLOG.md` to mark D.1 schema planning complete while keeping manifest implementation tasks planned/future.
+4. No ingestion runtime behavior changed.
+5. No documents were reprocessed.
+6. No embeddings were regenerated.
+7. Existing scripts still use the legacy data flow:
+   - `src/scripts/py_files/read_documents.py`
+   - `src/scripts/py_files/aviation_chunk_saver.py`
+   - embedding/Astra helper scripts
+8. Validation after schema planning:
+   - `npm run sanitize:check:all` passed.
+   - `python -m compileall src` passed.
+   - `npm run build` passed.
+   - `python tests/test_models.py` passed.
+9. Remaining blockers:
+   - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+   - Manifest is not implemented yet.
+   - Retrieval evaluation is not implemented.
+   - Response policy is not enforced.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

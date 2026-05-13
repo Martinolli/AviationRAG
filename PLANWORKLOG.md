@@ -1,6 +1,6 @@
 # PLANWORKLOG
 
-Last Updated: 2026-04-24  
+Last Updated: 2026-05-13  
 Repository: `Martinolli/AviationRAG`  
 Base Branch: `main`  
 Purpose: Refactored execution plan comparing the current `WORKLOG.md` status with the broader AviationRAG product/audit roadmap.
@@ -304,7 +304,7 @@ Acceptance criteria:
 
 #### C.2 Define core data models
 
-Status: `Planned`
+Status: `Dataclass anchors added` / `Runtime adoption planned`
 
 Recommended models:
 
@@ -346,7 +346,7 @@ class RetrievedChunk:
 
 Tasks:
 
-- [ ] Add lightweight dataclasses or Pydantic models.
+- [x] Add lightweight dataclasses or Pydantic models.
 - [ ] Use models inside new modules first.
 - [ ] Keep compatibility adapters for existing JSON/PKL format.
 
@@ -364,10 +364,11 @@ Acceptance criteria:
 
 #### D.1 Document manifest
 
-Status: `Planned`
+Status: `Schema planning complete` / `Implementation planned`
 
 Tasks:
 
+- [x] Define document manifest and metadata schema in `docs/DOCUMENT_MANIFEST_SCHEMA.md`.
 - [ ] Create `data/manifest/documents.jsonl` or database-backed equivalent.
 - [ ] Assign stable `document_id` for every source document.
 - [ ] Store file hash.
