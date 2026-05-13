@@ -189,7 +189,26 @@ Recommended staged migration:
 
 Real ingestion integration should not be mixed with chunking redesign, prompt changes, response policy enforcement, or retrieval behavior changes.
 
-## 11. Validation Plan
+## 11. Fake-Data Dry-Run Coverage
+
+A side-effect-free dry-run helper exists at `src/aviationrag/ingestion/dry_run.py`.
+
+Current scope:
+
+1. Simulate manifest-aware ingestion planning from fake in-memory legacy-like dictionaries.
+2. Convert fake document and chunk dictionaries into `DocumentRecord` and `ChunkRecord` objects.
+3. Link chunks to documents by normalized filename where possible.
+4. Report duplicate document IDs, unknown chunk document references, empty chunk text, and manifest validation issues.
+
+Current limitations:
+
+1. The helper does not write files.
+2. It does not scan `data/documents/` or read private local documents.
+3. It does not call legacy ingestion scripts, embedding APIs, Astra, or FAISS.
+4. It is not integrated with legacy ingestion yet.
+5. It is intended to reduce risk before future gated integration.
+
+## 12. Validation Plan
 
 Validation before real integration:
 
@@ -217,7 +236,7 @@ Validation after reset/rebuild:
 4. Sample citations can trace to document, chunk, page or section where available, source hash, and ingestion timestamp.
 5. Retrieval evaluation results are compared against baseline.
 
-## 12. Rollback Plan
+## 13. Rollback Plan
 
 Future manifest integration should be reversible:
 
@@ -228,7 +247,7 @@ Future manifest integration should be reversible:
 5. Preserve old document and chunk identifiers during compatibility phases unless a full reset has been approved.
 6. Do not delete superseded manifest records silently; mark them retired or superseded.
 
-## 13. Open Questions
+## 14. Open Questions
 
 1. What should the final Astra vector schema be?
 2. What metadata payload should every chunk/vector carry?

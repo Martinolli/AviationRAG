@@ -373,6 +373,7 @@ Tasks:
 - [x] Add safe JSONL manifest writer/reader utilities using fake/sample test data only.
 - [x] Add legacy compatibility adapter design using fake legacy-like test records only.
 - [x] Add controlled ingestion integration plan and reset strategy without runtime integration.
+- [x] Add fake-data dry-run integration coverage without runtime ingestion integration.
 - [ ] Create `data/manifest/documents.jsonl` or database-backed equivalent.
 - [ ] Assign stable `document_id` for every source document.
 - [ ] Store file hash.

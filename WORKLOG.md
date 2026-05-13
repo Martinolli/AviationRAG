@@ -706,6 +706,41 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Astra/FAISS reset is future only.
 
+### 2026-05-13
+
+1. Continued `PLANWORKLOG.md` Phase D.1f only: fake-data dry-run integration coverage.
+2. Created `src/aviationrag/ingestion/dry_run.py` with side-effect-free helpers:
+   - `DryRunIngestionPlan`
+   - `build_dry_run_ingestion_plan`
+   - `summarize_dry_run_plan`
+   - `validate_dry_run_plan`
+3. Added `tests/test_ingestion_dry_run.py` using inline fake legacy-like records only.
+4. Updated `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md` to document the fake-data dry-run helper and its limits.
+5. No legacy ingestion scripts were modified:
+   - `src/scripts/py_files/read_documents.py`
+   - `src/scripts/py_files/aviation_chunk_saver.py`
+   - `src/scripts/py_files/extract_pkl_to_json.py`
+6. No real data paths were scanned.
+7. No documents were reprocessed.
+8. No embeddings were regenerated.
+9. No Astra or FAISS reset was performed.
+10. Manifest is still not integrated into runtime ingestion.
+11. Validation after dry-run coverage:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `python tests/test_legacy_adapter.py` passed.
+    - `python tests/test_ingestion_dry_run.py` passed.
+    - `npm run build` passed.
+12. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Retrieval evaluation is not implemented.
+    - Response policy is not enforced.
+    - Real reset/rebuild remains future only.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
