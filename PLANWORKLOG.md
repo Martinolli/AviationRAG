@@ -371,6 +371,7 @@ Tasks:
 - [x] Define document manifest and metadata schema in `docs/DOCUMENT_MANIFEST_SCHEMA.md`.
 - [x] Add fake sample manifest fixture under `data/sample_documents/`.
 - [x] Add safe JSONL manifest writer/reader utilities using fake/sample test data only.
+- [x] Add legacy compatibility adapter design using fake legacy-like test records only.
 - [ ] Create `data/manifest/documents.jsonl` or database-backed equivalent.
 - [ ] Assign stable `document_id` for every source document.
 - [ ] Store file hash.

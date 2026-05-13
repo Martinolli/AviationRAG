@@ -149,6 +149,23 @@ data/manifest/documents.jsonl
 
 This path must remain ignored from Git when it contains real or local document metadata. The current committed manifest utility tests use only fake data from `data/sample_documents/sample_manifest.jsonl` and temporary directories.
 
+## Legacy Compatibility Adapter
+
+A legacy compatibility adapter exists at `src/aviationrag/ingestion/legacy_adapter.py`.
+
+Current scope:
+
+1. Map legacy-like dictionaries to `DocumentRecord` and `ChunkRecord`.
+2. Infer simple authority and document type values from fake/public-style filenames.
+3. Build deterministic document IDs for stable tests and future migration planning.
+4. Preserve representative extraction and chunk metadata in model `metadata`.
+
+Current limitations:
+
+1. The adapter is tested with fake legacy-like records only.
+2. It is not integrated with `read_documents.py`, `aviation_chunk_saver.py`, generated JSON, pickle files, embeddings, Astra, FAISS, API routes, or bridge code.
+3. It must not be used to scan or commit private local document metadata until a controlled ingestion integration phase is approved.
+
 ## 6. Proposed Manifest Record Schema
 
 Required or strongly recommended fields:

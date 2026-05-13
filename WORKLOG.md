@@ -637,6 +637,39 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Retrieval evaluation is not implemented.
     - Response policy is not enforced.
 
+### 2026-05-13
+
+1. Continued `PLANWORKLOG.md` Phase D.1d only: legacy compatibility adapter design using fake/test data.
+2. Created `src/aviationrag/ingestion/legacy_adapter.py` with pure conversion helpers for legacy-like dictionaries:
+   - filename normalization
+   - authority inference
+   - document type inference
+   - deterministic document ID generation
+   - document and chunk record conversion
+   - batch document and chunk conversion
+3. Added `tests/test_legacy_adapter.py` using inline fake legacy-like records only.
+4. Updated `docs/DOCUMENT_MANIFEST_SCHEMA.md` to document the legacy compatibility adapter and clarify it is not integrated with runtime ingestion.
+5. No legacy ingestion scripts were modified:
+   - `src/scripts/py_files/read_documents.py`
+   - `src/scripts/py_files/aviation_chunk_saver.py`
+   - `src/scripts/py_files/extract_pkl_to_json.py`
+6. No documents were reprocessed.
+7. No embeddings were regenerated.
+8. Manifest is not integrated with ingestion yet.
+9. Validation after compatibility adapter creation:
+   - `npm run sanitize:check:all` passed.
+   - `python -m compileall src` passed.
+   - `python tests/test_models.py` passed.
+   - `python tests/test_sample_manifest_fixture.py` passed.
+   - `python tests/test_manifest_writer.py` passed.
+   - `python tests/test_legacy_adapter.py` passed.
+   - `npm run build` passed.
+10. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Retrieval evaluation is not implemented.
+    - Response policy is not enforced.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
