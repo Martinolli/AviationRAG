@@ -245,6 +245,8 @@ The backend package skeleton from `PLANWORKLOG.md` now exists as `src/aviationra
 
 Lightweight core dataclasses now exist in `src/aviationrag/models.py` for future document, chunk, retrieval, and answer-result records. Existing ingestion, retrieval, bridge, API, JSON, pickle, and Astra flows still use the legacy dictionary/file structures; no runtime migration has started.
 
+Manifest integration planning now exists in `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md`. The plan documents future hook points, validation gates, and Astra/FAISS reset strategy only; the legacy ingestion runtime remains unchanged.
+
 ```text
 src/aviationrag/
   __init__.py

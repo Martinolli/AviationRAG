@@ -670,6 +670,42 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Retrieval evaluation is not implemented.
     - Response policy is not enforced.
 
+### 2026-05-13
+
+1. Continued `PLANWORKLOG.md` Phase D.1e only: controlled ingestion manifest integration design.
+2. Created `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md` covering:
+   - current legacy ingestion flow
+   - proposed manifest-aware ingestion flow
+   - planned integration hook points
+   - `DocumentRecord` and `ChunkRecord` mapping plans
+   - manifest lifecycle write points
+   - local/private data handling
+   - future Astra/FAISS reset and rebuild strategy
+   - migration phases, validation plan, rollback plan, and open questions
+3. Did not create an additional dry-run helper because `src/aviationrag/ingestion/legacy_adapter.py` already contains the pure fake-data conversion helpers this phase would call.
+4. Updated `docs/DOCUMENT_MANIFEST_SCHEMA.md` and `docs/ARCHITECTURE.md` to link the integration plan while clarifying that runtime integration is not active.
+5. No ingestion runtime scripts were modified:
+   - `src/scripts/py_files/read_documents.py`
+   - `src/scripts/py_files/aviation_chunk_saver.py`
+   - `src/scripts/py_files/extract_pkl_to_json.py`
+6. No documents were reprocessed.
+7. No embeddings were regenerated.
+8. No Astra or FAISS reset was performed.
+9. Validation after integration planning:
+   - `npm run sanitize:check:all` passed.
+   - `python -m compileall src` passed.
+   - `python tests/test_models.py` passed.
+   - `python tests/test_sample_manifest_fixture.py` passed.
+   - `python tests/test_manifest_writer.py` passed.
+   - `python tests/test_legacy_adapter.py` passed.
+   - `npm run build` passed.
+10. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Retrieval evaluation is not implemented.
+    - Response policy is not enforced.
+    - Astra/FAISS reset is future only.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

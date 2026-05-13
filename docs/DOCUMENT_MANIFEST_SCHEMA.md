@@ -149,6 +149,8 @@ data/manifest/documents.jsonl
 
 This path must remain ignored from Git when it contains real or local document metadata. The current committed manifest utility tests use only fake data from `data/sample_documents/sample_manifest.jsonl` and temporary directories.
 
+Future ingestion integration planning is documented in `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md`. That plan defines hook points, reset strategy, validation, and rollback guidance only; manifest integration is not active in runtime ingestion.
+
 ## Legacy Compatibility Adapter
 
 A legacy compatibility adapter exists at `src/aviationrag/ingestion/legacy_adapter.py`.
