@@ -243,6 +243,8 @@ assets/pictures/
 
 The backend package skeleton from `PLANWORKLOG.md` now exists as `src/aviationrag/`. It is a migration anchor only. Runtime behavior has not moved from the legacy scripts, and the modules below should not be treated as active runtime owners yet.
 
+Lightweight core dataclasses now exist in `src/aviationrag/models.py` for future document, chunk, retrieval, and answer-result records. Existing ingestion, retrieval, bridge, API, JSON, pickle, and Astra flows still use the legacy dictionary/file structures; no runtime migration has started.
+
 ```text
 src/aviationrag/
   __init__.py

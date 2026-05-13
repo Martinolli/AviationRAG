@@ -514,6 +514,38 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `npm run build` passed.
    - `python -m compileall src` passed.
 
+### 2026-05-13
+
+1. Continued `PLANWORKLOG.md` Phase C.2 only: lightweight core data models.
+2. Created `src/aviationrag/models.py` with lightweight standard-library dataclasses:
+   - `DocumentRecord`
+   - `ChunkRecord`
+   - `RetrievedChunk`
+   - `AnswerResult`
+3. Added minimal `to_dict()` and `from_dict()` helpers for future migration anchors.
+4. Added lightweight model tests in `tests/test_models.py`.
+5. Updated architecture/package documentation to clarify:
+   - Lightweight core models now exist.
+   - Runtime migration has not started.
+   - Existing scripts still use legacy dictionaries, JSON, pickle, FAISS, Astra, and bridge structures.
+6. No runtime migration was performed:
+   - No retrieval logic changes.
+   - No prompt changes.
+   - No chunking changes.
+   - No embedding changes.
+   - No bridge/API behavior changes.
+   - No deployment behavior changes.
+7. Validation after model creation:
+   - `python tests/test_models.py` passed.
+   - `npm run sanitize:check:all` passed.
+   - `python -m compileall src` passed.
+   - `npm run build` passed.
+8. Remaining blockers:
+   - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+   - Retrieval evaluation is not implemented.
+   - Response policy is not enforced.
+   - Metadata migration has not started.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

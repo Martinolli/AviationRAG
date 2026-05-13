@@ -2,9 +2,9 @@
 
 This package is the future home for maintainable AviationRAG backend modules.
 
-Current status: package skeleton only. The active runtime still depends on the
-legacy scripts in `src/scripts/py_files` and Node helpers in
-`src/scripts/js_files`.
+Current status: package skeleton with lightweight core dataclasses only. The
+active runtime still depends on the legacy scripts in `src/scripts/py_files`
+and Node helpers in `src/scripts/js_files`.
 
 Backward compatibility rule:
 
@@ -13,6 +13,12 @@ Backward compatibility rule:
    continue to work during migration.
 3. Future work should move logic into this package gradually, with legacy script
    paths kept as wrappers until an explicit migration is complete.
+
+Core model note:
+
+`models.py` defines future-facing dataclasses for documents, chunks, retrieved
+chunks, and answer results. Existing JSON, pickle, Astra, FAISS, and bridge
+flows still use legacy dictionaries and have not been migrated.
 
 Planned ownership areas:
 
