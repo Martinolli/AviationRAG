@@ -132,6 +132,7 @@ Near-term recommendation:
 2. Treat `data/manifest/` as private/generated when it contains real document metadata.
 3. Commit only tiny fake/sample manifest fixtures under `data/sample_documents/` if needed for tests or docs.
 4. Defer SQLite or Astra implementation until the manifest writer and lifecycle rules are designed.
+5. Use `data/sample_documents/sample_manifest.jsonl` for committed tests instead of the future private manifest path.
 
 Committed sample fixtures:
 
@@ -139,6 +140,14 @@ Committed sample fixtures:
 2. `data/sample_documents/sample_chunks.jsonl`
 
 These fixtures contain fake metadata and synthetic chunk text only. They are safe to commit and are not used by runtime ingestion, retrieval, embeddings, Astra storage, or the bridge.
+
+Future local/private manifest path:
+
+```text
+data/manifest/documents.jsonl
+```
+
+This path must remain ignored from Git when it contains real or local document metadata. The current committed manifest utility tests use only fake data from `data/sample_documents/sample_manifest.jsonl` and temporary directories.
 
 ## 6. Proposed Manifest Record Schema
 

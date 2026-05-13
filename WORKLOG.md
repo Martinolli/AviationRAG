@@ -605,6 +605,38 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Retrieval evaluation is not implemented.
     - Response policy is not enforced.
 
+### 2026-05-13
+
+1. Continued `PLANWORKLOG.md` Phase D.1c only: manifest utility module using fake/test data.
+2. Created `src/aviationrag/ingestion/manifest.py` with safe JSONL utilities:
+   - `read_manifest`
+   - `write_manifest`
+   - `append_manifest_record`
+   - `validate_manifest_record`
+   - `document_record_from_dict`
+   - `document_record_to_dict`
+3. Added `tests/test_manifest_writer.py` using only `data/sample_documents/sample_manifest.jsonl` and temporary directories.
+4. Updated `.gitignore` so `data/manifest/` remains ignored as the future local/private manifest path while fake sample fixtures remain allowed.
+5. Updated `docs/DOCUMENT_MANIFEST_SCHEMA.md` to clarify:
+   - `data/manifest/documents.jsonl` is future local/private storage and must not be committed with real metadata.
+   - committed tests use fake sample data from `data/sample_documents/sample_manifest.jsonl`.
+6. No ingestion runtime behavior changed.
+7. No documents were reprocessed.
+8. No embeddings were regenerated.
+9. Existing scripts still use the legacy data flow.
+10. Validation after manifest utility creation:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `npm run build` passed.
+11. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Retrieval evaluation is not implemented.
+    - Response policy is not enforced.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

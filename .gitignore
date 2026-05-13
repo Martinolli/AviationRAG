@@ -50,10 +50,13 @@ data/raw/
 data/processed/
 data/embeddings/
 data/astra_db/
+data/manifest/
 
 # Keep optional sample data only
 !data/sample_documents/
 !data/sample_documents/.gitkeep
+!data/sample_documents/sample_manifest.jsonl
+!data/sample_documents/sample_chunks.jsonl
 
 # Generated visualizations
 assets/pictures/
