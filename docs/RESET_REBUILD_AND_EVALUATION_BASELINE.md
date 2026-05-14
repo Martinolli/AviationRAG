@@ -183,6 +183,8 @@ read documents -> manifest update -> extract text -> chunk text
 
 ## 11. Retrieval Evaluation Baseline Requirements
 
+A fake/sample-only smoke fixture now exists at `data/sample_documents/sample_retrieval_eval.jsonl`, with validation utilities in `src/aviationrag/evaluation/smoke_fixture.py`. This fixture defines the future case format only; it does not execute retrieval and is not a substitute for the real pre-reset baseline.
+
 Minimum smoke baseline before reset:
 
 | Category | Initial minimum |

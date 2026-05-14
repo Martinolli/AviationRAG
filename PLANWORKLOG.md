@@ -457,6 +457,23 @@ Acceptance criteria:
 
 **Priority:** Critical for aviation/compliance usefulness
 
+#### E.0 Retrieval evaluation smoke fixture baseline
+
+Status: `Completed` / `Harness planned`
+
+Tasks:
+
+- [x] Add fake/sample-only retrieval evaluation JSONL fixture.
+- [x] Add smoke fixture validation utilities.
+- [x] Add fixture validation tests.
+- [ ] Connect evaluation cases to a retrieval harness.
+- [ ] Run real retrieval benchmark execution.
+
+Acceptance criteria:
+
+- [x] Smoke fixture format is validated without running retrieval.
+- [ ] Retrieval quality is measured against real retrieval results.
+
 #### E.1 Hybrid retrieval
 
 Status: `Planned`

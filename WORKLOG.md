@@ -921,6 +921,42 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Dependency major upgrades remain future work.
 
+### 2026-05-14
+
+1. Continued `PLANWORKLOG.md` Phase E.0 / D.2 only: retrieval evaluation smoke fixture baseline.
+2. Created fake/sample-only retrieval evaluation fixture:
+   - `data/sample_documents/sample_retrieval_eval.jsonl`
+3. Added validation utilities:
+   - `src/aviationrag/evaluation/smoke_fixture.py`
+4. Added tests:
+   - `tests/test_retrieval_smoke_fixture.py`
+5. Updated evaluation/reset documentation to describe the smoke fixture baseline and clarify it is not real retrieval execution.
+6. Updated `PLANWORKLOG.md` to mark the smoke fixture baseline complete while keeping real retrieval harness execution planned.
+7. No real retrieval integration was performed.
+8. No Astra or FAISS access occurred.
+9. No embeddings were generated.
+10. No ingestion runtime scripts were modified.
+11. No real data paths were scanned.
+12. No documents were reprocessed.
+13. Validation after retrieval smoke fixture baseline:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `python tests/test_legacy_adapter.py` passed.
+    - `python tests/test_ingestion_dry_run.py` passed.
+    - `python tests/test_local_manifest_dry_run_script.py` passed.
+    - `python tests/test_manifest_config.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `npm run build` passed.
+14. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Retrieval harness is not implemented.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

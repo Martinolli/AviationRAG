@@ -81,6 +81,36 @@ Metrics should include:
 
 Expected documents, sections, and pages should be added where practical. Page/section checks will become more important after the planned metadata upgrade.
 
+## Smoke Retrieval Fixture Baseline
+
+A fake/sample-only smoke fixture now exists at:
+
+```text
+data/sample_documents/sample_retrieval_eval.jsonl
+```
+
+Validation utilities exist at:
+
+```text
+src/aviationrag/evaluation/smoke_fixture.py
+```
+
+Current scope:
+
+1. Defines the JSONL shape for future retrieval evaluation cases.
+2. Uses fake sample document and chunk IDs only.
+3. Covers initial smoke categories: `compliance`, `manufacturing`, `sms`, `accident_analysis`, `maintenance`, and `unsupported`.
+4. Validates fixture syntax, required fields, accepted categories, accepted expected behaviors, duplicate IDs, and minimum expected rank.
+5. Does not run retrieval, connect to Astra, use FAISS, generate embeddings, or scan real documents.
+
+Intended future use:
+
+1. Use the smoke fixture to test the evaluation harness before connecting it to any real retrieval engine.
+2. Add top-k retrieval hit metrics after retrieval integration exists.
+3. Track expected document match and expected chunk match once real retrieval results can be compared.
+4. Track unsupported query handling for `insufficient_evidence` and `reject_out_of_scope` cases.
+5. Keep real/private evaluation datasets local or private if they expose source titles, document text, or operational metadata.
+
 ## Citation Validation Concept
 
 Citation validation should verify:
