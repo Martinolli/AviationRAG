@@ -817,6 +817,63 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Real reset/rebuild remains future only.
 
+### 2026-05-14
+
+1. Started and completed Security Sprint S.1 only: dependency audit baseline and safe non-breaking fixes.
+2. Created branch `security/dependency-hardening`.
+3. Baseline `npm audit` counts:
+   - Total: 39
+   - Critical: 2
+   - High: 21
+   - Moderate: 12
+   - Low: 4
+4. Saved baseline report:
+   - `docs/security/npm-audit-baseline.json`
+5. Ran safe fix only:
+   - `npm audit fix`
+   - Did not run `npm audit fix --force`.
+6. Safe fix result:
+   - `package-lock.json` updated.
+   - `package.json` unchanged.
+   - Critical findings reduced from 2 to 0.
+   - Total findings reduced from 39 to 27.
+7. Saved post-fix report:
+   - `docs/security/npm-audit-after-safe-fix.json`
+8. Created `docs/security/DEPENDENCY_HARDENING_PLAN.md` documenting remaining vulnerabilities, major-upgrade packages, risk classification, upgrade sequence, validation plan, rollback plan, and open questions.
+9. Remaining post-fix `npm audit` counts:
+   - Total: 27
+   - Critical: 0
+   - High: 18
+   - Moderate: 7
+   - Low: 2
+10. Remaining vulnerability clusters still require planned follow-up:
+    - Next.js / PostCSS major upgrade path.
+    - LangChain / LangSmith major upgrade path.
+    - Vercel/dev tooling transitive dependency review.
+11. No ingestion, retrieval, prompt, embedding, FAISS, Astra, manifest runtime, bridge, or deployment behavior was changed.
+12. No ingestion was run.
+13. No embeddings were regenerated.
+14. No data files were committed.
+15. Validation after safe dependency fix:
+    - `npm run sanitize:check:all` passed.
+    - `npm run build` passed.
+    - `npm run test:smoke` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `python tests/test_legacy_adapter.py` passed.
+    - `python tests/test_ingestion_dry_run.py` passed.
+    - `python tests/test_local_manifest_dry_run_script.py` passed.
+    - `python tests/test_manifest_config.py` passed.
+16. Non-blocking validation warnings:
+    - `npm run build` and `npm run test:smoke` reported an outdated Browserslist/caniuse-lite warning.
+    - Smoke test dev server reported a future Next.js `allowedDevOrigins` warning.
+17. Recommendation for next security sprint:
+    - Handle Next.js major upgrade first in a separate branch.
+    - Then handle LangChain package-family upgrades separately.
+    - Keep major dependency upgrades isolated from RAG/ingestion work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
