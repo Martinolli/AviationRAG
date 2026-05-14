@@ -151,6 +151,19 @@ This path must remain ignored from Git when it contains real or local document m
 
 Future ingestion integration planning is documented in `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md`. That plan defines hook points, reset strategy, validation, and rollback guidance only; manifest integration is not active in runtime ingestion.
 
+## Local-Only Manifest Dry Run
+
+A developer utility exists at `tools/manifest/write-local-sample-manifest.py` for local-only manifest path verification.
+
+Dry-run behavior:
+
+1. Input: `data/sample_documents/sample_manifest.jsonl`.
+2. Output: `data/manifest/documents.jsonl`.
+3. The output path is ignored, private, and local-only.
+4. The script uses fake sample data only.
+5. The script writes the manifest, reads it back, validates the records, and confirms the output path is ignored by Git.
+6. This is not runtime ingestion integration and does not scan `data/documents/`.
+
 ## Legacy Compatibility Adapter
 
 A legacy compatibility adapter exists at `src/aviationrag/ingestion/legacy_adapter.py`.

@@ -208,7 +208,26 @@ Current limitations:
 4. It is not integrated with legacy ingestion yet.
 5. It is intended to reduce risk before future gated integration.
 
-## 12. Validation Plan
+## 12. Local-Only Manifest Write Dry Run
+
+A manual developer utility exists at `tools/manifest/write-local-sample-manifest.py`.
+
+Current scope:
+
+1. Load fake records from `data/sample_documents/sample_manifest.jsonl`.
+2. Write them to the ignored local path `data/manifest/documents.jsonl`.
+3. Read the local file back through the manifest utility.
+4. Validate record count and required manifest fields.
+5. Confirm the generated output path is ignored by Git.
+
+Current limitations:
+
+1. The generated manifest is local-only and must not be committed.
+2. The utility refuses to overwrite an existing local manifest unless `--force` is supplied.
+3. It does not scan real documents, call legacy ingestion scripts, generate embeddings, access Astra, or build FAISS indexes.
+4. It is not runtime ingestion integration.
+
+## 13. Validation Plan
 
 Validation before real integration:
 
@@ -236,7 +255,7 @@ Validation after reset/rebuild:
 4. Sample citations can trace to document, chunk, page or section where available, source hash, and ingestion timestamp.
 5. Retrieval evaluation results are compared against baseline.
 
-## 13. Rollback Plan
+## 14. Rollback Plan
 
 Future manifest integration should be reversible:
 
@@ -247,7 +266,7 @@ Future manifest integration should be reversible:
 5. Preserve old document and chunk identifiers during compatibility phases unless a full reset has been approved.
 6. Do not delete superseded manifest records silently; mark them retired or superseded.
 
-## 14. Open Questions
+## 15. Open Questions
 
 1. What should the final Astra vector schema be?
 2. What metadata payload should every chunk/vector carry?

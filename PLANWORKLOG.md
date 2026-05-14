@@ -1,6 +1,6 @@
 # PLANWORKLOG
 
-Last Updated: 2026-05-13  
+Last Updated: 2026-05-14  
 Repository: `Martinolli/AviationRAG`  
 Base Branch: `main`  
 Purpose: Refactored execution plan comparing the current `WORKLOG.md` status with the broader AviationRAG product/audit roadmap.
@@ -374,6 +374,7 @@ Tasks:
 - [x] Add legacy compatibility adapter design using fake legacy-like test records only.
 - [x] Add controlled ingestion integration plan and reset strategy without runtime integration.
 - [x] Add fake-data dry-run integration coverage without runtime ingestion integration.
+- [x] Add local-only manifest write dry run using fake sample records and ignored output path.
 - [ ] Create `data/manifest/documents.jsonl` or database-backed equivalent.
 - [ ] Assign stable `document_id` for every source document.
 - [ ] Store file hash.
