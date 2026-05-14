@@ -874,6 +874,53 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Then handle LangChain package-family upgrades separately.
     - Keep major dependency upgrades isolated from RAG/ingestion work.
 
+### 2026-05-14
+
+1. Continued `PLANWORKLOG.md` Phase D.1i only: reset/rebuild and retrieval evaluation baseline planning.
+2. Created `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md` covering:
+   - reset/rebuild triggers
+   - pre-reset checklist
+   - backup/export checklist
+   - local artifact cleanup plan
+   - Astra DB reset plan
+   - FAISS/index reset plan
+   - re-ingestion/rebuild sequence
+   - retrieval evaluation baseline requirements
+   - acceptance criteria
+   - rollback/recovery plan
+   - operational risks
+   - go/no-go checklist
+   - future implementation phases
+3. Updated cross-references in:
+   - `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md`
+   - `docs/EVALUATION_PLAN.md`
+   - `docs/ARCHITECTURE.md`
+4. Updated `PLANWORKLOG.md` to mark D.1i reset/rebuild and retrieval baseline planning complete while keeping actual reset/rebuild and retrieval harness implementation planned.
+5. No reset was performed.
+6. No Astra or FAISS data was changed.
+7. No ingestion runtime scripts were modified.
+8. No real data paths were scanned.
+9. No documents were reprocessed.
+10. No embeddings were regenerated.
+11. No `data/manifest/documents.jsonl` was written.
+12. Validation after reset/rebuild planning:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `python tests/test_legacy_adapter.py` passed.
+    - `python tests/test_ingestion_dry_run.py` passed.
+    - `python tests/test_local_manifest_dry_run_script.py` passed.
+    - `python tests/test_manifest_config.py` passed.
+    - `npm run build` passed.
+13. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Retrieval evaluation harness is not implemented.
+    - Response policy is not enforced.
+    - Dependency major upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

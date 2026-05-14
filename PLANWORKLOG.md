@@ -403,6 +403,7 @@ Tasks:
 - [x] Add fake-data dry-run integration coverage without runtime ingestion integration.
 - [x] Add local-only manifest write dry run using fake sample records and ignored output path.
 - [x] Add gated manifest integration settings disabled by default.
+- [x] Define reset/rebuild and retrieval evaluation baseline gates before real migration.
 - [ ] Create `data/manifest/documents.jsonl` or database-backed equivalent.
 - [ ] Assign stable `document_id` for every source document.
 - [ ] Store file hash.

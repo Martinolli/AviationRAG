@@ -162,6 +162,18 @@ Operational metrics:
 6. Compare every retrieval change against the baseline.
 7. Keep slow or LLM-dependent evaluations manual or scheduled, not mandatory for every fast CI run.
 
+## Reset/Rebuild Baseline Gate
+
+Any future Astra, FAISS, embedding, or manifest-driven ingestion reset must be paired with retrieval baseline measurement. The reset/rebuild safety plan is documented in `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md`.
+
+Minimum reset gate:
+
+1. Run a pre-reset retrieval smoke baseline before deleting or rebuilding generated artifacts.
+2. Run the same baseline after rebuild.
+3. Compare top-1, top-3, top-5, expected-document, citation-traceability, and not-found correctness results.
+4. Treat material retrieval regression as a rollback or no-go signal.
+5. Keep evaluation outputs local/private when they expose real document names, source text, or operational metadata.
+
 ## Known Current Gaps
 
 1. No retrieval benchmark harness exists yet.

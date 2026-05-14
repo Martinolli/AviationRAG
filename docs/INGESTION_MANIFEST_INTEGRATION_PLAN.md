@@ -10,6 +10,8 @@ This plan defines how the new manifest utilities should later be integrated into
 
 The current phase does not modify ingestion scripts, reprocess documents, regenerate embeddings, reset Astra or FAISS, or write real manifest files. It records the intended integration path, dry-run safety rules, reset strategy, and validation gates for a later controlled migration.
 
+The detailed reset/rebuild and retrieval evaluation gate is tracked separately in `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md`.
+
 ## 2. Current Legacy Ingestion Flow
 
 The current ingestion pipeline remains script-based. Conceptually, it follows this flow:
@@ -149,6 +151,8 @@ Governance rules:
 ## 9. Reset and Rebuild Strategy for Astra and FAISS
 
 ### Safe Point for Full Index/Database Reset
+
+The detailed go/no-go checklist and retrieval baseline requirements are defined in `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md`.
 
 A full Astra, FAISS, and embedding reset is recommended when:
 

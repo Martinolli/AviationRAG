@@ -247,6 +247,8 @@ Lightweight core dataclasses now exist in `src/aviationrag/models.py` for future
 
 Manifest integration planning now exists in `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md`. The plan documents future hook points, validation gates, and Astra/FAISS reset strategy only; the legacy ingestion runtime remains unchanged.
 
+The controlled reset/rebuild and retrieval baseline gate is documented in `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md`. No Astra reset, FAISS reset, ingestion migration, or embedding regeneration has been performed.
+
 ```text
 src/aviationrag/
   __init__.py
