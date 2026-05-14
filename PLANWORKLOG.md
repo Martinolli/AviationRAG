@@ -127,6 +127,33 @@ The project should now follow this execution order:
 
 ## 4. Active Master Plan
 
+### Security Sprint S — Dependency Hardening
+
+**Goal:** Track dependency vulnerability reduction separately from ingestion, retrieval, manifest, bridge, embedding, and prompt work.
+
+**Priority:** High  
+**Recommended branch:** `security/dependency-hardening`
+
+#### S.1 Dependency audit baseline and safe fixes
+
+Status: `Completed` / `Major upgrades planned`
+
+Tasks:
+
+- [x] Create npm audit baseline report under `docs/security/`.
+- [x] Apply safe `npm audit fix` only.
+- [x] Save post-fix npm audit report under `docs/security/`.
+- [x] Document remaining dependency hardening plan.
+- [x] Validate sanitize, build, smoke, Python compile, and lightweight model/manifest tests.
+- [ ] Upgrade Next.js major version if required by audit.
+- [ ] Upgrade LangChain package family if required by audit.
+- [ ] Review Vercel/dev tooling transitive vulnerabilities.
+
+Acceptance criteria:
+
+- [x] Critical npm audit findings reduced to zero without `npm audit fix --force`.
+- [ ] Remaining high/moderate findings are resolved or formally risk accepted.
+
 ### Phase A — Close Production Cutover and Release Gate
 
 **Goal:** Finish the already-started deployment hardening track and reach a stable deployed baseline.
