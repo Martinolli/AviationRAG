@@ -227,7 +227,27 @@ Current limitations:
 3. It does not scan real documents, call legacy ingestion scripts, generate embeddings, access Astra, or build FAISS indexes.
 4. It is not runtime ingestion integration.
 
-## 13. Validation Plan
+## 13. Gated Manifest Integration Controls
+
+Future manifest integration settings are defined in `src/aviationrag/config.py`.
+
+Environment variables:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `AVIATIONRAG_ENABLE_MANIFEST_INTEGRATION` | `false` | Future gate for manifest-aware ingestion writes. |
+| `AVIATIONRAG_MANIFEST_DRY_RUN` | `false` | Future gate for dry-run behavior when integration is enabled. |
+| `AVIATIONRAG_MANIFEST_PATH` | `data/manifest/documents.jsonl` | Local/private manifest path override. |
+
+Current scope:
+
+1. The flags are parsed by side-effect-free package config helpers.
+2. Manifest integration remains disabled by default.
+3. The default manifest path is local/private and ignored by Git.
+4. The flags are not wired into legacy ingestion scripts in this phase.
+5. A future integration phase should require these settings before writing manifest records from real ingestion.
+
+## 14. Validation Plan
 
 Validation before real integration:
 
@@ -235,9 +255,10 @@ Validation before real integration:
 2. Fake fixture tests for sample manifest and sample chunks.
 3. Fake legacy adapter tests for document and chunk conversion.
 4. Dry-run tests that prove no files are written unless an explicit temporary path is supplied.
-5. Sanitization checks confirming no private data, generated data, embeddings, or env files are staged.
-6. Compile checks for the Python package.
-7. Build checks for the web app.
+5. Config tests for disabled-by-default manifest integration flags.
+6. Sanitization checks confirming no private data, generated data, embeddings, or env files are staged.
+7. Compile checks for the Python package.
+8. Build checks for the web app.
 
 Validation before reset/rebuild:
 
@@ -255,7 +276,7 @@ Validation after reset/rebuild:
 4. Sample citations can trace to document, chunk, page or section where available, source hash, and ingestion timestamp.
 5. Retrieval evaluation results are compared against baseline.
 
-## 14. Rollback Plan
+## 15. Rollback Plan
 
 Future manifest integration should be reversible:
 
@@ -266,7 +287,7 @@ Future manifest integration should be reversible:
 5. Preserve old document and chunk identifiers during compatibility phases unless a full reset has been approved.
 6. Do not delete superseded manifest records silently; mark them retired or superseded.
 
-## 15. Open Questions
+## 16. Open Questions
 
 1. What should the final Astra vector schema be?
 2. What metadata payload should every chunk/vector carry?

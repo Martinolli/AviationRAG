@@ -779,6 +779,44 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Real reset/rebuild remains future only.
 
+### 2026-05-14
+
+1. Continued `PLANWORKLOG.md` Phase D.1h only: gated manifest integration design.
+2. Added disabled-by-default manifest integration config helpers in `src/aviationrag/config.py`.
+3. Documented future environment variables in `.env.example`:
+   - `AVIATIONRAG_ENABLE_MANIFEST_INTEGRATION`
+   - `AVIATIONRAG_MANIFEST_DRY_RUN`
+   - `AVIATIONRAG_MANIFEST_PATH`
+4. Added `tests/test_manifest_config.py` for bool parsing, injected env mappings, default disabled state, dry-run state, and manifest path override behavior.
+5. Updated `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md` to document gated manifest integration controls.
+6. Manifest integration remains disabled by default.
+7. No legacy ingestion scripts were modified:
+   - `src/scripts/py_files/read_documents.py`
+   - `src/scripts/py_files/aviation_chunk_saver.py`
+   - `src/scripts/py_files/extract_pkl_to_json.py`
+8. No real data paths were scanned.
+9. No documents were reprocessed.
+10. No embeddings were regenerated.
+11. No Astra or FAISS reset was performed.
+12. Manifest is still not integrated into runtime ingestion.
+13. Validation after gated manifest integration settings:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `python tests/test_legacy_adapter.py` passed.
+    - `python tests/test_ingestion_dry_run.py` passed.
+    - `python tests/test_local_manifest_dry_run_script.py` passed.
+    - `python tests/test_manifest_config.py` passed.
+    - `npm run build` passed.
+14. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Retrieval evaluation is not implemented.
+    - Response policy is not enforced.
+    - Real reset/rebuild remains future only.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
