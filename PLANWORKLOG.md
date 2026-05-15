@@ -424,7 +424,7 @@ Tasks:
 - [x] Define metadata-rich chunk schema in `docs/CHUNK_METADATA_SCHEMA.md`.
 - [x] Define chunk identity, traceability, citation, retrieval payload, and evaluation alignment requirements.
 - [x] Define future vector database and FAISS metadata alignment requirements.
-- [ ] Expand fake chunk fixtures if needed.
+- [x] Expand fake chunk fixtures with metadata-rich synthetic chunk records.
 - [ ] Add chunk schema validator.
 - [ ] Add gated legacy chunk adapter.
 - [ ] Implement real chunk migration.

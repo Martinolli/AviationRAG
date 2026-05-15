@@ -56,6 +56,10 @@ Current state:
 8. `data/sample_documents/sample_chunks.jsonl` exists and contains fake synthetic chunk records only.
 9. Real chunk migration is not implemented yet.
 
+Fixture note:
+
+`data/sample_documents/sample_chunks.jsonl` now contains an expanded fake/sample-only chunk fixture with metadata-rich examples across multiple chunk types. It is intended for future validator and retrieval evaluation development only. It is not used by runtime ingestion, retrieval, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
+
 ## 4. Chunk Identity Model
 
 A chunk is a bounded retrieval unit derived from a parent document. It should represent a coherent passage, table, figure caption, procedure step, definition, requirement, or finding that can be retrieved, cited, evaluated, and audited independently.

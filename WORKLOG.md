@@ -1076,6 +1076,45 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
 
+### 2026-05-15
+
+1. Continued `PLANWORKLOG.md` Phase D.2b only: fake chunk fixture expansion.
+2. Expanded `data/sample_documents/sample_chunks.jsonl` to 15 fake metadata-rich chunk records.
+3. Updated `tests/test_sample_manifest_fixture.py` to validate:
+   - sample chunk fixture presence
+   - at least 12 chunk records
+   - unique `chunk_id` values
+   - manifest document linkage
+   - required chunk metadata fields
+   - controlled chunk type values
+   - valid page ranges
+   - non-empty fake/synthetic text
+   - no obvious real local/private paths
+   - no generated `data/manifest/documents.jsonl`
+4. Updated `docs/CHUNK_METADATA_SCHEMA.md` to document the expanded fake fixture and clarify it is not used by runtime ingestion.
+5. All expanded chunk records use fake/sample-only text and metadata.
+6. No real chunking behavior changed.
+7. No ingestion runtime scripts were modified.
+8. No documents were reprocessed.
+9. No embeddings were generated.
+10. No Astra or FAISS changes were made.
+11. Validation after fake chunk fixture expansion:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `python tests/test_retrieval_harness.py` passed.
+    - `python tests/test_retrieval_reporting.py` passed.
+    - `npm run build` passed.
+12. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Real chunk migration is not implemented.
+    - Real retrieval harness is not wired to FAISS/Astra.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

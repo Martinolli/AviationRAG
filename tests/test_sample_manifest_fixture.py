@@ -35,20 +35,41 @@ CHUNK_REQUIRED_FIELDS = {
     "document_id",
     "filename",
     "canonical_title",
+    "text",
+    "text_hash",
+    "source_hash",
+    "chunk_type",
     "page_start",
     "page_end",
     "section_path",
     "paragraph_id",
-    "chunk_type",
     "authority",
     "document_type",
     "revision",
     "effective_date",
     "extraction_quality",
-    "source_hash",
-    "text_hash",
-    "text",
+    "created_at",
     "metadata",
+}
+
+CHUNK_TYPES = {
+    "text",
+    "section",
+    "paragraph",
+    "regulatory_paragraph",
+    "table",
+    "figure_caption",
+    "warning",
+    "caution",
+    "note",
+    "definition",
+    "checklist",
+    "procedure",
+    "requirement",
+    "accident_finding",
+    "safety_recommendation",
+    "metadata_only",
+    "other",
 }
 
 
@@ -80,9 +101,10 @@ class TestSampleManifestFixture(unittest.TestCase):
     def test_manifest_does_not_reference_local_or_private_paths(self):
         forbidden_patterns = [
             re.compile(r"[A-Za-z]:\\"),
-            re.compile(r"(^|/)(data/documents|data/raw|data/processed|data/embeddings)(/|$)"),
+            re.compile(r"(^|[\\/])(data[\\/](documents|raw|processed|embeddings|manifest))([\\/]|$)"),
             re.compile(r"secure-connect", re.IGNORECASE),
             re.compile(r"\.env", re.IGNORECASE),
+            re.compile(r"/Users/", re.IGNORECASE),
         ]
 
         for path in [MANIFEST_PATH, CHUNKS_PATH]:
@@ -99,8 +121,7 @@ class TestSampleManifestFixture(unittest.TestCase):
         manifest_ids = {record["document_id"] for record in manifest_records}
         chunk_ids = [record["chunk_id"] for record in chunk_records]
 
-        self.assertGreaterEqual(len(chunk_records), 3)
-        self.assertLessEqual(len(chunk_records), 5)
+        self.assertGreaterEqual(len(chunk_records), 12)
         self.assertEqual(len(chunk_ids), len(set(chunk_ids)))
 
         for record in chunk_records:
@@ -109,9 +130,23 @@ class TestSampleManifestFixture(unittest.TestCase):
             self.assertTrue(record["chunk_id"].startswith(record["document_id"]))
             self.assertRegex(record["source_hash"], r"^sha256:[0-9a-f]{64}$")
             self.assertRegex(record["text_hash"], r"^sha256:[0-9a-f]{64}$")
-            self.assertLessEqual(len(record["text"]), 160)
-            self.assertIn("synthetic", record["text"].lower())
+            self.assertTrue(record["chunk_type"])
+            self.assertIn(record["chunk_type"], CHUNK_TYPES)
+            if record["page_start"] is not None and record["page_end"] is not None:
+                self.assertIsInstance(record["page_start"], int)
+                self.assertIsInstance(record["page_end"], int)
+                self.assertGreaterEqual(record["page_start"], 1)
+                self.assertGreaterEqual(record["page_end"], record["page_start"])
+            self.assertTrue(record["text"].strip())
+            lowered_text = record["text"].lower()
+            self.assertTrue("synthetic" in lowered_text or "fake" in lowered_text)
             self.assertTrue(record["metadata"].get("fixture"))
+
+        chunk_types = {record["chunk_type"] for record in chunk_records}
+        self.assertGreaterEqual(len(chunk_types), 10)
+
+    def test_sample_fixture_does_not_create_local_manifest(self):
+        self.assertFalse((ROOT / "data" / "manifest" / "documents.jsonl").exists())
 
 
 if __name__ == "__main__":
