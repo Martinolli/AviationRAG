@@ -415,7 +415,27 @@ Acceptance criteria:
 
 - [ ] Every chunk can be traced back to a document record and file hash.
 
-#### D.2 Structure-aware parsing
+#### D.2 Metadata-rich chunk schema planning
+
+Status: `Completed` / `Real chunk migration planned`
+
+Tasks:
+
+- [x] Define metadata-rich chunk schema in `docs/CHUNK_METADATA_SCHEMA.md`.
+- [x] Define chunk identity, traceability, citation, retrieval payload, and evaluation alignment requirements.
+- [x] Define future vector database and FAISS metadata alignment requirements.
+- [ ] Expand fake chunk fixtures if needed.
+- [ ] Add chunk schema validator.
+- [ ] Add gated legacy chunk adapter.
+- [ ] Implement real chunk migration.
+- [ ] Re-embed and re-index after reset gate approval.
+
+Acceptance criteria:
+
+- [x] Chunk metadata contract is documented without changing runtime chunking behavior.
+- [ ] Real chunks carry stable `document_id`, `chunk_id`, page/section metadata, and extraction quality after future migration.
+
+#### D.3 Structure-aware parsing
 
 Status: `Planned`
 
@@ -433,7 +453,7 @@ Acceptance criteria:
 - [ ] A retrieved chunk can show document, page span, and section path.
 - [ ] Low-quality extraction is visible to admin/user.
 
-#### D.3 Chunking redesign
+#### D.4 Chunking redesign
 
 Status: `Planned`
 

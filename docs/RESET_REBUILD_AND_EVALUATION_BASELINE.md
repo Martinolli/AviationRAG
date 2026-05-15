@@ -45,9 +45,11 @@ Current planning state:
 8. Real ingestion integration is not active.
 9. Real `data/manifest/documents.jsonl` is not committed and must remain local/private when created.
 10. Retrieval harness and report/export shells exist for fake/mock results only; real retrieval evaluation is not wired yet.
-11. Response policy and citation validation are not enforced.
-12. Production bridge remains an external blocker.
-13. Dependency major upgrades remain future work after Security Sprint S.1.
+11. The future chunk metadata schema is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
+12. Real metadata-rich chunk migration is not implemented.
+13. Response policy and citation validation are not enforced.
+14. Production bridge remains an external blocker.
+15. Dependency major upgrades remain future work after Security Sprint S.1.
 
 ## 4. Reset/Rebuild Triggers
 
@@ -62,6 +64,8 @@ A controlled reset/rebuild becomes appropriate when one or more of these conditi
 7. Old embeddings no longer match the current chunking strategy.
 8. FAISS metadata and Astra payloads no longer share a reliable chunk identity model.
 9. Approval/lifecycle rules require filtering active, retired, superseded, or unapproved documents.
+
+The target chunk metadata contract that should be ready before any schema-changing rebuild is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
 
 A reset should not be used as a shortcut for unclear metadata. If the target schema, evaluation baseline, or rollback path is incomplete, the decision must remain `No-Go`.
 
@@ -291,9 +295,10 @@ Decision:
 | Phase | Scope | Runtime impact |
 | --- | --- | --- |
 | D.1i | Reset/rebuild and retrieval baseline plan only. | None. |
-| D.2 | Retrieval evaluation smoke fixture. | None to runtime. |
-| D.3 | Metadata-rich chunk schema. | Planned; no reset until approved. |
-| D.4 | Gated local manifest integration. | Disabled by default, local first. |
+| D.2 | Metadata-rich chunk schema planning. | None. |
+| D.2b | Retrieval evaluation smoke fixture. | None to runtime. |
+| D.3 | Metadata-rich chunk implementation. | Planned; no reset until approved. |
+| D.4 | Gated local manifest/chunk integration. | Disabled by default, local first. |
 | D.5 | Controlled local reset/rebuild. | Requires explicit reset window. |
 | E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |
 | E.2 | Retrieval report/export shell. | Formats fake/mock evaluation results only; no real retrieval wiring. |

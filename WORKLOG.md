@@ -1034,6 +1034,48 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
 
+### 2026-05-15
+
+1. Continued `PLANWORKLOG.md` Phase D.2 only: metadata-rich chunk schema planning.
+2. Created `docs/CHUNK_METADATA_SCHEMA.md` covering:
+   - chunk identity model
+   - required and optional chunk metadata fields
+   - chunk type taxonomy
+   - page, section, and paragraph traceability
+   - extraction quality metadata
+   - citation requirements
+   - retrieval payload requirements
+   - evaluation alignment
+   - chunk lifecycle and versioning
+   - future Astra payload and FAISS metadata alignment
+   - staged migration plan and open questions
+3. Updated cross-references in:
+   - `docs/DOCUMENT_MANIFEST_SCHEMA.md`
+   - `docs/EVALUATION_PLAN.md`
+   - `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md`
+4. Updated `PLANWORKLOG.md` to mark D.2 schema planning complete while keeping real chunk migration, re-embedding, and re-indexing planned.
+5. No real chunking behavior changed.
+6. No ingestion runtime scripts were modified.
+7. No documents were reprocessed.
+8. No embeddings were generated.
+9. No Astra or FAISS changes were made.
+10. Validation after chunk metadata schema planning:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `python tests/test_retrieval_harness.py` passed.
+    - `python tests/test_retrieval_reporting.py` passed.
+    - `npm run build` passed.
+11. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Real chunk migration is not implemented.
+    - Real retrieval harness is not wired to FAISS/Astra.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

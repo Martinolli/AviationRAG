@@ -151,6 +151,8 @@ This path must remain ignored from Git when it contains real or local document m
 
 Future ingestion integration planning is documented in `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md`. That plan defines hook points, reset strategy, validation, and rollback guidance only; manifest integration is not active in runtime ingestion.
 
+The future metadata-rich chunk contract is documented in `docs/CHUNK_METADATA_SCHEMA.md`. That document defines target chunk identity, citation, retrieval payload, and evaluation metadata only; real chunk migration is not active.
+
 ## Local-Only Manifest Dry Run
 
 A developer utility exists at `tools/manifest/write-local-sample-manifest.py` for local-only manifest path verification.
@@ -234,6 +236,8 @@ Example JSONL record:
 ## 7. Proposed Chunk Metadata Schema
 
 Chunks should inherit document-level metadata needed for retrieval, filtering, display, and citation reconstruction. A chunk should not require loading the full document manifest just to display a basic source citation, but `document_id` should remain the authoritative join key.
+
+The fuller target schema is tracked in `docs/CHUNK_METADATA_SCHEMA.md`.
 
 Proposed fields:
 

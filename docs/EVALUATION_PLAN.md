@@ -81,6 +81,8 @@ Metrics should include:
 
 Expected documents, sections, and pages should be added where practical. Page/section checks will become more important after the planned metadata upgrade.
 
+The future chunk identity and metadata contract that evaluation will depend on is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
+
 ## Smoke Retrieval Fixture Baseline
 
 A fake/sample-only smoke fixture now exists at:
@@ -132,6 +134,7 @@ Future work:
 1. Wire the harness to real retrieval outputs after FAISS/Astra/hybrid retrieval integration is explicitly approved.
 2. Save real benchmark runs as local/private JSON and Markdown reports.
 3. Compare pre-change and post-change retrieval metrics before accepting retrieval, chunking, or metadata changes.
+4. Use stable `chunk_id` and `document_id` values from the future chunk metadata schema when real retrieval is evaluated.
 
 ## Retrieval Evaluation Report Shell
 
@@ -253,7 +256,7 @@ Minimum reset gate:
 3. No citation validator exists yet.
 4. No formal response mode classifier exists yet.
 5. No answer schema with `evidence_level` exists yet.
-6. Page and section metadata are not mature enough for compliance-grade evaluation.
+6. Page, section, and chunk metadata are not mature enough for compliance-grade evaluation.
 7. Current citations are extracted from context tags, not validated against claims.
 8. Current smoke tests validate UI shell behavior, not RAG quality.
 
