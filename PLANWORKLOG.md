@@ -426,6 +426,7 @@ Tasks:
 - [x] Define future vector database and FAISS metadata alignment requirements.
 - [x] Expand fake chunk fixtures with metadata-rich synthetic chunk records.
 - [x] Add chunk schema validator.
+- [x] Add fake chunk payload exporter.
 - [ ] Add gated legacy chunk adapter.
 - [ ] Implement real chunk migration.
 - [ ] Re-embed and re-index after reset gate approval.

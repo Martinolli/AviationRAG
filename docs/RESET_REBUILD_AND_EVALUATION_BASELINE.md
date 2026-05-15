@@ -47,9 +47,10 @@ Current planning state:
 10. Retrieval harness and report/export shells exist for fake/mock results only; real retrieval evaluation is not wired yet.
 11. The future chunk metadata schema is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
 12. Real metadata-rich chunk migration is not implemented.
-13. Response policy and citation validation are not enforced.
-14. Production bridge remains an external blocker.
-15. Dependency major upgrades remain future work after Security Sprint S.1.
+13. A fake/sample-only chunk payload exporter exists for future vector payload-shaped dictionaries; it does not generate embeddings or write to Astra/FAISS.
+14. Response policy and citation validation are not enforced.
+15. Production bridge remains an external blocker.
+16. Dependency major upgrades remain future work after Security Sprint S.1.
 
 ## 4. Reset/Rebuild Triggers
 

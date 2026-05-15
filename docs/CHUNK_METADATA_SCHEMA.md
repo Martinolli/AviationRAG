@@ -73,6 +73,20 @@ Current scope:
 
 The validator is not integrated with runtime ingestion, real chunking, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
 
+## Vector Payload Exporter
+
+A fake/sample chunk payload exporter exists at `src/aviationrag/ingestion/chunk_payload.py`.
+
+Current scope:
+
+1. Converts validated fake/sample chunks into vector payload-shaped dictionaries.
+2. Adds `payload_schema_version`, `chunk_id`, `document_id`, `text`, and traceability metadata.
+3. Preserves optional metadata such as regulatory references, applicability, warning type, table/figure IDs, captions, reviewer notes, language, product type, and confidence score when present.
+4. Validates payloads for required traceability fields, duplicate chunk IDs, forbidden embedding/vector fields, and obvious local/private paths.
+5. Supports the local-only developer export tool at `tools/chunking/export-sample-chunk-payloads.py`, which writes generated sample payload JSONL under ignored `logs/`.
+
+The exporter does not generate embeddings, call OpenAI or other embedding APIs, connect to Astra, use FAISS, write to vector databases, change real chunking behavior, or integrate with runtime ingestion.
+
 ## 4. Chunk Identity Model
 
 A chunk is a bounded retrieval unit derived from a parent document. It should represent a coherent passage, table, figure caption, procedure step, definition, requirement, or finding that can be retrieved, cited, evaluated, and audited independently.

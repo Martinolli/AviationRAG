@@ -1149,6 +1149,44 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
 
+### 2026-05-15
+
+1. Continued `PLANWORKLOG.md` Phase D.2d only: fake chunk payload exporter.
+2. Created `src/aviationrag/ingestion/chunk_payload.py` to convert validated fake/sample chunks into future vector payload-shaped dictionaries.
+3. Added `tests/test_chunk_payload.py` using fake/sample chunk data only.
+4. Created local-only developer export tool:
+   - `tools/chunking/export-sample-chunk-payloads.py`
+5. The sample export tool writes generated payload JSONL under ignored `logs/chunking/sample_chunk_payloads.jsonl`.
+6. Removed the generated local payload output after validation; no generated logs were staged.
+7. Updated `docs/CHUNK_METADATA_SCHEMA.md` and `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md` to document the fake/sample payload exporter and its limits.
+8. Fake/sample data only was used.
+9. No embeddings were generated.
+10. No Astra or FAISS writes occurred.
+11. No real chunking behavior changed.
+12. No ingestion runtime scripts were modified.
+13. No documents were reprocessed.
+14. Validation after fake chunk payload exporter:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_chunk_schema.py` passed.
+    - `python tests/test_chunk_payload.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `python tests/test_retrieval_harness.py` passed.
+    - `python tests/test_retrieval_reporting.py` passed.
+    - `python tools/chunking/export-sample-chunk-payloads.py` passed.
+    - `git check-ignore logs/chunking/sample_chunk_payloads.jsonl` passed.
+    - `npm run build` passed.
+15. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Real chunk migration is not implemented.
+    - Real vector indexing is not implemented.
+    - Real retrieval harness is not wired to FAISS/Astra.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
