@@ -995,6 +995,45 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
 
+### 2026-05-15
+
+1. Continued `PLANWORKLOG.md` Phase E.2 only: retrieval evaluation report/export shell.
+2. Added fake/mock evaluation reporting utilities:
+   - `src/aviationrag/evaluation/reporting.py`
+3. Added tests:
+   - `tests/test_retrieval_reporting.py`
+4. The reporting shell supports:
+   - JSON-serializable dictionaries for `EvaluationSummary` and `EvaluationCaseResult`
+   - Markdown summary reports
+   - explicit JSON report writes
+   - explicit Markdown report writes
+5. No optional report-generation tool script was created; no local report files were generated.
+6. No real retrieval integration was performed.
+7. No Astra or FAISS access occurred.
+8. No embeddings were generated.
+9. No ingestion runtime scripts were modified.
+10. Generated reports remain future local/ignored outputs only.
+11. Validation after retrieval report/export shell:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `python tests/test_legacy_adapter.py` passed.
+    - `python tests/test_ingestion_dry_run.py` passed.
+    - `python tests/test_local_manifest_dry_run_script.py` passed.
+    - `python tests/test_manifest_config.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `python tests/test_retrieval_harness.py` passed.
+    - `python tests/test_retrieval_reporting.py` passed.
+    - `npm run build` passed.
+12. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Real retrieval harness is not wired to FAISS/Astra.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

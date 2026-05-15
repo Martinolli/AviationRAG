@@ -133,6 +133,26 @@ Future work:
 2. Save real benchmark runs as local/private JSON and Markdown reports.
 3. Compare pre-change and post-change retrieval metrics before accepting retrieval, chunking, or metadata changes.
 
+## Retrieval Evaluation Report Shell
+
+Report/export utilities now exist at:
+
+```text
+src/aviationrag/evaluation/reporting.py
+```
+
+Current scope:
+
+1. Converts fake/mock `EvaluationSummary` and `EvaluationCaseResult` objects into JSON-serializable dictionaries.
+2. Renders Markdown summary reports with totals, pass rate, category counts, behavior counts, issues, and per-case results.
+3. Writes JSON and Markdown reports only when explicit write functions are called.
+4. Works with fake/mock harness outputs only.
+5. Does not call real retrieval, connect to Astra, use FAISS, generate embeddings, scan documents, or change runtime behavior.
+
+Generated reports should remain local and ignored by Git unless a future phase intentionally publishes a fake/sample report fixture. Real benchmark reports must remain local/private if they expose source titles, document text, retrieved chunks, or operational metadata.
+
+Future real retrieval integration can reuse this reporting layer after retrieval outputs are explicitly wired to the harness.
+
 ## Citation Validation Concept
 
 Citation validation should verify:
@@ -228,7 +248,7 @@ Minimum reset gate:
 
 ## Known Current Gaps
 
-1. The retrieval harness shell currently evaluates fake/mock results only.
+1. The retrieval harness and report/export shell currently operate on fake/mock results only.
 2. No real retrieval benchmark execution is wired yet.
 3. No citation validator exists yet.
 4. No formal response mode classifier exists yet.
@@ -239,4 +259,4 @@ Minimum reset gate:
 
 ## Implementation Guardrail
 
-This document remains a controlled evaluation plan. The current harness shell only evaluates fake/mock retrieval results; real retrieval integration should be implemented later as a separate phase after the production bridge blocker is closed or explicitly paused and after the repository baseline remains stable.
+This document remains a controlled evaluation plan. The current harness and report/export shells only evaluate and format fake/mock retrieval results; real retrieval integration should be implemented later as a separate phase after the production bridge blocker is closed or explicitly paused and after the repository baseline remains stable.

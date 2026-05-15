@@ -491,7 +491,25 @@ Acceptance criteria:
 - [x] Fake/mock retrieval results can be evaluated without running retrieval.
 - [ ] Real retrieval quality is measured against real retrieval results.
 
-#### E.2 Hybrid retrieval
+#### E.2 Retrieval evaluation report/export shell
+
+Status: `Completed` / `Real retrieval integration planned`
+
+Tasks:
+
+- [x] Add JSON-serializable report dictionaries for evaluation summaries and case results.
+- [x] Add Markdown report rendering for fake/mock evaluation results.
+- [x] Add explicit JSON and Markdown write helpers.
+- [x] Add tests using fake/mock data only.
+- [ ] Wire reporting to real retrieval benchmark runs.
+- [ ] Publish or archive real benchmark reports only under a future data-governance decision.
+
+Acceptance criteria:
+
+- [x] Fake/mock evaluation results can be exported without running retrieval.
+- [ ] Real retrieval benchmark reports are generated after real retrieval integration exists.
+
+#### E.3 Hybrid retrieval
 
 Status: `Planned`
 
@@ -509,7 +527,7 @@ Acceptance criteria:
 - [ ] Exact regulatory identifiers reliably retrieve exact matching source passages.
 - [ ] General conceptual questions do not over-prioritize irrelevant accident reports.
 
-#### E.3 Reranking rules
+#### E.4 Reranking rules
 
 Status: `Planned`
 
@@ -525,7 +543,7 @@ Acceptance criteria:
 
 - [ ] Top 5 retrieved chunks are explainable and stable for benchmark questions.
 
-#### E.4 Retrieval evaluation harness integration
+#### E.5 Retrieval evaluation harness integration
 
 Status: `Planned`
 
