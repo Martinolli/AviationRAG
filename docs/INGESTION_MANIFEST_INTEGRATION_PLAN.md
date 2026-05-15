@@ -242,6 +242,8 @@ Environment variables:
 | `AVIATIONRAG_ENABLE_MANIFEST_INTEGRATION` | `false` | Future gate for manifest-aware ingestion writes. |
 | `AVIATIONRAG_MANIFEST_DRY_RUN` | `false` | Future gate for dry-run behavior when integration is enabled. |
 | `AVIATIONRAG_MANIFEST_PATH` | `data/manifest/documents.jsonl` | Local/private manifest path override. |
+| `AVIATIONRAG_ENABLE_CHUNK_MIGRATION` | `false` | Future gate for legacy chunk migration utilities. |
+| `AVIATIONRAG_CHUNK_MIGRATION_DRY_RUN` | `true` | Future dry-run default for legacy chunk migration previews. |
 
 Current scope:
 
@@ -250,6 +252,8 @@ Current scope:
 3. The default manifest path is local/private and ignored by Git.
 4. The flags are not wired into legacy ingestion scripts in this phase.
 5. A future integration phase should require these settings before writing manifest records from real ingestion.
+
+A passive legacy chunk adapter now exists at `src/aviationrag/ingestion/chunk_legacy_adapter.py`. It converts fake legacy-like chunk dictionaries into `ChunkRecord` objects and optional vector payload-shaped dictionaries for preview purposes only. It is tested with fake data and is not wired into runtime ingestion, embeddings, Astra, FAISS, API routes, prompts, or deployment behavior.
 
 ## 14. Validation Plan
 

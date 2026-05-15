@@ -15,6 +15,8 @@ DEFAULT_MANIFEST_PATH = Path("data/manifest/documents.jsonl")
 MANIFEST_INTEGRATION_ENV = "AVIATIONRAG_ENABLE_MANIFEST_INTEGRATION"
 MANIFEST_DRY_RUN_ENV = "AVIATIONRAG_MANIFEST_DRY_RUN"
 MANIFEST_PATH_ENV = "AVIATIONRAG_MANIFEST_PATH"
+CHUNK_MIGRATION_ENV = "AVIATIONRAG_ENABLE_CHUNK_MIGRATION"
+CHUNK_MIGRATION_DRY_RUN_ENV = "AVIATIONRAG_CHUNK_MIGRATION_DRY_RUN"
 
 _TRUE_VALUES = {"1", "true", "yes", "on"}
 _FALSE_VALUES = {"0", "false", "no", "off"}
@@ -50,6 +52,19 @@ class ManifestIntegrationSettings:
     enabled: bool
     dry_run: bool
     manifest_path: Path
+
+
+@dataclass(frozen=True)
+class ChunkMigrationSettings:
+    """Disabled-by-default settings for future legacy chunk migration.
+
+    These settings are not wired into legacy ingestion scripts. Future
+    migration code should read this object before adapting or writing any real
+    chunk data.
+    """
+
+    enabled: bool
+    dry_run: bool
 
 
 def _get_env(env: Mapping[str, str] | None) -> Mapping[str, str]:
@@ -113,16 +128,48 @@ def get_manifest_integration_settings(
     )
 
 
+def is_chunk_migration_enabled(env: Mapping[str, str] | None = None) -> bool:
+    """Return whether future chunk migration is explicitly enabled."""
+
+    active_env = _get_env(env)
+    return parse_bool_env(active_env.get(CHUNK_MIGRATION_ENV), default=False)
+
+
+def is_chunk_migration_dry_run_enabled(env: Mapping[str, str] | None = None) -> bool:
+    """Return whether future chunk migration should remain in dry-run mode."""
+
+    active_env = _get_env(env)
+    return parse_bool_env(active_env.get(CHUNK_MIGRATION_DRY_RUN_ENV), default=True)
+
+
+def get_chunk_migration_settings(
+    env: Mapping[str, str] | None = None,
+) -> ChunkMigrationSettings:
+    """Build side-effect-free chunk migration settings."""
+
+    active_env = _get_env(env)
+    return ChunkMigrationSettings(
+        enabled=is_chunk_migration_enabled(active_env),
+        dry_run=is_chunk_migration_dry_run_enabled(active_env),
+    )
+
+
 __all__ = [
     "DEFAULT_MANIFEST_PATH",
+    "CHUNK_MIGRATION_DRY_RUN_ENV",
+    "CHUNK_MIGRATION_ENV",
+    "ChunkMigrationSettings",
     "MANIFEST_DRY_RUN_ENV",
     "MANIFEST_INTEGRATION_ENV",
     "MANIFEST_PATH_ENV",
     "ManifestIntegrationSettings",
     "ProjectPaths",
     "get_manifest_integration_settings",
+    "get_chunk_migration_settings",
     "get_manifest_path",
     "is_manifest_dry_run_enabled",
     "is_manifest_integration_enabled",
+    "is_chunk_migration_dry_run_enabled",
+    "is_chunk_migration_enabled",
     "parse_bool_env",
 ]

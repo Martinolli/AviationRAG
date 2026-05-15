@@ -87,6 +87,20 @@ Current scope:
 
 The exporter does not generate embeddings, call OpenAI or other embedding APIs, connect to Astra, use FAISS, write to vector databases, change real chunking behavior, or integrate with runtime ingestion.
 
+## Legacy Chunk Adapter
+
+A passive legacy chunk adapter exists at `src/aviationrag/ingestion/chunk_legacy_adapter.py`.
+
+Current scope:
+
+1. Converts fake legacy-like chunk dictionaries into lightweight `ChunkRecord` objects.
+2. Preserves future metadata-rich fields in `ChunkRecord.metadata` when the core dataclass does not expose them directly.
+3. Optionally converts adapted chunks into vector payload-shaped dictionaries through the fake/sample payload exporter.
+4. Produces a side-effect-free migration preview with chunks, payloads, issues, warnings, and summary counts.
+5. Respects disabled-by-default chunk migration settings from `src/aviationrag/config.py`.
+
+The adapter is tested with fake inline data only. It is not wired into `read_documents.py`, `aviation_chunk_saver.py`, generated chunk files, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
+
 ## 4. Chunk Identity Model
 
 A chunk is a bounded retrieval unit derived from a parent document. It should represent a coherent passage, table, figure caption, procedure step, definition, requirement, or finding that can be retrieved, cited, evaluated, and audited independently.

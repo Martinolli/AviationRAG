@@ -1187,6 +1187,47 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
 
+### 2026-05-15
+
+1. Continued `PLANWORKLOG.md` Phase D.2e only: gated legacy chunk adapter.
+2. Added disabled-by-default chunk migration config flags in `src/aviationrag/config.py`:
+   - `AVIATIONRAG_ENABLE_CHUNK_MIGRATION`
+   - `AVIATIONRAG_CHUNK_MIGRATION_DRY_RUN`
+3. Documented the future chunk migration flags in `.env.example`.
+4. Created passive adapter module:
+   - `src/aviationrag/ingestion/chunk_legacy_adapter.py`
+5. Added `tests/test_chunk_legacy_adapter.py` using fake inline legacy-like chunk dictionaries only.
+6. The adapter converts fake legacy-like chunks into `ChunkRecord` objects and optional vector payload-shaped dictionaries for preview only.
+7. Updated `docs/CHUNK_METADATA_SCHEMA.md` and `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md` to document the gated legacy chunk adapter.
+8. Fake/sample data only was used.
+9. The adapter is not wired into runtime ingestion.
+10. No real chunking behavior changed.
+11. No ingestion runtime scripts were modified.
+12. No documents were reprocessed.
+13. No embeddings were generated.
+14. No Astra or FAISS writes occurred.
+15. Validation after gated legacy chunk adapter:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_manifest_config.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_chunk_schema.py` passed.
+    - `python tests/test_chunk_payload.py` passed.
+    - `python tests/test_chunk_legacy_adapter.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `python tests/test_retrieval_harness.py` passed.
+    - `python tests/test_retrieval_reporting.py` passed.
+    - `npm run build` passed.
+16. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Real chunk migration is not implemented.
+    - Real vector indexing is not implemented.
+    - Real retrieval harness is not wired to FAISS/Astra.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
