@@ -107,6 +107,8 @@ The future integration should map chunk-like dictionaries into `ChunkRecord` as 
 
 Future vector records should include both `document_id` and `chunk_id`. Until the reset phase, existing vector payload shape should remain unchanged.
 
+The detailed real chunk migration design is tracked in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`. That document defines the future mapping, chunk ID policy, evaluation gates, and reset dependency; it does not implement runtime ingestion integration.
+
 ## 7. Manifest Lifecycle Write Points
 
 Target normal lifecycle:

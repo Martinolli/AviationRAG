@@ -101,6 +101,8 @@ Current scope:
 
 The adapter is tested with fake inline data only. It is not wired into `read_documents.py`, `aviation_chunk_saver.py`, generated chunk files, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
 
+The real migration path and go/no-go criteria are defined separately in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`. That design remains planning-only and does not activate chunk migration.
+
 ## 4. Chunk Identity Model
 
 A chunk is a bounded retrieval unit derived from a parent document. It should represent a coherent passage, table, figure caption, procedure step, definition, requirement, or finding that can be retrieved, cited, evaluated, and audited independently.
@@ -435,7 +437,9 @@ Alignment requirements:
 | D.2c | Chunk schema validator. | None to runtime. |
 | D.2d | Fake chunk payload exporter. | None to runtime. |
 | D.2e | Gated legacy chunk adapter. | Disabled by default. |
-| D.3 | Real chunking redesign. | Planned future migration. |
+| D.3 | Real chunk migration design. | Planning only; no runtime migration. |
+| D.3b | Read-only legacy chunk format audit. | Planned future audit. |
+| D.3c | Fake/local chunk migration dry run. | Planned future dry run. |
 | D.4 | Re-embed/re-index after reset gate. | Requires explicit reset approval. |
 
 Migration rules:

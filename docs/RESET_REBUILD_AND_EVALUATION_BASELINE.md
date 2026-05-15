@@ -48,9 +48,10 @@ Current planning state:
 11. The future chunk metadata schema is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
 12. Real metadata-rich chunk migration is not implemented.
 13. A fake/sample-only chunk payload exporter exists for future vector payload-shaped dictionaries; it does not generate embeddings or write to Astra/FAISS.
-14. Response policy and citation validation are not enforced.
-15. Production bridge remains an external blocker.
-16. Dependency major upgrades remain future work after Security Sprint S.1.
+14. The real chunk migration design is documented in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`; it is planning-only and no migration has occurred.
+15. Response policy and citation validation are not enforced.
+16. Production bridge remains an external blocker.
+17. Dependency major upgrades remain future work after Security Sprint S.1.
 
 ## 4. Reset/Rebuild Triggers
 
@@ -67,6 +68,7 @@ A controlled reset/rebuild becomes appropriate when one or more of these conditi
 9. Approval/lifecycle rules require filtering active, retired, superseded, or unapproved documents.
 
 The target chunk metadata contract that should be ready before any schema-changing rebuild is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
+The future real chunk migration path and go/no-go criteria are documented in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`.
 
 A reset should not be used as a shortcut for unclear metadata. If the target schema, evaluation baseline, or rollback path is incomplete, the decision must remain `No-Go`.
 

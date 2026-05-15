@@ -436,21 +436,29 @@ Acceptance criteria:
 - [x] Chunk metadata contract is documented without changing runtime chunking behavior.
 - [ ] Real chunks carry stable `document_id`, `chunk_id`, page/section metadata, and extraction quality after future migration.
 
-#### D.3 Structure-aware parsing
+#### D.3 Real chunk migration design
 
-Status: `Planned`
+Status: `Design complete` / `Real migration execution planned`
 
 Tasks:
 
-- [ ] Preserve page numbers for PDF extraction.
-- [ ] Detect headings and section paths where possible.
-- [ ] Separate tables into dedicated table chunks.
-- [ ] Preserve notes, cautions, warnings, and definitions as distinct chunk candidates.
+- [x] Define real chunk migration path in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`.
+- [x] Define legacy-to-new mapping strategy, chunk ID policy, evaluation gates, reset dependency, rollout stages, rollback strategy, and go/no-go criteria.
+- [x] Add future operational go/no-go checklist for chunk migration.
+- [ ] Audit legacy chunk format with a read-only script.
+- [ ] Run fake/local chunk migration dry run.
+- [ ] Implement gated local chunk conversion writing ignored outputs only.
+- [ ] Preserve page numbers for PDF extraction in a future real parsing phase.
+- [ ] Detect headings and section paths where possible in a future real parsing phase.
+- [ ] Separate tables into dedicated table chunks in a future real parsing phase.
+- [ ] Preserve notes, cautions, warnings, and definitions as distinct chunk candidates in a future real parsing phase.
 - [ ] Keep fallback extraction for difficult PDFs.
 - [ ] Keep manual review flag for low-quality extraction.
 
 Acceptance criteria:
 
+- [x] Real chunk migration design and go/no-go criteria are documented without changing runtime chunking behavior.
+- [ ] Real migration execution is approved, implemented, and validated in a future phase.
 - [ ] A retrieved chunk can show document, page span, and section path.
 - [ ] Low-quality extraction is visible to admin/user.
 

@@ -82,6 +82,7 @@ Metrics should include:
 Expected documents, sections, and pages should be added where practical. Page/section checks will become more important after the planned metadata upgrade.
 
 The future chunk identity and metadata contract that evaluation will depend on is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
+The planned real chunk migration path that will stabilize those IDs before reset/rebuild is documented in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`.
 
 ## Smoke Retrieval Fixture Baseline
 
