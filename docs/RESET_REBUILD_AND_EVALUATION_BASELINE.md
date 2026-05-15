@@ -44,7 +44,7 @@ Current planning state:
 7. Gated manifest settings exist and are disabled by default.
 8. Real ingestion integration is not active.
 9. Real `data/manifest/documents.jsonl` is not committed and must remain local/private when created.
-10. Retrieval evaluation is planned but not implemented.
+10. A retrieval harness shell exists for fake/mock results only; real retrieval evaluation is not wired yet.
 11. Response policy and citation validation are not enforced.
 12. Production bridge remains an external blocker.
 13. Dependency major upgrades remain future work after Security Sprint S.1.
@@ -183,7 +183,7 @@ read documents -> manifest update -> extract text -> chunk text
 
 ## 11. Retrieval Evaluation Baseline Requirements
 
-A fake/sample-only smoke fixture now exists at `data/sample_documents/sample_retrieval_eval.jsonl`, with validation utilities in `src/aviationrag/evaluation/smoke_fixture.py`. This fixture defines the future case format only; it does not execute retrieval and is not a substitute for the real pre-reset baseline.
+A fake/sample-only smoke fixture now exists at `data/sample_documents/sample_retrieval_eval.jsonl`, with validation utilities in `src/aviationrag/evaluation/smoke_fixture.py`. A fake/mock retrieval harness shell exists at `src/aviationrag/evaluation/retrieval_harness.py`. These utilities define and test the future evaluation shape only; they do not execute real retrieval and are not a substitute for the real pre-reset baseline.
 
 Minimum smoke baseline before reset:
 
@@ -295,7 +295,8 @@ Decision:
 | D.3 | Metadata-rich chunk schema. | Planned; no reset until approved. |
 | D.4 | Gated local manifest integration. | Disabled by default, local first. |
 | D.5 | Controlled local reset/rebuild. | Requires explicit reset window. |
-| E.1 | Retrieval evaluation harness. | Measures retrieval before behavior changes. |
+| E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |
+| E.2 | Real retrieval evaluation integration. | Measures retrieval before behavior changes. |
 | F.1 | Response and citation validation. | Adds policy enforcement after evidence quality is measurable. |
 
 Actual reset/rebuild work must be performed in a later approved phase and should remain separate from dependency upgrades, prompt changes, retrieval algorithm changes, and deployment bridge changes.

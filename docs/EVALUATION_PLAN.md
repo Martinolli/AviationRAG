@@ -111,6 +111,28 @@ Intended future use:
 4. Track unsupported query handling for `insufficient_evidence` and `reject_out_of_scope` cases.
 5. Keep real/private evaluation datasets local or private if they expose source titles, document text, or operational metadata.
 
+## Retrieval Harness Shell
+
+A fake/mock retrieval result evaluator now exists at:
+
+```text
+src/aviationrag/evaluation/retrieval_harness.py
+```
+
+Current scope:
+
+1. Loads `RetrievalEvaluationCase` objects from the smoke fixture utilities.
+2. Accepts caller-supplied fake/mock `RetrievalResult` objects.
+3. Evaluates expected document match, expected chunk match, top-k/rank requirements, insufficient-evidence behavior, and out-of-scope rejection behavior.
+4. Produces per-case results and aggregate pass/fail summaries.
+5. Does not call real retrieval, connect to Astra, use FAISS, generate embeddings, scan documents, or change runtime behavior.
+
+Future work:
+
+1. Wire the harness to real retrieval outputs after FAISS/Astra/hybrid retrieval integration is explicitly approved.
+2. Save real benchmark runs as local/private JSON and Markdown reports.
+3. Compare pre-change and post-change retrieval metrics before accepting retrieval, chunking, or metadata changes.
+
 ## Citation Validation Concept
 
 Citation validation should verify:
@@ -206,8 +228,8 @@ Minimum reset gate:
 
 ## Known Current Gaps
 
-1. No retrieval benchmark harness exists yet.
-2. No benchmark question set exists yet.
+1. The retrieval harness shell currently evaluates fake/mock results only.
+2. No real retrieval benchmark execution is wired yet.
 3. No citation validator exists yet.
 4. No formal response mode classifier exists yet.
 5. No answer schema with `evidence_level` exists yet.
@@ -217,4 +239,4 @@ Minimum reset gate:
 
 ## Implementation Guardrail
 
-This document is planning only. The evaluation harness should be implemented later as a separate phase after the production bridge blocker is closed or explicitly paused and after the repository baseline remains stable.
+This document remains a controlled evaluation plan. The current harness shell only evaluates fake/mock retrieval results; real retrieval integration should be implemented later as a separate phase after the production bridge blocker is closed or explicitly paused and after the repository baseline remains stable.

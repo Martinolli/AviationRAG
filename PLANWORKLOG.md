@@ -1,6 +1,6 @@
 # PLANWORKLOG
 
-Last Updated: 2026-05-14  
+Last Updated: 2026-05-15
 Repository: `Martinolli/AviationRAG`  
 Base Branch: `main`  
 Purpose: Refactored execution plan comparing the current `WORKLOG.md` status with the broader AviationRAG product/audit roadmap.
@@ -459,14 +459,14 @@ Acceptance criteria:
 
 #### E.0 Retrieval evaluation smoke fixture baseline
 
-Status: `Completed` / `Harness planned`
+Status: `Completed`
 
 Tasks:
 
 - [x] Add fake/sample-only retrieval evaluation JSONL fixture.
 - [x] Add smoke fixture validation utilities.
 - [x] Add fixture validation tests.
-- [ ] Connect evaluation cases to a retrieval harness.
+- [x] Connect evaluation cases to a fake/mock retrieval harness shell.
 - [ ] Run real retrieval benchmark execution.
 
 Acceptance criteria:
@@ -474,7 +474,24 @@ Acceptance criteria:
 - [x] Smoke fixture format is validated without running retrieval.
 - [ ] Retrieval quality is measured against real retrieval results.
 
-#### E.1 Hybrid retrieval
+#### E.1 Retrieval evaluation harness shell
+
+Status: `Completed` / `Real retrieval integration planned`
+
+Tasks:
+
+- [x] Add fake/mock retrieval result evaluator.
+- [x] Evaluate expected document match, expected chunk match, top-k/rank, insufficient evidence, and out-of-scope rejection behavior.
+- [x] Add tests using fake/mock data only.
+- [ ] Wire harness to real FAISS/Astra/hybrid retrieval outputs.
+- [ ] Run real retrieval benchmark execution.
+
+Acceptance criteria:
+
+- [x] Fake/mock retrieval results can be evaluated without running retrieval.
+- [ ] Real retrieval quality is measured against real retrieval results.
+
+#### E.2 Hybrid retrieval
 
 Status: `Planned`
 
@@ -492,7 +509,7 @@ Acceptance criteria:
 - [ ] Exact regulatory identifiers reliably retrieve exact matching source passages.
 - [ ] General conceptual questions do not over-prioritize irrelevant accident reports.
 
-#### E.2 Reranking rules
+#### E.3 Reranking rules
 
 Status: `Planned`
 
@@ -508,7 +525,7 @@ Acceptance criteria:
 
 - [ ] Top 5 retrieved chunks are explainable and stable for benchmark questions.
 
-#### E.3 Retrieval evaluation harness
+#### E.4 Retrieval evaluation harness integration
 
 Status: `Planned`
 

@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-04-03  
+Last Updated: 2026-05-15
 Active Branch: `main`
 Source Branch for Historical Entries: `hardening/sanitize-repo`
 
@@ -954,6 +954,44 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
     - Manifest is not integrated with ingestion.
     - Retrieval harness is not implemented.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
+### 2026-05-15
+
+1. Continued `PLANWORKLOG.md` Phase E.1 only: retrieval evaluation harness shell.
+2. Added fake/mock retrieval result evaluator:
+   - `src/aviationrag/evaluation/retrieval_harness.py`
+3. Added tests:
+   - `tests/test_retrieval_harness.py`
+4. The harness shell evaluates caller-supplied fake/mock results for:
+   - expected document match
+   - expected chunk match
+   - rank/top-k requirement
+   - insufficient-evidence behavior
+   - out-of-scope rejection behavior
+5. No real retrieval integration was performed.
+6. No Astra or FAISS access occurred.
+7. No embeddings were generated.
+8. No ingestion runtime scripts were modified.
+9. Updated evaluation/reset documentation and `PLANWORKLOG.md` to keep real retrieval execution future-only.
+10. Validation after retrieval harness shell:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_manifest_writer.py` passed.
+    - `python tests/test_legacy_adapter.py` passed.
+    - `python tests/test_ingestion_dry_run.py` passed.
+    - `python tests/test_local_manifest_dry_run_script.py` passed.
+    - `python tests/test_manifest_config.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `python tests/test_retrieval_harness.py` passed.
+    - `npm run build` passed.
+11. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Real retrieval harness is not wired to FAISS/Astra.
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
 
