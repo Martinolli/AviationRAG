@@ -1115,6 +1115,40 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
 
+### 2026-05-15
+
+1. Continued `PLANWORKLOG.md` Phase D.2c only: chunk schema validator.
+2. Created `src/aviationrag/ingestion/chunk_schema.py` with validation utilities for:
+   - metadata-rich chunk dictionaries
+   - lightweight `ChunkRecord` objects
+   - JSONL chunk fixture loading
+   - dataset-level duplicate `chunk_id` and document linkage checks
+3. Added `tests/test_chunk_schema.py` using fake/sample fixtures and inline fake negative cases only.
+4. Updated `docs/CHUNK_METADATA_SCHEMA.md` to document the validator and clarify it is not integrated with runtime ingestion.
+5. Fake/sample data only was used.
+6. No real chunking behavior changed.
+7. No ingestion runtime scripts were modified.
+8. No documents were reprocessed.
+9. No embeddings were generated.
+10. No Astra or FAISS changes were made.
+11. Validation after chunk schema validator:
+    - `npm run sanitize:check:all` passed.
+    - `python -m compileall src` passed.
+    - `python tests/test_models.py` passed.
+    - `python tests/test_sample_manifest_fixture.py` passed.
+    - `python tests/test_chunk_schema.py` passed.
+    - `python tests/test_retrieval_smoke_fixture.py` passed.
+    - `python tests/test_retrieval_harness.py` passed.
+    - `python tests/test_retrieval_reporting.py` passed.
+    - `npm run build` passed.
+12. Remaining blockers:
+    - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+    - Manifest is not integrated with ingestion.
+    - Real chunk migration is not implemented.
+    - Real retrieval harness is not wired to FAISS/Astra.
+    - Response policy is not enforced.
+    - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

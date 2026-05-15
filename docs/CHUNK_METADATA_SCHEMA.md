@@ -60,6 +60,19 @@ Fixture note:
 
 `data/sample_documents/sample_chunks.jsonl` now contains an expanded fake/sample-only chunk fixture with metadata-rich examples across multiple chunk types. It is intended for future validator and retrieval evaluation development only. It is not used by runtime ingestion, retrieval, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
 
+## Chunk Schema Validator
+
+A chunk schema validator exists at `src/aviationrag/ingestion/chunk_schema.py`.
+
+Current scope:
+
+1. Validates metadata-rich fake/sample chunk dictionaries and lightweight `ChunkRecord` objects.
+2. Checks required fields, allowed chunk types, page ranges, duplicate `chunk_id` values, document linkage, obvious local/private paths, and optional `confidence_score` bounds.
+3. Loads JSONL chunk fixtures with line-numbered errors for malformed JSON.
+4. Validates `data/sample_documents/sample_chunks.jsonl` using fake/sample data only.
+
+The validator is not integrated with runtime ingestion, real chunking, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
+
 ## 4. Chunk Identity Model
 
 A chunk is a bounded retrieval unit derived from a parent document. It should represent a coherent passage, table, figure caption, procedure step, definition, requirement, or finding that can be retrieved, cited, evaluated, and audited independently.

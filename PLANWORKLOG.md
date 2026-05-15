@@ -425,7 +425,7 @@ Tasks:
 - [x] Define chunk identity, traceability, citation, retrieval payload, and evaluation alignment requirements.
 - [x] Define future vector database and FAISS metadata alignment requirements.
 - [x] Expand fake chunk fixtures with metadata-rich synthetic chunk records.
-- [ ] Add chunk schema validator.
+- [x] Add chunk schema validator.
 - [ ] Add gated legacy chunk adapter.
 - [ ] Implement real chunk migration.
 - [ ] Re-embed and re-index after reset gate approval.
