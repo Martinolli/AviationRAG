@@ -143,6 +143,31 @@ Current scope:
 
 This audit is intended to reveal legacy schema shape before any future conversion work. It is not runtime ingestion integration.
 
+## Fake/Local Chunk Migration Dry Run
+
+A fake/local chunk migration dry-run module exists at:
+
+```text
+src/aviationrag/ingestion/chunk_migration_dry_run.py
+```
+
+A manual tool script exists at:
+
+```text
+tools/chunking/run-chunk-migration-dry-run.py
+```
+
+Current scope:
+
+1. Default input uses the fake sample chunk fixture at `data/sample_documents/sample_chunks.jsonl`.
+2. An operator may provide an explicit local chunk-like file with `--input`.
+3. The dry run loads one explicit file, audits input structure, converts records through the passive legacy chunk adapter, validates converted `ChunkRecord` outputs, validates vector payload-shaped dictionaries, and returns summary counts, issues, and warnings.
+4. Generated reports go to the ignored local path `logs/chunking/chunk_migration_dry_run.json` by default.
+5. Reports are intended as local rehearsal artifacts only and should not be committed when they contain private/local metadata.
+6. The dry run does not write migrated chunks, modify `data/processed`, generate embeddings, connect to Astra, use FAISS, reset indexes, or change runtime ingestion.
+
+This dry run is a rehearsal for future migration execution. It is not real chunk migration and does not activate chunk migration flags globally.
+
 ## 7. Legacy-to-New Mapping Strategy
 
 Likely mapping rules:

@@ -1316,6 +1316,47 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Response policy is not enforced.
    - Major dependency upgrades remain future work.
 
+### 2026-05-16
+
+1. Continued `PLANWORKLOG.md` Phase D.3c only: fake/local chunk migration dry run.
+2. Created dry-run module:
+   - `src/aviationrag/ingestion/chunk_migration_dry_run.py`
+3. Created manual dry-run tool script:
+   - `tools/chunking/run-chunk-migration-dry-run.py`
+4. Added tests:
+   - `tests/test_chunk_migration_dry_run.py`
+5. Default dry run uses fake/sample chunks from `data/sample_documents/sample_chunks.jsonl`.
+6. The dry-run report is summary-only and writes to ignored `logs/chunking/chunk_migration_dry_run.json` when the tool is run.
+7. No real chunk migration was performed.
+8. No ingestion runtime scripts were modified.
+9. No documents were reprocessed.
+10. No embeddings were generated.
+11. No Astra or FAISS changes were made.
+12. Generated report remains ignored/local-only and must not be committed.
+13. Validation after fake/local chunk migration dry run:
+   - `npm run sanitize:check:all` passed.
+   - `python -m compileall src` passed.
+   - `python tests/test_models.py` passed.
+   - `python tests/test_chunk_schema.py` passed.
+   - `python tests/test_chunk_payload.py` passed.
+   - `python tests/test_chunk_legacy_adapter.py` passed.
+   - `python tests/test_chunk_audit.py` passed.
+   - `python tests/test_chunk_migration_dry_run.py` passed.
+   - `python tests/test_retrieval_smoke_fixture.py` passed.
+   - `python tests/test_retrieval_harness.py` passed.
+   - `python tests/test_retrieval_reporting.py` passed.
+   - `python tools/chunking/run-chunk-migration-dry-run.py` passed.
+   - `git check-ignore logs/chunking/chunk_migration_dry_run.json` passed.
+   - `npm run build` passed.
+14. Remaining blockers:
+   - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+   - Manifest is not integrated with ingestion.
+   - Real chunk migration is not implemented.
+   - Real vector indexing is not implemented.
+   - Real retrieval harness is not wired to FAISS/Astra.
+   - Response policy is not enforced.
+   - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:
