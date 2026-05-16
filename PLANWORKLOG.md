@@ -447,7 +447,7 @@ Tasks:
 - [x] Add future operational go/no-go checklist for chunk migration.
 - [x] Audit legacy chunk format with a read-only script using fake/default fixture and explicit-file support.
 - [x] Run fake/local chunk migration dry run using fake/sample fixture and ignored report output.
-- [ ] Implement gated local chunk conversion writing ignored outputs only.
+- [x] Implement gated local chunk conversion writing ignored outputs only.
 - [ ] Preserve page numbers for PDF extraction in a future real parsing phase.
 - [ ] Detect headings and section paths where possible in a future real parsing phase.
 - [ ] Separate tables into dedicated table chunks in a future real parsing phase.

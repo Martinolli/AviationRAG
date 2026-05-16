@@ -1357,6 +1357,54 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Response policy is not enforced.
    - Major dependency upgrades remain future work.
 
+### 2026-05-16
+
+1. Continued `PLANWORKLOG.md` Phase D.3d only: gated local chunk conversion writing ignored outputs.
+2. Created conversion writer module:
+   - `src/aviationrag/ingestion/chunk_conversion_writer.py`
+3. Created manual conversion tool script:
+   - `tools/chunking/write-local-chunk-conversion.py`
+4. Added tests:
+   - `tests/test_chunk_conversion_writer.py`
+5. Added `.gitignore` coverage for generated local conversion outputs under `data/migration_dry_run/`.
+6. The conversion writer requires explicit local-write permission through `--allow-local-write` or the future chunk migration flag.
+7. Outputs go to ignored local paths only:
+   - `converted_chunks.jsonl`
+   - `vector_payloads.jsonl`
+   - `conversion_report.json`
+8. No real chunk migration was performed.
+9. No ingestion runtime scripts were modified.
+10. No documents were reprocessed.
+11. No embeddings were generated.
+12. No Astra or FAISS changes were made.
+13. Generated conversion outputs were not committed.
+14. Validation after gated local chunk conversion writer:
+   - `npm run sanitize:check:all` passed.
+   - `python -m compileall src` passed.
+   - `python tests/test_models.py` passed.
+   - `python tests/test_chunk_schema.py` passed.
+   - `python tests/test_chunk_payload.py` passed.
+   - `python tests/test_chunk_legacy_adapter.py` passed.
+   - `python tests/test_chunk_audit.py` passed.
+   - `python tests/test_chunk_migration_dry_run.py` passed.
+   - `python tests/test_chunk_conversion_writer.py` passed.
+   - `python tests/test_retrieval_smoke_fixture.py` passed.
+   - `python tests/test_retrieval_harness.py` passed.
+   - `python tests/test_retrieval_reporting.py` passed.
+   - `python tools/chunking/write-local-chunk-conversion.py --allow-local-write` passed.
+   - `git check-ignore data/migration_dry_run/chunks/converted_chunks.jsonl` passed.
+   - `git check-ignore data/migration_dry_run/chunks/vector_payloads.jsonl` passed.
+   - `git check-ignore data/migration_dry_run/chunks/conversion_report.json` passed.
+   - `npm run build` passed.
+15. Remaining blockers:
+   - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+   - Manifest is not integrated with ingestion.
+   - Real chunk migration is not implemented.
+   - Real vector indexing is not implemented.
+   - Real retrieval harness is not wired to FAISS/Astra.
+   - Response policy is not enforced.
+   - Major dependency upgrades remain future work.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

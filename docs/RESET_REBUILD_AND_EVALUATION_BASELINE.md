@@ -50,9 +50,10 @@ Current planning state:
 13. A fake/sample-only chunk payload exporter exists for future vector payload-shaped dictionaries; it does not generate embeddings or write to Astra/FAISS.
 14. The real chunk migration design is documented in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`; it is planning-only and no migration has occurred.
 15. A fake/local chunk migration dry-run tool exists for summary-only rehearsal reports under ignored `logs/`; it does not write migrated chunks, generate embeddings, or touch Astra/FAISS.
-16. Response policy and citation validation are not enforced.
-17. Production bridge remains an external blocker.
-18. Dependency major upgrades remain future work after Security Sprint S.1.
+16. A gated local chunk conversion writer exists for explicitly allowed ignored outputs under `data/migration_dry_run/`; it is not production migration and does not generate embeddings or touch Astra/FAISS.
+17. Response policy and citation validation are not enforced.
+18. Production bridge remains an external blocker.
+19. Dependency major upgrades remain future work after Security Sprint S.1.
 
 ## 4. Reset/Rebuild Triggers
 

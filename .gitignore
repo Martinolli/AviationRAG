@@ -51,6 +51,7 @@ data/processed/
 data/embeddings/
 data/astra_db/
 data/manifest/
+data/migration_dry_run/
 
 # Keep optional sample data only
 !data/sample_documents/

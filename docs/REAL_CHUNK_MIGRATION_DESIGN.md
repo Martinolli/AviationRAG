@@ -168,6 +168,36 @@ Current scope:
 
 This dry run is a rehearsal for future migration execution. It is not real chunk migration and does not activate chunk migration flags globally.
 
+## Gated Local Chunk Conversion Writer
+
+A gated local conversion writer exists at:
+
+```text
+src/aviationrag/ingestion/chunk_conversion_writer.py
+```
+
+A manual tool script exists at:
+
+```text
+tools/chunking/write-local-chunk-conversion.py
+```
+
+Current scope:
+
+1. Default input uses the fake sample chunk fixture at `data/sample_documents/sample_chunks.jsonl`.
+2. An operator may provide an explicit local chunk-like file with `--input`.
+3. The tool refuses to write unless local writing is explicitly allowed with `--allow-local-write` or the future chunk migration environment flag is enabled.
+4. Default output is the ignored local directory `data/migration_dry_run/chunks`.
+5. The writer creates:
+   - `converted_chunks.jsonl`
+   - `vector_payloads.jsonl`
+   - `conversion_report.json`
+6. The writer reuses the dry-run flow, passive legacy adapter, chunk schema validator, and vector payload validator before writing local outputs.
+7. Generated outputs are local rehearsal artifacts and must not be committed when they contain private/local metadata.
+8. The writer does not generate embeddings, connect to Astra, use FAISS, write runtime ingestion outputs, reset indexes, or modify legacy ingestion scripts.
+
+This writer is still not production migration. It only proves that explicitly approved input can be converted into ignored local artifacts for review.
+
 ## 7. Legacy-to-New Mapping Strategy
 
 Likely mapping rules:
