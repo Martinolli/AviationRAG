@@ -103,6 +103,17 @@ The adapter is tested with fake inline data only. It is not wired into `read_doc
 
 The real migration path and go/no-go criteria are defined separately in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`. That design remains planning-only and does not activate chunk migration.
 
+## Read-Only Chunk Format Audit
+
+A read-only chunk format audit module exists at `src/aviationrag/ingestion/chunk_audit.py`, with a manual tool at `tools/chunking/audit-legacy-chunks.py`.
+
+Current scope:
+
+1. Audits explicitly provided chunk-like files or the fake sample fixture by default.
+2. Summarizes record count, top-level keys, metadata keys, chunk types, missing IDs, page fields, section fields, and redacted sample shapes.
+3. Does not scan directories, migrate chunks, write migration outputs, generate embeddings, use FAISS, connect to Astra, or change runtime behavior.
+4. Writes optional generated audit reports under ignored `logs/` only when the tool script is run.
+
 ## 4. Chunk Identity Model
 
 A chunk is a bounded retrieval unit derived from a parent document. It should represent a coherent passage, table, figure caption, procedure step, definition, requirement, or finding that can be retrieved, cited, evaluated, and audited independently.

@@ -1,6 +1,6 @@
 # PLANWORKLOG
 
-Last Updated: 2026-05-15
+Last Updated: 2026-05-16
 Repository: `Martinolli/AviationRAG`  
 Base Branch: `main`  
 Purpose: Refactored execution plan comparing the current `WORKLOG.md` status with the broader AviationRAG product/audit roadmap.
@@ -445,7 +445,7 @@ Tasks:
 - [x] Define real chunk migration path in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`.
 - [x] Define legacy-to-new mapping strategy, chunk ID policy, evaluation gates, reset dependency, rollout stages, rollback strategy, and go/no-go criteria.
 - [x] Add future operational go/no-go checklist for chunk migration.
-- [ ] Audit legacy chunk format with a read-only script.
+- [x] Audit legacy chunk format with a read-only script using fake/default fixture and explicit-file support.
 - [ ] Run fake/local chunk migration dry run.
 - [ ] Implement gated local chunk conversion writing ignored outputs only.
 - [ ] Preserve page numbers for PDF extraction in a future real parsing phase.

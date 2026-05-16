@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-05-15
+Last Updated: 2026-05-16
 Active Branch: `main`
 Source Branch for Historical Entries: `hardening/sanitize-repo`
 
@@ -1275,6 +1275,46 @@ Persistent execution log for deployment hardening and product-readiness work so 
     - Real retrieval harness is not wired to FAISS/Astra.
     - Response policy is not enforced.
     - Major dependency upgrades remain future work.
+
+### 2026-05-16
+
+1. Continued `PLANWORKLOG.md` Phase D.3b only: read-only legacy chunk format audit.
+2. Created read-only audit module:
+   - `src/aviationrag/ingestion/chunk_audit.py`
+3. Created manual audit tool script:
+   - `tools/chunking/audit-legacy-chunks.py`
+4. Added tests:
+   - `tests/test_chunk_audit.py`
+5. Default audit input uses fake/sample chunks from `data/sample_documents/sample_chunks.jsonl`.
+6. The audit tool accepts only explicit file paths and does not scan directories by default.
+7. The audit summary redacts and summarizes text values by type and length only.
+8. No real chunk migration was performed.
+9. No ingestion runtime scripts were modified.
+10. No documents were reprocessed.
+11. No embeddings were generated.
+12. No Astra or FAISS changes were made.
+13. Validation after read-only legacy chunk format audit:
+   - `npm run sanitize:check:all` passed.
+   - `python -m compileall src` passed.
+   - `python tests/test_models.py` passed.
+   - `python tests/test_chunk_schema.py` passed.
+   - `python tests/test_chunk_payload.py` passed.
+   - `python tests/test_chunk_legacy_adapter.py` passed.
+   - `python tests/test_chunk_audit.py` passed.
+   - `python tests/test_retrieval_smoke_fixture.py` passed.
+   - `python tests/test_retrieval_harness.py` passed.
+   - `python tests/test_retrieval_reporting.py` passed.
+   - `python tools/chunking/audit-legacy-chunks.py` passed.
+   - `git check-ignore logs/chunking/legacy_chunk_audit.json` passed.
+   - `npm run build` passed.
+14. Remaining blockers:
+   - Production bridge remains an external blocker until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+   - Manifest is not integrated with ingestion.
+   - Real chunk migration is not implemented.
+   - Real vector indexing is not implemented.
+   - Real retrieval harness is not wired to FAISS/Astra.
+   - Response policy is not enforced.
+   - Major dependency upgrades remain future work.
 
 ## Session Recovery Procedure
 

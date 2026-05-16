@@ -116,6 +116,33 @@ Real chunk migration must not begin until these prerequisites are satisfied:
 10. The reset/rebuild plan is reviewed and accepted if embeddings, vector payloads, Astra, or FAISS must be rebuilt.
 11. The user/operator explicitly approves any deletion, reset, reprocessing, re-embedding, or database write.
 
+## Read-Only Legacy Chunk Format Audit
+
+A read-only legacy chunk audit module exists at:
+
+```text
+src/aviationrag/ingestion/chunk_audit.py
+```
+
+A manual tool script exists at:
+
+```text
+tools/chunking/audit-legacy-chunks.py
+```
+
+Current scope:
+
+1. Default input uses the fake sample chunk fixture at `data/sample_documents/sample_chunks.jsonl`.
+2. An operator may provide an explicit local file path with `--input`.
+3. The tool supports explicit `.jsonl`, `.json`, and trusted-local `.pkl`/`.pickle` files.
+4. The tool does not scan directories.
+5. The tool does not migrate, rewrite, re-chunk, embed, index, or modify data.
+6. Sample record shapes summarize keys and value types only.
+7. String values, including `text`, are summarized by type and length; full text is not copied into the report.
+8. Generated audit reports go to the ignored local path `logs/chunking/legacy_chunk_audit.json` by default.
+
+This audit is intended to reveal legacy schema shape before any future conversion work. It is not runtime ingestion integration.
+
 ## 7. Legacy-to-New Mapping Strategy
 
 Likely mapping rules:
