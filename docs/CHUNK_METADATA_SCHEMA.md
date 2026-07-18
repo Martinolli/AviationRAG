@@ -60,6 +60,8 @@ Fixture note:
 
 `data/sample_documents/sample_chunks.jsonl` now contains an expanded fake/sample-only chunk fixture with metadata-rich examples across multiple chunk types. It is intended for future validator and retrieval evaluation development only. It is not used by runtime ingestion, retrieval, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
 
+`data/sample_documents/sample_structured_document.json` contains a synthetic D.4 structured-document design fixture. It is not parsed from real source material and is not consumed by runtime ingestion, retrieval, embeddings, Astra, FAISS, API routes, prompts, bridge code, or deployment behavior.
+
 ## Chunk Schema Validator
 
 A chunk schema validator exists at `src/aviationrag/ingestion/chunk_schema.py`.
@@ -266,6 +268,33 @@ Traceability rules:
 4. `paragraph_id` should preserve official numbering or clause labels when reliable.
 5. Chunks without page or section metadata may still be retrievable but should not be treated as compliance-grade citations until reviewed.
 
+## 8a. Planned D.4 Structural Provenance Extension
+
+`docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md` defines the D.4 target design
+for preserving page and structure before any real document reprocessing or chunk
+migration begins.
+
+The following fields are future design targets only. They are not implemented
+by the current `ChunkRecord`, validators, local conversion writer, vector
+payload writer, runtime ingestion, retrieval, Astra, or FAISS flows:
+
+| Field | Purpose |
+| --- | --- |
+| `source_block_ids` | Parser block IDs that contributed to the chunk. |
+| `source_span` | Page, character, and optional bounding-box provenance. |
+| `pdf_page_index_start` / `pdf_page_index_end` | Zero-based source file page indexes. |
+| `printed_page_label_start` / `printed_page_label_end` | Printed page labels when they differ from physical page numbers. |
+| `section_id`, `section_number`, `section_title` | Normalized section hierarchy references. |
+| `clause_id`, `list_path` | Paragraph, clause, and nested list provenance. |
+| `table_id`, `figure_id`, `equation_id`, `admonition_id` | Specialized source-object references. |
+| `parser_name`, `parser_schema_version` | Parser contract identity for future structured-document outputs. |
+| `structure_confidence` | Confidence in extracted structural provenance. |
+| `provenance_status` | `structured`, `legacy_partial`, `legacy_unstructured`, or `synthetic_fixture`. |
+
+Future schema implementation must preserve backward compatibility for legacy
+chunks that lack these fields. Missing structural provenance must remain visible
+instead of being inferred as authoritative.
+
 ## 9. Extraction Quality Metadata
 
 Required or strongly recommended extraction metadata:
@@ -452,7 +481,7 @@ Alignment requirements:
 | D.3b | Read-only legacy chunk format audit. | Completed without runtime ingestion changes. |
 | D.3c | Fake/local chunk migration dry run. | Completed for local rehearsal only. |
 | D.3d | Gated local chunk conversion writer. | Completed for ignored local outputs only. |
-| D.4 | Page and structure preservation design. | Planning only; no reprocessing, embeddings, Astra, or FAISS. |
+| D.4 | Page and structure preservation design. | Completed as design only; no reprocessing, migration, embeddings, Astra, or FAISS. |
 | D.5 | Re-embed/re-index after reset gate. | Future work requiring explicit reset approval. |
 
 Migration rules:

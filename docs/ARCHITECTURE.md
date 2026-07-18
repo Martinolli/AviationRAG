@@ -138,6 +138,22 @@ Current ingestion characteristics:
 4. Generated/private data folders are ignored by Git.
 5. Only optional tiny sample data under `data/sample_documents/` is intended for public tracking.
 
+Planned D.4 structured parsing boundary:
+
+```text
+source file
+  -> future parser such as techdoc-parse
+  -> StructuredDocument
+  -> AviationRAG ingestion adapter
+  -> ChunkRecord with page and structure provenance
+  -> validated vector payloads
+  -> retrieval citations
+```
+
+This boundary is design-only. Runtime ingestion still uses the legacy scripts,
+and no parser integration, document reprocessing, embedding regeneration, Astra
+reset, or FAISS rebuild has been performed.
+
 Current retrieval and generation:
 
 1. A user query is embedded with OpenAI embeddings.
@@ -248,6 +264,13 @@ Lightweight core dataclasses now exist in `src/aviationrag/models.py` for future
 Manifest integration planning now exists in `docs/INGESTION_MANIFEST_INTEGRATION_PLAN.md`. The plan documents future hook points, validation gates, and Astra/FAISS reset strategy only; the legacy ingestion runtime remains unchanged.
 
 The controlled reset/rebuild and retrieval baseline gate is documented in `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md`. No Astra reset, FAISS reset, ingestion migration, or embedding regeneration has been performed.
+
+Page and structure preservation design now exists in
+`docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md`. It defines the future
+StructuredDocument contract and parser boundary for pages, sections,
+paragraphs, tables, figures, equations, warnings, cautions, notes, appendices,
+and source spans. This design does not make `src/aviationrag/` the active
+runtime ingestion owner and does not change current retrieval behavior.
 
 ```text
 src/aviationrag/

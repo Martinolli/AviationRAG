@@ -1433,6 +1433,32 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Real retrieval harness is not wired to FAISS/Astra.
    - Response policy is not enforced.
 
+### 2026-07-18
+
+1. Completed D.4 page and structure preservation design as documentation-only work.
+2. Added `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md`.
+3. Added the synthetic design fixture `data/sample_documents/sample_structured_document.json`.
+4. Defined future provenance handling for:
+   - page numbers and printed page labels
+   - section and subsection hierarchy
+   - paragraph and clause identifiers
+   - table, figure, caption, and equation provenance
+   - warning, caution, and note classification
+   - appendices, cross-references, source spans, confidence, and citation-ready retrieval metadata
+5. Updated roadmap, architecture, chunk schema, reset/rebuild, and migration design docs to reference D.4 as a completed design gate.
+6. No dependency, source, runtime, ingestion, retrieval, embedding, Astra, FAISS, API, prompt, or generated-data behavior changes were made.
+7. Real parser integration, real document reprocessing, real chunk migration, embedding regeneration, Astra rebuild, FAISS rebuild, real retrieval harness wiring, and response-policy enforcement remain future work.
+8. Dependency hardening remains separate future maintenance work.
+9. Production bridge remains externally blocked.
+10. Validation after D.4:
+   - `npm run sanitize:check:all` passed.
+   - `.venv` `python -m compileall src` passed.
+   - `.venv` JSON syntax check for `data/sample_documents/sample_structured_document.json` passed.
+   - `.venv` `tests/test_chunk_migration_dry_run.py` passed.
+   - `.venv` `tests/test_chunk_conversion_writer.py` passed.
+   - `.venv` `tests/test_retrieval_harness.py` passed.
+   - `.venv` `tests/test_retrieval_reporting.py` passed.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

@@ -113,8 +113,16 @@ Real chunk migration must not begin until these prerequisites are satisfied:
 7. A read-only legacy chunk format audit has been run and reviewed.
 8. The retrieval smoke fixture and mock harness remain passing.
 9. A real retrieval baseline plan is approved for pre-change and post-change comparison.
-10. The reset/rebuild plan is reviewed and accepted if embeddings, vector payloads, Astra, or FAISS must be rebuilt.
-11. The user/operator explicitly approves any deletion, reset, reprocessing, re-embedding, or database write.
+10. D.4 page and structure preservation requirements are approved, including the future parser boundary and structured-document provenance contract.
+
+D.4 gate:
+
+Real chunk migration must not begin until page, section, paragraph, table,
+figure, warning, caution, note, appendix, and source-span provenance rules are
+accepted. Legacy conversion must not claim structured provenance unless it is
+derived from source evidence or a future validated parser output.
+11. The reset/rebuild plan is reviewed and accepted if embeddings, vector payloads, Astra, or FAISS must be rebuilt.
+12. The user/operator explicitly approves any deletion, reset, reprocessing, re-embedding, or database write.
 
 ## Read-Only Legacy Chunk Format Audit
 
@@ -432,7 +440,7 @@ Do not silently delete superseded chunks that were used in prior retrieval or an
 | D.3b | Legacy chunk format audit script, read-only. | None; no writes or ingestion. |
 | D.3c | Fake/local chunk migration dry run. | None to runtime. |
 | D.3d | Gated local chunk conversion writing ignored outputs. | Local-only, disabled by default. |
-| D.4 | Page and structure preservation design. | Planning only; no reprocessing, migration, embeddings, Astra, or FAISS. |
+| D.4 | Page and structure preservation design. | Completed as design only; no reprocessing, migration, embeddings, Astra, or FAISS. |
 | E.3 | Connect retrieval harness to local FAISS outputs. | Evaluation only, no answer behavior change. |
 | D.5/E.4 | Controlled local re-chunk, reset/rebuild, and evaluation baseline. | Requires go/no-go approval. |
 

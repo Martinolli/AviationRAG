@@ -54,6 +54,7 @@ Current planning state:
 17. Response policy and citation validation are not enforced.
 18. Production bridge remains an external blocker.
 19. Dependency major upgrades remain future work after Security Sprint S.1.
+20. D.4 page and structure preservation design is documented in `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md`; no parser integration, document reprocessing, migration, embedding regeneration, Astra reset, or FAISS rebuild has occurred.
 
 ## 4. Reset/Rebuild Triggers
 
@@ -71,6 +72,7 @@ A controlled reset/rebuild becomes appropriate when one or more of these conditi
 
 The target chunk metadata contract that should be ready before any schema-changing rebuild is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
 The future real chunk migration path and go/no-go criteria are documented in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`.
+The D.4 page and structure preservation design is documented in `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md` and must remain a gate before real parsing, migration, embedding, or indexing work.
 
 A reset should not be used as a shortcut for unclear metadata. If the target schema, evaluation baseline, or rollback path is incomplete, the decision must remain `No-Go`.
 
@@ -306,7 +308,7 @@ Decision:
 | D.3b | Read-only legacy chunk audit. | Completed with fake/default fixture and explicit-file support only. |
 | D.3c | Fake/local chunk migration dry run. | Completed for local rehearsal only; no embeddings, Astra, or FAISS. |
 | D.3d | Gated local chunk conversion writer. | Completed for ignored local outputs only; disabled by default. |
-| D.4 | Page and structure preservation design. | Planned design only; no document reprocessing or migration. |
+| D.4 | Page and structure preservation design. | Completed as design only; no document reprocessing, migration, embeddings, Astra, or FAISS. |
 | D.5 | Controlled local manifest/chunk integration prototype. | Future gated local work only; disabled by default. |
 | D.6 | Controlled local reset/rebuild. | Future work requiring explicit reset window. |
 | E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |

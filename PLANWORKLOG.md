@@ -491,22 +491,39 @@ Acceptance criteria:
 
 #### D.4 Page and structure preservation design
 
-Status: `Planned` / `Not started`
+Status: `Completed` / `Design only; implementation not started`
 
 Tasks:
 
-- [ ] Design how source page numbers should be preserved in future chunk records.
-- [ ] Design section and subsection hierarchy representation.
-- [ ] Design paragraph, clause, appendix, table, figure, and caption provenance fields.
-- [ ] Design warning, caution, note, definition, and regulatory passage classification.
-- [ ] Design source-document traceability rules for future parsing and migration work.
-- [ ] Design fallback and manual-review handling for difficult or low-quality extraction.
-- [ ] Keep real document reprocessing, real migration, embedding regeneration, and vector indexing out of this phase.
+- [x] Design how source page numbers should be preserved in future chunk records.
+- [x] Design section and subsection hierarchy representation.
+- [x] Design paragraph, clause, appendix, table, figure, and caption provenance fields.
+- [x] Design warning, caution, note, definition, and regulatory passage classification.
+- [x] Design source-document traceability rules for future parsing and migration work.
+- [x] Design fallback and manual-review handling for difficult or low-quality extraction.
+- [x] Keep real document reprocessing, real migration, embedding regeneration, and vector indexing out of this phase.
 
 Acceptance criteria:
 
-- [ ] Page and structure provenance requirements are documented without changing runtime ingestion, chunking, embeddings, Astra, FAISS, retrieval, or prompts.
-- [ ] The next implementation/reset phases remain gated by explicit approval.
+- [x] Page and structure provenance requirements are documented without changing runtime ingestion, chunking, embeddings, Astra, FAISS, retrieval, or prompts.
+- [x] The next implementation/reset phases remain gated by explicit approval.
+
+Notes:
+
+1. D.4 added `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md`.
+2. D.4 added a synthetic design fixture at `data/sample_documents/sample_structured_document.json`.
+3. The fixture is not derived from real source material and is not used by runtime ingestion or retrieval.
+4. Real parser integration, schema implementation, migration, embedding regeneration, Astra rebuild, FAISS rebuild, and response-policy enforcement remain future work.
+
+#### D.4b Structured provenance validation planning
+
+Status: `Planned`
+
+Tasks:
+
+- [ ] Decide whether the synthetic structured-document fixture needs a dedicated validator before parser integration.
+- [ ] Define parser-adapter acceptance tests using synthetic data only.
+- [ ] Keep real source document parsing and reprocessing out of this planning phase unless explicitly approved.
 
 ---
 
@@ -1048,6 +1065,7 @@ Recommended immediate order:
 3. Add architecture/governance/evaluation docs.
 4. Add backend package skeleton without behavior change.
 5. Add retrieval evaluation harness.
-6. Start D.4 page and structure preservation design before any real parsing, migration, embedding, or indexing work.
+6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
+7. Plan D.4b structured provenance validation before implementing parser integration.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.
