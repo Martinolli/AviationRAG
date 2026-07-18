@@ -471,8 +471,8 @@ A future parser output file SHOULD identify its schema and parser identity:
 
 ```json
 {
-  "schema_name": "aviationrag.structured_document",
-  "schema_version": "0.1-design",
+  "schema_name": "techdoc-structured-document",
+  "schema_version": "0.1.0",
   "parser_name": "techdoc-parse",
   "parser_version": "future",
   "document": {},
@@ -485,6 +485,35 @@ A future parser output file SHOULD identify its schema and parser identity:
 
 The contract MUST support validation before chunk creation. Invalid parser
 output MUST fail before embedding, indexing, Astra write, or FAISS rebuild.
+
+## D.4b Synthetic Structural Validation
+
+D.4b adds an offline validator for synthetic structured-document records:
+
+```text
+src/aviationrag/ingestion/structured_document_validator.py
+tools/chunking/validate-structured-document.py
+```
+
+The validator checks internal structural coherence only. It validates schema
+identity, document metadata, page ordering, block references, section hierarchy,
+source spans, confidence values, tables, figures, equations, admonitions, and
+cross-references. Validation errors make a record invalid. Validation warnings
+identify incomplete optional provenance or review concerns without invalidating
+an otherwise coherent record.
+
+Unsupported schema names or schema versions are errors. The default supported
+contract is:
+
+```text
+schema_name: techdoc-structured-document
+schema_version: 0.1.0
+```
+
+The validator does not mutate the input document. It does not parse PDFs or
+DOCX files, run OCR, implement `techdoc-parse`, judge source-document extraction
+accuracy, generate chunks, generate embeddings, connect to Astra, use FAISS,
+perform migration, or integrate with runtime ingestion.
 
 ## 26. Versioning And Backward Compatibility
 

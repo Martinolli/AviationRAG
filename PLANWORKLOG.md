@@ -515,15 +515,38 @@ Notes:
 3. The fixture is not derived from real source material and is not used by runtime ingestion or retrieval.
 4. Real parser integration, schema implementation, migration, embedding regeneration, Astra rebuild, FAISS rebuild, and response-policy enforcement remain future work.
 
-#### D.4b Structured provenance validation planning
+#### D.4b Synthetic structured-provenance validation
+
+Status: `Completed` / `Synthetic offline validation only`
+
+Tasks:
+
+- [x] Add offline structured-document validator.
+- [x] Add manual CLI for synthetic structured-document validation.
+- [x] Validate schema identity and supported schema version.
+- [x] Validate document metadata, pages, blocks, sections, source spans, confidence values, tables, figures, equations, admonitions, and cross-references.
+- [x] Add deterministic JSON-serializable validation report.
+- [x] Add tests using synthetic in-memory records and the D.4 sample fixture.
+- [x] Confirm the sample fixture validates.
+- [x] Confirm default local report output remains ignored.
+- [x] Keep real source document parsing, parser implementation, runtime ingestion, real migration, embedding regeneration, Astra, and FAISS out of this phase.
+
+Acceptance criteria:
+
+- [x] Validator is implemented at `src/aviationrag/ingestion/structured_document_validator.py`.
+- [x] CLI is implemented at `tools/chunking/validate-structured-document.py`.
+- [x] Tests pass for synthetic valid and invalid records.
+- [x] No runtime ingestion integration occurs.
+
+#### D.4c Synthetic parser-output adapter design and dry run
 
 Status: `Planned`
 
 Tasks:
 
-- [ ] Decide whether the synthetic structured-document fixture needs a dedicated validator before parser integration.
-- [ ] Define parser-adapter acceptance tests using synthetic data only.
-- [ ] Keep real source document parsing and reprocessing out of this planning phase unless explicitly approved.
+- [ ] Design a synthetic parser-output adapter that consumes validated structured-document records.
+- [ ] Define dry-run mapping from `StructuredDocument` blocks to future chunk-ready records.
+- [ ] Keep real parser output, real documents, runtime ingestion, migration, embeddings, Astra, and FAISS out of this phase unless explicitly approved.
 
 ---
 
@@ -1066,6 +1089,6 @@ Recommended immediate order:
 4. Add backend package skeleton without behavior change.
 5. Add retrieval evaluation harness.
 6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
-7. Plan D.4b structured provenance validation before implementing parser integration.
+7. Plan D.4c synthetic parser-output adapter design before implementing parser integration.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.

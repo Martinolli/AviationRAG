@@ -1,6 +1,6 @@
 {
-  "schema_name": "aviationrag.structured_document",
-  "schema_version": "0.1-design",
+  "schema_name": "techdoc-structured-document",
+  "schema_version": "0.1.0",
   "fixture_type": "synthetic_design_fixture",
   "description": "Synthetic structured-document fixture for D.4 design validation only. It is not derived from real aviation source material.",
   "parser_name": "design-fixture",
@@ -100,7 +100,7 @@
     {
       "block_id": "adm-0001",
       "block_type": "warning",
-      "admonition_type": "warning",
+      "admonition_type": "WARNING",
       "source_label": "WARNING",
       "text": "Synthetic warning text for design validation only.",
       "reading_order": 19,

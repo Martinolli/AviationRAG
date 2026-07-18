@@ -1459,6 +1459,59 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - `.venv` `tests/test_retrieval_harness.py` passed.
    - `.venv` `tests/test_retrieval_reporting.py` passed.
 
+### 2026-07-18
+
+1. Completed D.4b synthetic structured-provenance validation.
+2. Created `src/aviationrag/ingestion/structured_document_validator.py`.
+3. Created `tools/chunking/validate-structured-document.py`.
+4. Added `tests/test_structured_document_validator.py`.
+5. Updated the synthetic sample fixture to the supported schema identity:
+   - `schema_name`: `techdoc-structured-document`
+   - `schema_version`: `0.1.0`
+6. Implemented schema name/version checks.
+7. Implemented document metadata, page, and block consistency checks.
+8. Implemented section hierarchy and cycle checks.
+9. Implemented source-span and source-block reference checks.
+10. Implemented table, figure, equation, admonition, and cross-reference checks.
+11. Implemented confidence-range validation.
+12. Implemented deterministic JSON-serializable validation reports with stable issue ordering.
+13. Validator checks structural coherence only; it does not judge source-document extraction accuracy.
+14. No real documents were processed.
+15. No parser implementation was performed.
+16. No runtime ingestion was changed.
+17. No real migration was performed.
+18. No embeddings, Astra records, or FAISS indexes were changed.
+19. Validation after D.4b:
+   - `git status -b --short` showed only expected working-tree changes before commit.
+   - `npm run sanitize:check:all` passed.
+   - `git diff --check` passed.
+   - `.venv` `python -m compileall src` passed.
+   - `.venv` `tests/test_models.py` passed.
+   - `.venv` `tests/test_chunk_schema.py` passed.
+   - `.venv` `tests/test_chunk_payload.py` passed.
+   - `.venv` `tests/test_chunk_legacy_adapter.py` passed.
+   - `.venv` `tests/test_chunk_migration_dry_run.py` passed.
+   - `.venv` `tests/test_chunk_conversion_writer.py` passed.
+   - `.venv` `tests/test_structured_document_validator.py` passed.
+   - `.venv` `tests/test_retrieval_harness.py` passed.
+   - `.venv` `tests/test_retrieval_reporting.py` passed.
+   - `.venv` JSON syntax check for `data/sample_documents/sample_structured_document.json` passed.
+   - `.venv` CLI validation without report writing passed.
+   - `.venv` CLI validation with ignored report writing passed.
+   - `git check-ignore logs/chunking/structured_document_validation.json` passed.
+   - `npm run build` passed.
+20. Remaining blockers:
+   - Production bridge remains externally blocked.
+   - Python dependencies remain unpinned.
+   - Node remains declared as an application dependency.
+   - npm/GitHub vulnerabilities remain separate security work.
+   - Parser implementation is absent.
+   - Real document validation is absent.
+   - Real migration is absent.
+   - Embeddings and indexes have not been rebuilt.
+   - Retrieval harness is not wired to FAISS/Astra.
+   - Response policy is not enforced.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

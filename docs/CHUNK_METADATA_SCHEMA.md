@@ -295,6 +295,19 @@ Future schema implementation must preserve backward compatibility for legacy
 chunks that lack these fields. Missing structural provenance must remain visible
 instead of being inferred as authoritative.
 
+## 8b. D.4b Structured-Document Validation
+
+D.4b adds an offline validator for the synthetic structured-document contract at
+`src/aviationrag/ingestion/structured_document_validator.py`, with a manual CLI
+at `tools/chunking/validate-structured-document.py`.
+
+Structured-document validation is a pre-chunk-conversion coherence gate for
+future parser output. It does not change the current `ChunkRecord` runtime
+contract, does not implement D.4 provenance fields in runtime ingestion, and
+does not authorize real migration. D.4 provenance extensions remain planned
+until a later controlled implementation phase wires them into chunk conversion,
+embedding payloads, Astra, FAISS, retrieval, and response citations.
+
 ## 9. Extraction Quality Metadata
 
 Required or strongly recommended extraction metadata:
@@ -482,6 +495,7 @@ Alignment requirements:
 | D.3c | Fake/local chunk migration dry run. | Completed for local rehearsal only. |
 | D.3d | Gated local chunk conversion writer. | Completed for ignored local outputs only. |
 | D.4 | Page and structure preservation design. | Completed as design only; no reprocessing, migration, embeddings, Astra, or FAISS. |
+| D.4b | Synthetic structured-provenance validation. | Completed as offline validation only; no parser, runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.5 | Re-embed/re-index after reset gate. | Future work requiring explicit reset approval. |
 
 Migration rules:

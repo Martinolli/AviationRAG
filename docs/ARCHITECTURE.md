@@ -144,6 +144,7 @@ Planned D.4 structured parsing boundary:
 source file
   -> future parser such as techdoc-parse
   -> StructuredDocument
+  -> Structured-document validator
   -> AviationRAG ingestion adapter
   -> ChunkRecord with page and structure provenance
   -> validated vector payloads
@@ -152,7 +153,9 @@ source file
 
 This boundary is design-only. Runtime ingestion still uses the legacy scripts,
 and no parser integration, document reprocessing, embedding regeneration, Astra
-reset, or FAISS rebuild has been performed.
+reset, or FAISS rebuild has been performed. The D.4b validator is offline
+pre-runtime scaffolding for synthetic records only; it does not parse source
+documents or feed runtime ingestion.
 
 Current retrieval and generation:
 
@@ -271,6 +274,13 @@ StructuredDocument contract and parser boundary for pages, sections,
 paragraphs, tables, figures, equations, warnings, cautions, notes, appendices,
 and source spans. This design does not make `src/aviationrag/` the active
 runtime ingestion owner and does not change current retrieval behavior.
+
+Synthetic structured-provenance validation now exists at
+`src/aviationrag/ingestion/structured_document_validator.py`, with a manual
+offline CLI at `tools/chunking/validate-structured-document.py`. This validates
+internal coherence for synthetic structured-document records before future
+adapter work; it is not connected to runtime parsing, ingestion, embeddings,
+Astra, FAISS, retrieval, generation, API routes, or deployment.
 
 ```text
 src/aviationrag/
