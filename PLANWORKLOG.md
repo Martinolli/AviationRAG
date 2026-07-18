@@ -1,6 +1,6 @@
 # PLANWORKLOG
 
-Last Updated: 2026-05-16
+Last Updated: 2026-07-18
 Repository: `Martinolli/AviationRAG`  
 Base Branch: `main`  
 Purpose: Refactored execution plan comparing the current `WORKLOG.md` status with the broader AviationRAG product/audit roadmap.
@@ -126,6 +126,31 @@ The project should now follow this execution order:
 ---
 
 ## 4. Active Master Plan
+
+### Maintenance M - Repository Environment and Roadmap Hygiene
+
+**Goal:** Keep the local development baseline and roadmap numbering clear before starting new feature work.
+
+#### M.1 Repository virtual environment and Node declaration revalidation
+
+Status: `Completed` / `Follow-up maintenance planned`
+
+Tasks:
+
+- [x] Validate the repository `.venv` directly without relying on global Python activation.
+- [x] Confirm `.venv` uses Python `3.12.10`.
+- [x] Confirm `.venv` `pip check` passes.
+- [x] Confirm Python compilation passes with `.venv`.
+- [x] Confirm targeted chunking and retrieval-shell tests pass with `.venv`.
+- [x] Confirm global Python package conflicts do not affect the validated repository `.venv`.
+- [ ] Pin or otherwise lock Python dependency declarations in a separate controlled maintenance phase.
+- [ ] Correct the misleading `node@22.13.0` application dependency declaration in a separate controlled maintenance phase.
+
+Notes:
+
+1. The current Python dependency declaration is `requirements.txt` only and is unpinned, so the existing `.venv` is operational but only partially reproducible from repository declarations.
+2. `node@22.13.0` is currently declared as an application dependency; this should become a runtime/tooling declaration later, not a dependency change in M.1 or M.2.
+3. No dependency, source, runtime, ingestion, retrieval, embedding, Astra, or FAISS changes were made during M.1.
 
 ### Security Sprint S — Dependency Hardening
 
@@ -440,6 +465,13 @@ Acceptance criteria:
 
 Status: `Design complete` / `Real migration execution planned`
 
+Completed subphases:
+
+- [x] D.3 real chunk migration design.
+- [x] D.3b read-only legacy chunk audit.
+- [x] D.3c fake/local chunk migration dry run.
+- [x] D.3d gated local chunk conversion writer.
+
 Tasks:
 
 - [x] Define real chunk migration path in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`.
@@ -448,12 +480,7 @@ Tasks:
 - [x] Audit legacy chunk format with a read-only script using fake/default fixture and explicit-file support.
 - [x] Run fake/local chunk migration dry run using fake/sample fixture and ignored report output.
 - [x] Implement gated local chunk conversion writing ignored outputs only.
-- [ ] Preserve page numbers for PDF extraction in a future real parsing phase.
-- [ ] Detect headings and section paths where possible in a future real parsing phase.
-- [ ] Separate tables into dedicated table chunks in a future real parsing phase.
-- [ ] Preserve notes, cautions, warnings, and definitions as distinct chunk candidates in a future real parsing phase.
-- [ ] Keep fallback extraction for difficult PDFs.
-- [ ] Keep manual review flag for low-quality extraction.
+- [ ] Implement real chunk migration only after a future explicit approval gate.
 
 Acceptance criteria:
 
@@ -462,21 +489,24 @@ Acceptance criteria:
 - [ ] A retrieved chunk can show document, page span, and section path.
 - [ ] Low-quality extraction is visible to admin/user.
 
-#### D.4 Chunking redesign
+#### D.4 Page and structure preservation design
 
-Status: `Planned`
+Status: `Planned` / `Not started`
 
 Tasks:
 
-- [ ] Add section-aware chunking.
-- [ ] Add configurable chunk size by document type.
-- [ ] Add special handling for regulatory paragraphs.
-- [ ] Add special handling for tables.
-- [ ] Add exact citation passage chunks for compliance mode.
+- [ ] Design how source page numbers should be preserved in future chunk records.
+- [ ] Design section and subsection hierarchy representation.
+- [ ] Design paragraph, clause, appendix, table, figure, and caption provenance fields.
+- [ ] Design warning, caution, note, definition, and regulatory passage classification.
+- [ ] Design source-document traceability rules for future parsing and migration work.
+- [ ] Design fallback and manual-review handling for difficult or low-quality extraction.
+- [ ] Keep real document reprocessing, real migration, embedding regeneration, and vector indexing out of this phase.
 
 Acceptance criteria:
 
-- [ ] Regulatory queries retrieve exact paragraph-like chunks rather than random long text blocks.
+- [ ] Page and structure provenance requirements are documented without changing runtime ingestion, chunking, embeddings, Astra, FAISS, retrieval, or prompts.
+- [ ] The next implementation/reset phases remain gated by explicit approval.
 
 ---
 
@@ -1018,6 +1048,6 @@ Recommended immediate order:
 3. Add architecture/governance/evaluation docs.
 4. Add backend package skeleton without behavior change.
 5. Add retrieval evaluation harness.
-6. Then start parsing/chunking/metadata upgrade.
+6. Start D.4 page and structure preservation design before any real parsing, migration, embedding, or indexing work.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.

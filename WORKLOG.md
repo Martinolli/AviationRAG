@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-05-16
+Last Updated: 2026-07-18
 Active Branch: `main`
 Source Branch for Historical Entries: `hardening/sanitize-repo`
 
@@ -1404,6 +1404,34 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Real retrieval harness is not wired to FAISS/Astra.
    - Response policy is not enforced.
    - Major dependency upgrades remain future work.
+
+### 2026-07-18
+
+1. Completed maintenance checkpoint M.1/M.2 before starting D.4.
+2. Validated the repository `.venv`:
+   - Python `3.12.10`.
+   - `.venv` `pip check` passed.
+   - `.venv` Python compilation of `src` passed.
+   - Targeted chunking and retrieval-shell tests passed with `.venv`.
+3. Confirmed global Python package conflicts do not affect the validated repository `.venv`.
+4. Recorded environment follow-up items:
+   - Existing Python dependency declarations are unpinned and only partially reproduce the current `.venv`.
+   - `node@22.13.0` is currently declared as an application dependency and needs later controlled correction.
+5. Reconciled roadmap numbering so the completed sequence is:
+   - D.3 real chunk migration design.
+   - D.3b read-only legacy chunk audit.
+   - D.3c fake/local chunk migration dry run.
+   - D.3d gated local chunk conversion writer.
+6. Reconciled the next intended phase as D.4 - page and structure preservation design.
+7. No dependency, source, runtime, ingestion, retrieval, embedding, Astra, FAISS, API, prompt, or generated-data changes were made.
+8. D.4 remains not started.
+9. Remaining blockers:
+   - Production bridge remains externally blocked until a real public HTTPS bridge endpoint is provisioned and configured in Vercel.
+   - Dependency hardening remains separate future work.
+   - Real chunk migration is not implemented.
+   - Real embedding regeneration and vector indexing are not implemented.
+   - Real retrieval harness is not wired to FAISS/Astra.
+   - Response policy is not enforced.
 
 ## Session Recovery Procedure
 

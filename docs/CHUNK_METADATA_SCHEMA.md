@@ -449,9 +449,11 @@ Alignment requirements:
 | D.2d | Fake chunk payload exporter. | None to runtime. |
 | D.2e | Gated legacy chunk adapter. | Disabled by default. |
 | D.3 | Real chunk migration design. | Planning only; no runtime migration. |
-| D.3b | Read-only legacy chunk format audit. | Planned future audit. |
-| D.3c | Fake/local chunk migration dry run. | Planned future dry run. |
-| D.4 | Re-embed/re-index after reset gate. | Requires explicit reset approval. |
+| D.3b | Read-only legacy chunk format audit. | Completed without runtime ingestion changes. |
+| D.3c | Fake/local chunk migration dry run. | Completed for local rehearsal only. |
+| D.3d | Gated local chunk conversion writer. | Completed for ignored local outputs only. |
+| D.4 | Page and structure preservation design. | Planning only; no reprocessing, embeddings, Astra, or FAISS. |
+| D.5 | Re-embed/re-index after reset gate. | Future work requiring explicit reset approval. |
 
 Migration rules:
 

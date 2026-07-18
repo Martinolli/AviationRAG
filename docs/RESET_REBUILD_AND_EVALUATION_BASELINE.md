@@ -302,9 +302,13 @@ Decision:
 | D.1i | Reset/rebuild and retrieval baseline plan only. | None. |
 | D.2 | Metadata-rich chunk schema planning. | None. |
 | D.2b | Retrieval evaluation smoke fixture. | None to runtime. |
-| D.3 | Metadata-rich chunk implementation. | Planned; no reset until approved. |
-| D.4 | Gated local manifest/chunk integration. | Disabled by default, local first. |
-| D.5 | Controlled local reset/rebuild. | Requires explicit reset window. |
+| D.3 | Real chunk migration design. | Completed as planning only; no runtime migration. |
+| D.3b | Read-only legacy chunk audit. | Completed with fake/default fixture and explicit-file support only. |
+| D.3c | Fake/local chunk migration dry run. | Completed for local rehearsal only; no embeddings, Astra, or FAISS. |
+| D.3d | Gated local chunk conversion writer. | Completed for ignored local outputs only; disabled by default. |
+| D.4 | Page and structure preservation design. | Planned design only; no document reprocessing or migration. |
+| D.5 | Controlled local manifest/chunk integration prototype. | Future gated local work only; disabled by default. |
+| D.6 | Controlled local reset/rebuild. | Future work requiring explicit reset window. |
 | E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |
 | E.2 | Retrieval report/export shell. | Formats fake/mock evaluation results only; no real retrieval wiring. |
 | E.3 | Real retrieval evaluation integration. | Measures retrieval before behavior changes. |

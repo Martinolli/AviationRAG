@@ -432,9 +432,9 @@ Do not silently delete superseded chunks that were used in prior retrieval or an
 | D.3b | Legacy chunk format audit script, read-only. | None; no writes or ingestion. |
 | D.3c | Fake/local chunk migration dry run. | None to runtime. |
 | D.3d | Gated local chunk conversion writing ignored outputs. | Local-only, disabled by default. |
-| D.4 | Controlled local re-chunk and re-embed trial. | Requires explicit approval. |
+| D.4 | Page and structure preservation design. | Planning only; no reprocessing, migration, embeddings, Astra, or FAISS. |
 | E.3 | Connect retrieval harness to local FAISS outputs. | Evaluation only, no answer behavior change. |
-| D.5/E.4 | Reset/rebuild with evaluation baseline. | Requires go/no-go approval. |
+| D.5/E.4 | Controlled local re-chunk, reset/rebuild, and evaluation baseline. | Requires go/no-go approval. |
 
 Implementation sequencing rule:
 
