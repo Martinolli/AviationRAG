@@ -134,6 +134,18 @@ enter migration. Unsupported schema versions must not enter migration. Validator
 output should be retained or summarized for auditability in a later controlled
 phase. D.4b does not authorize real migration.
 
+D.4c gate:
+
+Parser-output artifacts must pass the offline structured-document adapter dry
+run before any future migration phase treats them as chunk candidates. The dry
+run must verify manifest identity, artifact checksum, source checksum when
+source bytes are provided, structured-document validation, and candidate
+construction without importing parser runtime code. `PASS` means the artifact is
+candidate-ready for review only. `REVIEW` requires explicit warning/source
+checksum disposition. `FAIL` blocks migration. D.4c does not authorize real
+migration, chunk persistence, embedding generation, Astra writes, FAISS rebuild,
+or runtime ingestion integration.
+
 ## Read-Only Legacy Chunk Format Audit
 
 A read-only legacy chunk audit module exists at:
@@ -215,6 +227,33 @@ Current scope:
 8. The writer does not generate embeddings, connect to Astra, use FAISS, write runtime ingestion outputs, reset indexes, or modify legacy ingestion scripts.
 
 This writer is still not production migration. It only proves that explicitly approved input can be converted into ignored local artifacts for review.
+
+## Structured-Document Adapter Dry Run
+
+A structured-document parser-output adapter dry run exists at:
+
+```text
+src/aviationrag/ingestion/structured_document_adapter.py
+tools/chunking/run-structured-document-adapter-dry-run.py
+```
+
+Current scope:
+
+1. The tool accepts explicit structured-document artifact and manifest files.
+2. Optional `--source` verifies the manifest `source_sha256` against source
+   bytes.
+3. The adapter runs the D.4b validator and fails closed on validator errors.
+4. Validator warnings fail by default unless the operator explicitly approves a
+   warning code for that dry run.
+5. Candidate output is review-only and remains separate from persisted
+   `ChunkRecord` records.
+6. Optional local outputs are written only with `--allow-local-write` under
+   ignored `data/migration_dry_run/structured_document_adapter/`.
+7. The adapter does not write runtime chunks, generate embeddings, connect to
+   Astra, use FAISS, reset indexes, or modify legacy ingestion scripts.
+
+This dry run rehearses future parser-output compatibility. It is not real chunk
+migration and does not activate chunk migration flags globally.
 
 ## 7. Legacy-to-New Mapping Strategy
 
@@ -452,6 +491,7 @@ Do not silently delete superseded chunks that were used in prior retrieval or an
 | D.3d | Gated local chunk conversion writing ignored outputs. | Local-only, disabled by default. |
 | D.4 | Page and structure preservation design. | Completed as design only; no reprocessing, migration, embeddings, Astra, or FAISS. |
 | D.4b | Synthetic structured-provenance validation. | Offline validation only; no parser, migration, embeddings, Astra, or FAISS. |
+| D.4c | Structured-document parser-output adapter dry run. | Offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | E.3 | Connect retrieval harness to local FAISS outputs. | Evaluation only, no answer behavior change. |
 | D.5/E.4 | Controlled local re-chunk, reset/rebuild, and evaluation baseline. | Requires go/no-go approval. |
 

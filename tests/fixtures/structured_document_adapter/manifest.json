@@ -1,0 +1,19 @@
+{
+  "parser_name": "techdoc-parser",
+  "parser_version": "0.1.0-test",
+  "outputs": {
+    "structured_document": "structured_document.json"
+  },
+  "artifacts": [
+    {
+      "artifact_type": "structured_document",
+      "path": "structured_document.json",
+      "media_type": "application/json",
+      "schema_name": "techdoc-structured-document",
+      "schema_version": "0.1.0",
+      "source_sha256": "4df3052b53cb7d8060bde4bd8b4f25764271e26c6847f3d9535d72a02dc247ae",
+      "artifact_sha256": "ba0b96a92c137d0ece7975239b9740801db45756255778a10ffe54caba9a1a32",
+      "document_id": "adapter-fixture-doc"
+    }
+  ]
+}

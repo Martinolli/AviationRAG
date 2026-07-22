@@ -1089,6 +1089,6 @@ Recommended immediate order:
 4. Add backend package skeleton without behavior change.
 5. Add retrieval evaluation harness.
 6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
-7. Plan D.4c synthetic parser-output adapter design before implementing parser integration.
+7. Review D.4c structured-document adapter dry-run candidates before any parser integration, persisted chunk mapping, embedding, Astra, or FAISS work.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.

@@ -515,6 +515,32 @@ DOCX files, run OCR, implement `techdoc-parse`, judge source-document extraction
 accuracy, generate chunks, generate embeddings, connect to Astra, use FAISS,
 perform migration, or integrate with runtime ingestion.
 
+## D.4c Structured-Document Adapter Dry Run
+
+D.4c implements the first offline parser-output adapter rehearsal:
+
+```text
+src/aviationrag/ingestion/structured_document_adapter.py
+tools/chunking/run-structured-document-adapter-dry-run.py
+docs/STRUCTURED_DOCUMENT_ADAPTER_DRY_RUN.md
+```
+
+The adapter accepts `techdoc-parser` structured-document JSON and manifest files
+as file inputs only. It validates artifact identity, manifest identity,
+artifact SHA256, source SHA256 when source bytes are provided, and the D.4b
+structured-document schema before creating review-only chunk candidates.
+
+Candidate records preserve raw block/entity text, section path, page range,
+printed page labels, parser identity, source checksum, source block IDs, and
+table/figure/equation/admonition/cross-reference IDs. Headings are excluded by
+default. Admonitions produce one candidate from the root admonition entity and
+do not duplicate their source body block.
+
+The D.4c adapter does not create runtime `ChunkRecord` records, does not update
+the active chunk schema, does not import `techdoc-parser`, and does not modify
+legacy ingestion, embeddings, Astra, FAISS, retrieval, generation, API routes,
+or deployment behavior.
+
 ## 26. Versioning And Backward Compatibility
 
 The structured-document contract SHOULD use explicit schema versions. Breaking

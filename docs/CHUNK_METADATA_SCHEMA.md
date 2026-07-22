@@ -308,6 +308,38 @@ does not authorize real migration. D.4 provenance extensions remain planned
 until a later controlled implementation phase wires them into chunk conversion,
 embedding payloads, Astra, FAISS, retrieval, and response citations.
 
+## 8c. D.4c Structured-Document Adapter Candidates
+
+D.4c adds an offline structured-document parser-output adapter at
+`src/aviationrag/ingestion/structured_document_adapter.py`, with a CLI at
+`tools/chunking/run-structured-document-adapter-dry-run.py`.
+
+The adapter emits `StructuredDocumentChunkCandidate` records for review, not
+persisted runtime chunks. Candidate records are intentionally separate from the
+current `ChunkRecord` dataclass and from the target metadata-rich chunk schema.
+They preserve parser-derived evidence fields needed to decide a future schema
+mapping:
+
+| Candidate field group | Purpose |
+| --- | --- |
+| Document identity | `document_id`, source filename, document title/number/revision, source checksum. |
+| Source location | page range, PDF page indexes, printed page labels, section ID/path/number/title, clause identifier. |
+| Text | raw `text` plus optional `normalized_text`; raw text is not repaired. |
+| Entity links | source block IDs plus table, figure, equation, admonition, and cross-reference IDs. |
+| Parser provenance | parser name/version, extraction method, provenance status. |
+
+D.4c candidate IDs use
+`<document_id>:chunk:<percent-encoded-source-entity-id>` for deterministic,
+reversible dry-run evidence. Final persisted `chunk_id` policy remains a future
+reset/rebuild decision.
+
+The adapter uses `structured` provenance only when source bytes are verified and
+page/source-block evidence is present. Without source bytes, candidates are
+`structured_partial` and the dry run reports `REVIEW`.
+
+This adapter does not change `ALLOWED_CHUNK_TYPES`, `ChunkRecord`, vector
+payloads, retrieval metadata, or runtime ingestion.
+
 ## 9. Extraction Quality Metadata
 
 Required or strongly recommended extraction metadata:
@@ -496,6 +528,7 @@ Alignment requirements:
 | D.3d | Gated local chunk conversion writer. | Completed for ignored local outputs only. |
 | D.4 | Page and structure preservation design. | Completed as design only; no reprocessing, migration, embeddings, Astra, or FAISS. |
 | D.4b | Synthetic structured-provenance validation. | Completed as offline validation only; no parser, runtime ingestion, migration, embeddings, Astra, or FAISS. |
+| D.4c | Structured-document parser-output adapter dry run. | Completed as offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.5 | Re-embed/re-index after reset gate. | Future work requiring explicit reset approval. |
 
 Migration rules:

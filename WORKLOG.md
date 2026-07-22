@@ -1512,6 +1512,59 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Retrieval harness is not wired to FAISS/Astra.
    - Response policy is not enforced.
 
+### 2026-07-22
+
+1. Completed D.4c structured-document parser-output adapter dry run.
+2. Created `src/aviationrag/ingestion/structured_document_adapter.py`.
+3. Created `tools/chunking/run-structured-document-adapter-dry-run.py`.
+4. Added committed synthetic fixture set:
+   - `tests/fixtures/structured_document_adapter/structured_document.json`
+   - `tests/fixtures/structured_document_adapter/manifest.json`
+   - `tests/fixtures/structured_document_adapter/source.txt`
+5. Added `tests/test_structured_document_adapter.py`.
+6. Added `docs/STRUCTURED_DOCUMENT_ADAPTER_DRY_RUN.md`.
+7. Updated architecture, page/structure design, chunk schema, real migration design, reset/rebuild baseline, and plan docs for the D.4c gate.
+8. Implemented manifest and artifact integrity checks:
+   - exactly one structured-document manifest artifact entry
+   - artifact path and `outputs.structured_document` consistency
+   - schema name/version and document ID consistency
+   - artifact SHA256 verification
+   - source SHA256 verification when source bytes are provided
+   - source checksum review outcome when source bytes are omitted
+9. Implemented adapter warning policy:
+   - validator errors fail
+   - validator warnings fail by default
+   - explicitly approved warning codes produce review
+   - strict warning mode fails all warnings
+10. Implemented review-only `StructuredDocumentChunkCandidate` records for parser-derived block/entity evidence.
+11. Implemented candidate policy for paragraphs, tables, figure captions, equations, admonitions, cross-references, and optional headings.
+12. Implemented gated local dry-run writes under ignored `data/migration_dry_run/structured_document_adapter/`.
+13. The adapter does not import `techdoc-parser`, parse documents, mutate parser output, create runtime `ChunkRecord` records, write runtime ingestion outputs, generate embeddings, connect to Astra, use FAISS, or modify legacy ingestion scripts.
+14. No real documents were processed.
+15. No real migration was performed.
+16. Embeddings, Astra records, and FAISS indexes were not changed.
+17. Validation after D.4c:
+   - `git diff --check` passed.
+   - `.venv` `python -m compileall src` passed.
+   - `.venv` `python -m unittest discover -s tests` passed with 216 tests.
+   - `.venv` `python -m unittest discover -s tests -p 'test_structured_document_adapter.py'` passed.
+   - Fixture CLI dry run passed with `Outcome: PASS` and 6 candidates.
+   - Fresh `techdoc-parser` structured-document export passed the AviationRAG adapter CLI with `Outcome: PASS` and 7 candidates.
+   - `git check-ignore` confirmed D.4c local output files under `data/migration_dry_run/structured_document_adapter/` are ignored.
+   - `npm run sanitize:check:all` passed.
+   - `npm run build` passed.
+18. Remaining blockers:
+   - Production bridge remains externally blocked.
+   - Python dependencies remain unpinned.
+   - Node remains declared as an application dependency.
+   - npm/GitHub vulnerabilities remain separate security work.
+   - Parser integration is absent from AviationRAG runtime.
+   - Real document validation is absent.
+   - Real migration is absent.
+   - Embeddings and indexes have not been rebuilt.
+   - Retrieval harness is not wired to FAISS/Astra.
+   - Response policy is not enforced.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

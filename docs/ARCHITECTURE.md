@@ -282,6 +282,17 @@ internal coherence for synthetic structured-document records before future
 adapter work; it is not connected to runtime parsing, ingestion, embeddings,
 Astra, FAISS, retrieval, generation, API routes, or deployment.
 
+D.4c adds an offline parser-output adapter dry run at
+`src/aviationrag/ingestion/structured_document_adapter.py`, with a manual CLI at
+`tools/chunking/run-structured-document-adapter-dry-run.py` and runbook at
+`docs/STRUCTURED_DOCUMENT_ADAPTER_DRY_RUN.md`. It consumes exported
+`techdoc-parser` structured-document JSON and manifest files as inert inputs,
+verifies artifact/source checksums, runs the D.4b validator, and produces
+review-only chunk candidates. It does not import `techdoc-parser` runtime
+modules, does not modify runtime ingestion scripts, and does not write chunks,
+embeddings, Astra records, FAISS indexes, API routes, prompts, or deployment
+behavior.
+
 ```text
 src/aviationrag/
   __init__.py

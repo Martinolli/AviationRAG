@@ -1,0 +1,9 @@
+Synthetic adapter source document.
+1 Scope
+Synthetic paragraph keeps exact source text.
+Table 1 Condition | Limit Synthetic | 1
+Figure 1 Synthetic adapter figure.
+2 Operations
+Equation: lift = mass * acceleration.
+WARNING: Use synthetic adapters only.
+See Section 2 and external reference SYN-EXT-1.

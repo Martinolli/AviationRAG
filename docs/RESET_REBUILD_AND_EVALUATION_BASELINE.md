@@ -51,10 +51,11 @@ Current planning state:
 14. The real chunk migration design is documented in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`; it is planning-only and no migration has occurred.
 15. A fake/local chunk migration dry-run tool exists for summary-only rehearsal reports under ignored `logs/`; it does not write migrated chunks, generate embeddings, or touch Astra/FAISS.
 16. A gated local chunk conversion writer exists for explicitly allowed ignored outputs under `data/migration_dry_run/`; it is not production migration and does not generate embeddings or touch Astra/FAISS.
-17. Response policy and citation validation are not enforced.
-18. Production bridge remains an external blocker.
-19. Dependency major upgrades remain future work after Security Sprint S.1.
-20. D.4 page and structure preservation design is documented in `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md`; no parser integration, document reprocessing, migration, embedding regeneration, Astra reset, or FAISS rebuild has occurred.
+17. A structured-document adapter dry run exists for explicit parser-output artifact/manifest files; it writes only ignored local outputs when explicitly allowed and does not generate embeddings or touch Astra/FAISS.
+18. Response policy and citation validation are not enforced.
+19. Production bridge remains an external blocker.
+20. Dependency major upgrades remain future work after Security Sprint S.1.
+21. D.4 page and structure preservation design is documented in `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md`; no parser integration, document reprocessing, migration, embedding regeneration, Astra reset, or FAISS rebuild has occurred.
 
 ## 4. Reset/Rebuild Triggers
 
@@ -73,6 +74,7 @@ A controlled reset/rebuild becomes appropriate when one or more of these conditi
 The target chunk metadata contract that should be ready before any schema-changing rebuild is documented in `docs/CHUNK_METADATA_SCHEMA.md`.
 The future real chunk migration path and go/no-go criteria are documented in `docs/REAL_CHUNK_MIGRATION_DESIGN.md`.
 The D.4 page and structure preservation design is documented in `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md` and must remain a gate before real parsing, migration, embedding, or indexing work.
+The D.4c structured-document adapter dry run is documented in `docs/STRUCTURED_DOCUMENT_ADAPTER_DRY_RUN.md` and must remain a review gate before parser-output candidates are promoted to persisted chunks.
 
 A reset should not be used as a shortcut for unclear metadata. If the target schema, evaluation baseline, or rollback path is incomplete, the decision must remain `No-Go`.
 
@@ -285,6 +287,7 @@ Use this checklist before any future reset execution:
 - [ ] Astra export is completed or explicitly waived.
 - [ ] Manifest schema and vector payload schema are finalized for this reset.
 - [ ] Gated manifest integration has passed dry-run validation.
+- [ ] Structured-document parser-output artifacts have passed the D.4c adapter dry run when structured provenance is in scope.
 - [ ] Retrieval evaluation smoke set exists.
 - [ ] Pre-reset retrieval baseline has been run.
 - [ ] Estimated embedding cost and runtime are accepted.
@@ -309,6 +312,8 @@ Decision:
 | D.3c | Fake/local chunk migration dry run. | Completed for local rehearsal only; no embeddings, Astra, or FAISS. |
 | D.3d | Gated local chunk conversion writer. | Completed for ignored local outputs only; disabled by default. |
 | D.4 | Page and structure preservation design. | Completed as design only; no document reprocessing, migration, embeddings, Astra, or FAISS. |
+| D.4b | Synthetic structured-provenance validation. | Completed as offline validation only; no parser, runtime ingestion, migration, embeddings, Astra, or FAISS. |
+| D.4c | Structured-document parser-output adapter dry run. | Completed as offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.5 | Controlled local manifest/chunk integration prototype. | Future gated local work only; disabled by default. |
 | D.6 | Controlled local reset/rebuild. | Future work requiring explicit reset window. |
 | E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |
