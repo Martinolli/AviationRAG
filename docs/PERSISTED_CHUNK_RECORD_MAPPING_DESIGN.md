@@ -783,3 +783,27 @@ Not implemented or authorized in D.5:
 5. Astra writes or rebuild.
 6. FAISS reads or rebuild.
 7. Retrieval or generation behavior changes.
+
+## 31. D.5b Implementation Status
+
+D.5b implements isolated synthetic/local scaffolding for the approved D.5
+contract:
+
+1. Persisted record model implemented in
+   `src/aviationrag/ingestion/persisted_chunk_record.py`.
+2. Candidate mapper implemented in
+   `src/aviationrag/ingestion/persisted_chunk_mapper.py`.
+3. Persisted-record validator and limitation registry implemented in
+   `src/aviationrag/ingestion/persisted_chunk_validator.py`.
+4. Deterministic local package writer implemented in
+   `src/aviationrag/ingestion/persisted_chunk_package.py`.
+5. CLI dry run implemented at
+   `tools/chunking/run-persisted-chunk-package-dry-run.py`.
+6. Synthetic D.4c package dry run completed with adapter `PASS`, package
+   `PASS`, 6 accepted records, 0 rejected candidates, 0 warnings, and package
+   digest
+   `36355a2dbc52c1534ce884fc11d5554dfc9b4c37785054d85b11bc6696a134d9`.
+
+Runtime persistence remains inactive. No production persisted chunks exist. The
+real corpus remains unauthorized. No embeddings were generated. Astra and FAISS
+were untouched.

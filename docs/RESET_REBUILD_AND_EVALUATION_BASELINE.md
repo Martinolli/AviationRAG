@@ -61,7 +61,10 @@ Current planning state:
 23. D.5 persisted-record mapping design is documented in
     `docs/PERSISTED_CHUNK_RECORD_MAPPING_DESIGN.md`, with machine-readable
     design spec `docs/persisted_chunk_record_mapping.json`.
-24. No reset, rebuild, embedding generation, Astra work, FAISS work, real corpus
+24. D.5b synthetic persisted-record package dry run passed locally against the
+    formal D.4c fixture. The generated package is ignored under
+    `data/migration_dry_run/` and is not a production persistence artifact.
+25. No reset, rebuild, embedding generation, Astra work, FAISS work, real corpus
     processing, or production retrieval activation is authorized by D.5.
 
 ## 4. Reset/Rebuild Triggers
@@ -83,6 +86,7 @@ The future real chunk migration path and go/no-go criteria are documented in `do
 The D.4 page and structure preservation design is documented in `docs/PAGE_AND_STRUCTURE_PRESERVATION_DESIGN.md` and must remain a gate before real parsing, migration, embedding, or indexing work.
 The D.4c structured-document adapter dry run is documented in `docs/STRUCTURED_DOCUMENT_ADAPTER_DRY_RUN.md` and must remain a review gate before parser-output candidates are promoted to persisted chunks.
 The D.5 persisted-record mapping design is documented in `docs/PERSISTED_CHUNK_RECORD_MAPPING_DESIGN.md` and must remain a required gate before any structured candidates are persisted or used for vector payload generation.
+The D.5b persisted-record package dry run is documented in `docs/PERSISTED_CHUNK_PACKAGE_DRY_RUN.md`; it proves only synthetic/local package determinism and does not authorize reset, rebuild, embedding, Astra, FAISS, or real corpus work.
 
 A reset should not be used as a shortcut for unclear metadata. If the target schema, evaluation baseline, or rollback path is incomplete, the decision must remain `No-Go`.
 
@@ -297,7 +301,7 @@ Use this checklist before any future reset execution:
 - [ ] Gated manifest integration has passed dry-run validation.
 - [ ] Structured-document parser-output artifacts have passed the D.4c adapter dry run when structured provenance is in scope.
 - [ ] D.5 persisted-record mapping design is approved.
-- [ ] D.5b synthetic persisted-record package dry run has passed.
+- [x] D.5b synthetic persisted-record package dry run has passed.
 - [ ] Package rollback and audit checks have passed.
 - [ ] Production warning governance is approved.
 - [ ] Retrieval evaluation smoke set exists.
@@ -327,7 +331,7 @@ Decision:
 | D.4b | Synthetic structured-provenance validation. | Completed as offline validation only; no parser, runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.4c | Structured-document parser-output adapter dry run. | Completed as offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.5 | Persisted `ChunkRecord` mapping design. | Completed as design only; no mapper, persistence, reset, rebuild, embeddings, Astra, or FAISS. |
-| D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Future synthetic/local work only; no real corpus, embeddings, Astra, or FAISS. |
+| D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Completed for synthetic/local package review only; no real corpus, embeddings, Astra, or FAISS. |
 | D.6 | Controlled local manifest/chunk integration prototype. | Future gated local work only; disabled by default. |
 | D.7 | Controlled local reset/rebuild. | Future work requiring explicit reset window and validated persisted packages. |
 | E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |

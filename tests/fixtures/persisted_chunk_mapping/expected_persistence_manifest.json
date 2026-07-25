@@ -1,0 +1,20 @@
+{
+  "accepted_count": 6,
+  "file_sha256": {},
+  "issue_count": 0,
+  "limitation_registry_version": "0.1.0",
+  "mapper_version": "0.1.0",
+  "outcome": "PASS",
+  "package_checksum": "synthetic-fixture-placeholder",
+  "package_schema_name": "aviationrag-persisted-chunk-package",
+  "package_schema_version": "0.1.0",
+  "persisted_schema_name": "aviationrag-persisted-chunk",
+  "persisted_schema_version": "0.1.0",
+  "record_count": 6,
+  "rejected_count": 0,
+  "source_manifest_checksum": "synthetic-fixture-placeholder",
+  "source_structured_document_checksum": "synthetic-fixture-placeholder",
+  "specification_name": "aviationrag-persisted-chunk-mapping",
+  "specification_version": "0.1.0",
+  "warning_count": 0
+}

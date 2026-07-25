@@ -64,6 +64,8 @@ class StructuredDocumentAdapterTests(unittest.TestCase):
         warning = candidates["adapter-fixture-doc:chunk:warning-1"]
         self.assertEqual(warning.content_type, "warning")
         self.assertEqual(warning.source_block_ids, ("warning-block-1",))
+        self.assertEqual(warning.pdf_page_index_start, 1)
+        self.assertEqual(warning.pdf_page_index_end, 1)
         self.assertNotIn("adapter-fixture-doc:chunk:warning-block-1", candidates)
 
         reference = candidates["adapter-fixture-doc:chunk:xref-block-1"]

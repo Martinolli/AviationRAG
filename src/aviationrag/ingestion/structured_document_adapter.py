@@ -874,6 +874,10 @@ def _candidate_from_admonition(
     page_start, page_end, pdf_start, pdf_end = _page_range(admonition)
     if page_start is None:
         page_start, page_end, pdf_start, pdf_end = _page_range(fallback_block)
+    elif pdf_start is None or pdf_end is None:
+        _, _, fallback_pdf_start, fallback_pdf_end = _page_range(fallback_block)
+        pdf_start = pdf_start if pdf_start is not None else fallback_pdf_start
+        pdf_end = pdf_end if pdf_end is not None else fallback_pdf_end
     cross_reference_ids = tuple(
         sorted({xref for block_id in source_block_ids for xref in xref_ids_by_block.get(block_id, set())})
     )

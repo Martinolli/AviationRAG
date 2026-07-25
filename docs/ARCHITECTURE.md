@@ -153,16 +153,17 @@ source file
   -> future retrieval citations
 ```
 
-This boundary is design-only. Runtime ingestion still uses the legacy scripts,
-and no parser integration, document reprocessing, embedding regeneration, Astra
-reset, or FAISS rebuild has been performed. The D.4b validator is offline
-pre-runtime scaffolding for synthetic records only; it does not parse source
-documents or feed runtime ingestion.
+This boundary is partly implemented as offline scaffolding only. Runtime
+ingestion still uses the legacy scripts, and no parser integration, document
+reprocessing, embedding regeneration, Astra reset, or FAISS rebuild has been
+performed. The D.4b validator is offline pre-runtime scaffolding for synthetic
+records only; it does not parse source documents or feed runtime ingestion.
 
-The D.5 persisted-record boundary is also design-only. The
-`PersistedChunkRecord` mapper is not implemented, persistence is not active,
-and no vectors are involved. Future vector payloads must derive from validated
-persisted records rather than directly from review-only D.4c candidates.
+The D.5b persisted-record boundary now has an isolated synthetic/local mapper,
+validator, limitation registry, package writer, and manual dry-run CLI. Active
+runtime persistence is still absent, and no vectors are involved. Future vector
+payloads must derive from validated persisted records rather than directly from
+review-only D.4c candidates.
 
 Current retrieval and generation:
 
@@ -319,9 +320,14 @@ validated local persistence package
 future embedding/vector pipeline
 ```
 
-The mapper is not implemented. Persisted records are not generated. Runtime
-ingestion remains unchanged. The real corpus is untouched. Embeddings, Astra,
-and FAISS are not involved.
+D.5b implements this path only for synthetic/sample dry runs in
+`src/aviationrag/ingestion/persisted_chunk_record.py`,
+`src/aviationrag/ingestion/persisted_chunk_mapper.py`,
+`src/aviationrag/ingestion/persisted_chunk_validator.py`, and
+`src/aviationrag/ingestion/persisted_chunk_package.py`, with manual CLI
+`tools/chunking/run-persisted-chunk-package-dry-run.py`. Runtime ingestion
+remains unchanged. The real corpus is untouched. Embeddings, Astra, and FAISS
+are not involved.
 
 ```text
 src/aviationrag/

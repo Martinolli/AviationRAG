@@ -1613,6 +1613,63 @@ Persistent execution log for deployment hardening and product-readiness work so 
 26. Next phase documented:
    - D.5b synthetic persisted `ChunkRecord` mapper and local package dry run.
 
+### 2026-07-25 D.5b Synthetic Persisted ChunkRecord Package Dry Run
+
+1. Completed D.5b synthetic persisted `ChunkRecord` mapper and local package dry run.
+2. Added isolated persisted-record model in `src/aviationrag/ingestion/persisted_chunk_record.py`.
+3. Preserved persisted schema identity:
+   - `schema_name`: `aviationrag-persisted-chunk`
+   - `schema_version`: `0.1.0`
+   - mapping specification: `aviationrag-persisted-chunk-mapping` / `0.1.0`
+4. Implemented deterministic persisted `chunk_id` generation using canonical inputs and the first 24 lowercase SHA-256 hex characters.
+5. Implemented `StructuredDocumentChunkCandidate` to `PersistedChunkRecord` mapping in `src/aviationrag/ingestion/persisted_chunk_mapper.py`.
+6. Implemented validation and package-level checks in `src/aviationrag/ingestion/persisted_chunk_validator.py`.
+7. Implemented accepted limitation registry handling for:
+   - `CHUNK_SECTION_CROSSING_REVIEW`
+   - `DUPLICATE_TEXT_LINES`
+   - `TABLE_CANDIDATE_ONLY`
+   - `TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE`
+8. Implemented provenance gates:
+   - `structured` maps to `full_provenance` only with required source/page/parser evidence.
+   - `structured_partial` requires explicit policy/context approval and review.
+   - legacy filename-only and unknown provenance remain rejected for new structured records.
+9. Implemented content-type policies for paragraphs, tables, figure captions, equations, warnings, cautions, notes, procedures, requirements, definitions, and controlled heading inclusion.
+10. Preserved exact source text and source/entity IDs; no synthetic text, fabricated metadata, table rows/cells, figure descriptions, or inferred revisions are generated.
+11. Implemented rejection handling so failed candidates can be retained in `rejected_candidates.jsonl` only when the package policy allows review continuation.
+12. Implemented deterministic local package writer in `src/aviationrag/ingestion/persisted_chunk_package.py`.
+13. Package artifacts are:
+   - `persisted_chunks.jsonl`
+   - `persistence_manifest.json`
+   - `persistence_report.json`
+   - `rejected_candidates.jsonl`
+   - `warnings.json`
+14. Implemented exact-byte SHA-256 checksums and deterministic package digest; manifest self-checksum is excluded to avoid circular hashing.
+15. Added manual CLI `tools/chunking/run-persisted-chunk-package-dry-run.py`.
+16. Formal D.4c fixture dry run passed:
+   - adapter outcome: `PASS`
+   - package outcome: `PASS`
+   - accepted records: 6
+   - rejected candidates: 0
+   - warnings: 0
+   - issues: 0
+   - package digest: `36355a2dbc52c1534ce884fc11d5554dfc9b4c37785054d85b11bc6696a134d9`
+17. Determinism was verified by writing two ignored local packages and comparing all package file hashes.
+18. Generated package outputs are ignored under `data/migration_dry_run/` and were not staged for Git.
+19. Added tests for mapper rules, validator behavior, package writing, CLI outcomes, fixture contracts, determinism, and no runtime-script coupling.
+20. Added a narrow D.4c adapter compatibility fix so admonition candidates can inherit missing PDF indexes from their linked source block when the admonition already has page evidence.
+21. Runtime ingestion scripts remain unchanged.
+22. No real corpus was processed.
+23. No embeddings were generated.
+24. Astra and FAISS were untouched.
+25. `techdoc-parser` was inspected read-only and not modified.
+26. Remaining blockers:
+   - D.5c controlled real parser-output sample persistence package is not implemented.
+   - Real corpus migration remains unapproved.
+   - Embedding and index rebuild remain unapproved.
+   - Warning-owner approval and partial-provenance governance remain future gates.
+27. Recommended next phase:
+   - D.5c controlled real parser-output sample persistence package.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

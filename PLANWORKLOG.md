@@ -582,14 +582,24 @@ Acceptance criteria:
 
 #### D.5b Synthetic persisted ChunkRecord mapper and local package dry run
 
-Status: `Recommended next phase` / `Do not begin automatically`
+Status: `Completed` / `Synthetic local package only`
 
 Tasks:
 
-- [ ] Implement a synthetic-only persisted-record mapper after D.5 approval.
-- [ ] Write a controlled local persistence package using synthetic/sample inputs only.
-- [ ] Validate package determinism, warnings, rejections, rollback, and audit outputs.
-- [ ] Keep real corpus ingestion, embeddings, Astra, FAISS, and runtime retrieval out of this phase.
+- [x] Implement a synthetic-only persisted-record mapper after D.5 approval.
+- [x] Write a controlled local persistence package using synthetic/sample inputs only.
+- [x] Validate package determinism, warnings, rejections, rollback, and audit outputs.
+- [x] Keep real corpus ingestion, embeddings, Astra, FAISS, and runtime retrieval out of this phase.
+
+Acceptance:
+
+- [x] D.4c fixture maps to six deterministic persisted records with full provenance.
+- [x] Package writer produces deterministic JSONL/JSON artifacts under ignored `data/migration_dry_run/` only when local writes are explicitly allowed.
+- [x] D.5b CLI reports explicit exclusions for runtime ingestion, real corpus, embeddings, Astra, and FAISS.
+
+Recommended next controlled phase:
+
+- D.5c controlled real parser-output sample persistence package.
 
 ---
 
@@ -1132,7 +1142,7 @@ Recommended immediate order:
 4. Add backend package skeleton without behavior change.
 5. Add retrieval evaluation harness.
 6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
-7. Use the D.5 persisted-record mapping design as the gate before any persisted mapper, parser integration, embedding, Astra, or FAISS work.
-8. Recommended next controlled phase: D.5b synthetic persisted `ChunkRecord` mapper and local package dry run.
+7. Use the D.5b persisted-record package dry run as the gate before any real parser-output sample persistence, embedding, Astra, or FAISS work.
+8. Recommended next controlled phase: D.5c controlled real parser-output sample persistence package.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.

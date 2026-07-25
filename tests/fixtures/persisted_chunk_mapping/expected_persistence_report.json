@@ -1,0 +1,35 @@
+{
+  "accepted_count": 6,
+  "adapter_outcome": "PASS",
+  "content_type_counts": {
+    "equation": 1,
+    "figure_caption": 1,
+    "paragraph": 2,
+    "table": 1,
+    "warning": 1
+  },
+  "embedding_generation": false,
+  "faiss_touched": false,
+  "issue_count": 0,
+  "issues": [],
+  "limitation_counts": {},
+  "outcome": "PASS",
+  "provenance_counts": {
+    "full_provenance": 6
+  },
+  "real_corpus_processed": false,
+  "record_count": 6,
+  "rejected_count": 0,
+  "review_required_count": 0,
+  "runtime_ingestion_modified": false,
+  "storage": {
+    "astra_touched": false,
+    "faiss_touched": false
+  },
+  "validation_status_counts": {
+    "valid": 6
+  },
+  "warning_code_counts": {},
+  "warning_count": 0,
+  "warnings": []
+}

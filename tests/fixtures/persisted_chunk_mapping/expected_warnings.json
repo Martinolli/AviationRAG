@@ -1,0 +1,6 @@
+{
+  "schema_name": "aviationrag-persisted-chunk-warnings",
+  "schema_version": "0.1.0",
+  "warning_count": 0,
+  "warnings": []
+}

@@ -348,9 +348,10 @@ mapping design in `docs/persisted_chunk_record_mapping.json`.
 
 Current runtime `ChunkRecord` remains unchanged. The D.4c
 `StructuredDocumentChunkCandidate` model remains review-only and is not a
-persisted runtime chunk. D.5 does not implement a mapper, write persisted
-records, modify runtime ingestion, process the real corpus, generate
-embeddings, touch Astra, touch FAISS, or change retrieval behavior.
+persisted runtime chunk. D.5b now implements an isolated synthetic/local
+mapper, validator, and package writer for the D.5 persisted contract. This does
+not modify runtime ingestion, process the real corpus, generate embeddings,
+touch Astra, touch FAISS, or change retrieval behavior.
 
 The planned persisted schema identity is:
 
@@ -406,6 +407,13 @@ It also recorded the confirmed nonblocking issue
 `TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE`. These codes must remain visible in
 warnings, accepted limitation codes, and persistence reports; they must not be
 used to erase warnings or silently repair evidence.
+
+D.5b package outputs are local review artifacts only. The dry-run package
+contains `persisted_chunks.jsonl`, `persistence_manifest.json`,
+`persistence_report.json`, `rejected_candidates.jsonl`, and `warnings.json`
+under ignored `data/migration_dry_run/` when explicitly written. The manifest
+excludes its own exact-byte checksum to avoid a circular digest; the package
+digest is still deterministic across repeated writes.
 
 ## 9. Extraction Quality Metadata
 
@@ -597,7 +605,7 @@ Alignment requirements:
 | D.4b | Synthetic structured-provenance validation. | Completed as offline validation only; no parser, runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.4c | Structured-document parser-output adapter dry run. | Completed as offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.5 | Persisted `ChunkRecord` mapping design. | Completed as design only; no mapper, persistence, runtime ingestion, embeddings, Astra, or FAISS. |
-| D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Future local synthetic work only; no real corpus, embeddings, Astra, or FAISS. |
+| D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Completed for local synthetic package review only; no real corpus, embeddings, Astra, or FAISS. |
 | D.6 | Re-embed/re-index after reset gate. | Future work requiring explicit reset approval. |
 
 Migration rules:
