@@ -270,3 +270,18 @@ No runtime integration occurred. The real artifact and generated packages
 remained ignored local files, no source PDF was copied into
 `AviationRAG/data/documents`, and no embeddings, Astra writes, FAISS writes, or
 production migration were authorized.
+
+## 19. D.5d Three-Profile Package Exercise
+
+D.5d exercised the same D.5b package writer across three real parser-output
+profiles:
+
+| Profile | Package outcome | Accepted records | Rejected candidates | Package digest |
+| --- | --- | ---: | ---: | --- |
+| `flight_test_rm_ag_300` | `PASS` | 6187 | 0 | `44fc8fd6ab799d3b2bfe6e530c5e8ddc91e01ee834c8e4a190a8675da3717026` |
+| `mil_std_882e` | `PASS` | 2406 | 0 | `f1abf41c7d93d23eec24829181e1496ca63a55869bc78d9d94bb6105e0ae71c1` |
+| `aircraft_system_safety` | `REVIEW` | 7741 | 0 | `cdac3287b5da537ca47fe7d9f33f6140292bcf288baefca0a3ae285438b39bef` |
+
+Each profile package was written twice to ignored local output and compared for
+byte-identical deterministic output. No runtime ingestion, production
+persistence, embeddings, Astra, FAISS, or retrieval integration occurred.

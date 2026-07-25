@@ -1,0 +1,198 @@
+{
+  "aggregate_content_type_counts": {
+    "figure_caption": 2,
+    "note": 15,
+    "paragraph": 15803,
+    "table": 514
+  },
+  "aggregate_limitation_counts": {
+    "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE": 1
+  },
+  "aggregate_provenance_counts": {
+    "full_provenance": 16334
+  },
+  "aggregate_validation_status_counts": {
+    "review_required": 1,
+    "valid": 16333
+  },
+  "authorization": {
+    "additional_uncontrolled_document_processing": false,
+    "astra_rebuild": false,
+    "d6_persistence_governance_review": true,
+    "embedding_generation": false,
+    "faiss_rebuild": false,
+    "full_corpus_ingestion": false,
+    "production_migration": false,
+    "production_persistence": false,
+    "production_retrieval_integration": false,
+    "runtime_ingestion": false
+  },
+  "blocking_issue_codes": [],
+  "cross_document_chunk_id_collision_count": 0,
+  "determinism_verified": true,
+  "evaluation_schema_name": "aviationrag-multi-profile-persistence-gate",
+  "evaluation_schema_version": "0.1.0",
+  "outcome": "ACCEPTED_WITH_LIMITATIONS",
+  "profile_count": 3,
+  "profile_outcomes": {
+    "aircraft_system_safety": "REVIEW",
+    "flight_test_rm_ag_300": "PASS",
+    "mil_std_882e": "PASS"
+  },
+  "profiles": [
+    {
+      "accepted_limitation_counts": {
+        "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE": 1
+      },
+      "accepted_record_count": 7741,
+      "artifact_checksum": "1efcb160ed5d429e73e1fc09c825546d6d41c5738595c978b76ed3ba9cc47df7",
+      "candidate_context_ids": [
+        "aircraft_system_safety:chunk:page-52-table-1"
+      ],
+      "content_type_counts": {
+        "note": 6,
+        "paragraph": 7494,
+        "table": 241
+      },
+      "determinism_verified": true,
+      "document_key": "aircraft_system_safety",
+      "expected_document_id": "aircraft_system_safety",
+      "expected_source_filename": "Aircraft_System_Safety_Military_Civil_Aeronautical_Applications.pdf",
+      "gate_outcome": "REVIEW",
+      "input_candidate_count": 7741,
+      "manifest_checksum": "b93b5506fd95ca551b525f0771e9f474d75a25116ab083b5997aefa8145398dd",
+      "package_digest": "cdac3287b5da537ca47fe7d9f33f6140292bcf288baefca0a3ae285438b39bef",
+      "package_outcome": "REVIEW",
+      "page_count": 367,
+      "parser_name": "techdoc-parser",
+      "parser_version": "0.1.0",
+      "profile_key": "aircraft_system_safety",
+      "profile_role": "accepted-limitation profile",
+      "provenance_counts": {
+        "full_provenance": 7741
+      },
+      "rejected_candidate_count": 0,
+      "review_required_count": 1,
+      "source_checksum": "ce6bd8f65f6a1737b8538c0709580f043e853b5c407c87f32d651f17c6ec4477",
+      "source_filename": "Aircraft_System_Safety_Military_Civil_Aeronautical_Applications.pdf",
+      "structured_document_schema_version": "0.1.0",
+      "validation_status_counts": {
+        "review_required": 1,
+        "valid": 7740
+      },
+      "warning_count": 2
+    },
+    {
+      "accepted_limitation_counts": {},
+      "accepted_record_count": 6187,
+      "artifact_checksum": "16fcce707d92e99c231483263d08cfc3106c83a2994007d0b3e421e592711223",
+      "candidate_context_ids": [],
+      "content_type_counts": {
+        "note": 7,
+        "paragraph": 5976,
+        "table": 204
+      },
+      "determinism_verified": true,
+      "document_key": "flight_test_rm_ag_300",
+      "expected_document_id": "flight_test_rm_ag_300",
+      "expected_source_filename": "Flight_Test_RM_AG_300_V32.pdf",
+      "gate_outcome": "PASS",
+      "input_candidate_count": 6187,
+      "manifest_checksum": "ea8a3009a0a9a4f69a2d277e62e7a474e5c23d33166ecac678b7fe01adcdcd73",
+      "package_digest": "44fc8fd6ab799d3b2bfe6e530c5e8ddc91e01ee834c8e4a190a8675da3717026",
+      "package_outcome": "PASS",
+      "page_count": 210,
+      "parser_name": "techdoc-parser",
+      "parser_version": "0.1.0",
+      "profile_key": "flight_test_rm_ag_300",
+      "profile_role": "flight-test publication",
+      "provenance_counts": {
+        "full_provenance": 6187
+      },
+      "rejected_candidate_count": 0,
+      "review_required_count": 0,
+      "source_checksum": "70bb005d0540836b0d5d5e759c088f32a5b98a094ad973344b11264507ffb98e",
+      "source_filename": "Flight_Test_RM_AG_300_V32.pdf",
+      "structured_document_schema_version": "0.1.0",
+      "validation_status_counts": {
+        "valid": 6187
+      },
+      "warning_count": 0
+    },
+    {
+      "accepted_limitation_counts": {},
+      "accepted_record_count": 2406,
+      "artifact_checksum": "7d9898fd35302f548b3a87cbca58cf1c4f0e6f379ad67722c70efb3700fc3a25",
+      "candidate_context_ids": [],
+      "content_type_counts": {
+        "figure_caption": 2,
+        "note": 2,
+        "paragraph": 2333,
+        "table": 69
+      },
+      "determinism_verified": true,
+      "document_key": "mil_std_882e",
+      "expected_document_id": "mil_std_882e",
+      "expected_source_filename": "MIL-STD-882E.pdf",
+      "gate_outcome": "PASS",
+      "input_candidate_count": 2406,
+      "manifest_checksum": "5b36b4c0dcccb6b755d9b2e8380800e94c629eb00e130f61792a6cfea32f699e",
+      "package_digest": "f1abf41c7d93d23eec24829181e1496ca63a55869bc78d9d94bb6105e0ae71c1",
+      "package_outcome": "PASS",
+      "page_count": 106,
+      "parser_name": "techdoc-parser",
+      "parser_version": "0.1.0",
+      "profile_key": "mil_std_882e",
+      "profile_role": "formal safety standard",
+      "provenance_counts": {
+        "full_provenance": 2406
+      },
+      "rejected_candidate_count": 0,
+      "review_required_count": 0,
+      "source_checksum": "b041218c488ce448738696eac463fae040db39cd18dd000939d6efe282a9ac14",
+      "source_filename": "MIL-STD-882E.pdf",
+      "structured_document_schema_version": "0.1.0",
+      "validation_status_counts": {
+        "valid": 2406
+      },
+      "warning_count": 0
+    }
+  ],
+  "schema_consistency_verified": true,
+  "summary": {
+    "approved_limitation_codes": [
+      "CHUNK_SECTION_CROSSING_REVIEW",
+      "DUPLICATE_TEXT_LINES",
+      "TABLE_CANDIDATE_ONLY",
+      "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE"
+    ],
+    "astra_touched": false,
+    "embedding_generation": false,
+    "faiss_touched": false,
+    "full_corpus_processed": false,
+    "production_persistence": false,
+    "runtime_ingestion_modified": false,
+    "schema_values": {
+      "adapter_versions": [
+        "D.4c"
+      ],
+      "limitation_registry_versions": [
+        "0.1.0"
+      ],
+      "mapper_versions": [
+        "0.1.0"
+      ],
+      "package_schema_versions": [
+        "0.1.0"
+      ],
+      "persisted_schema_versions": [
+        "0.1.0"
+      ]
+    }
+  },
+  "total_accepted_record_count": 16334,
+  "total_candidate_count": 16334,
+  "total_rejected_candidate_count": 0,
+  "total_review_required_count": 1,
+  "total_warning_count": 2
+}

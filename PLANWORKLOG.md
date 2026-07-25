@@ -1172,6 +1172,30 @@ Recommended immediate order:
 5. Add retrieval evaluation harness.
 6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
 7. Use the D.5c real parser-output sample gate as the gate before any multi-profile parser-output evaluation, embedding, Astra, or FAISS work.
-8. Recommended next controlled phase: D.5d controlled multi-profile parser-output persistence evaluation.
+8. D.5d controlled multi-profile parser-output persistence evaluation is complete for exactly three controlled profiles.
+9. Recommended next controlled phase: D.6 persistence governance decision and migration readiness review.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.
+
+## 11. D.5d Completion Record
+
+D.5d is complete with aggregate outcome `ACCEPTED_WITH_LIMITATIONS`.
+
+Completion criteria:
+
+1. Exactly three profiles were evaluated: `flight_test_rm_ag_300`, `mil_std_882e`, and `aircraft_system_safety`.
+2. Source, artifact, and manifest identities were verified by SHA-256.
+3. Each D.4c gate completed.
+4. Each D.5b package completed.
+5. Zero rejected candidates remain.
+6. All warnings and limitations are understood.
+7. The page-52 limitation is candidate-specific:
+   `aircraft_system_safety:chunk:page-52-table-1`.
+8. All packages are deterministic across two local writes.
+9. Cross-document chunk-ID collision count is 0.
+10. Schema consistency passed.
+11. Outputs remain ignored under `data/migration_dry_run/multi_profile_persistence/`.
+12. No runtime ingestion, embedding generation, Astra, FAISS, or retrieval work occurred.
+
+D.5d does not make the system production-ready and does not authorize broader
+document processing.

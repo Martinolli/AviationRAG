@@ -222,3 +222,13 @@ The next recommended phase is D.5d controlled multi-profile parser-output
 persistence evaluation. It should use only a very small contrasting sample set
 and must not automatically authorize full-corpus ingestion, embeddings, Astra,
 FAISS, or production retrieval.
+
+## 29. D.5d Baseline Extension
+
+D.5c provided the single clean real parser-output baseline. D.5d extended that
+baseline to three contrasting real profiles through independent D.5c gates and
+independent D.5b packages, then aggregated only sanitized counts, checksums,
+digests, schema consistency, determinism, and authorization boundaries.
+
+D.5d did not merge packages, validate the full corpus, modify runtime ingestion,
+generate embeddings, or touch Astra or FAISS.

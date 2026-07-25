@@ -1,0 +1,55 @@
+{
+  "profiles": [
+    {
+      "allow_review_outcome": false,
+      "approved_adapter_warning_codes": [],
+      "artifact_path": "parser-output/d5d/flight_test_rm_ag_300/structured_document.json",
+      "candidate_contexts": {},
+      "expected_document_id": "flight_test_rm_ag_300",
+      "expected_page_count": 210,
+      "expected_source_filename": "Flight_Test_RM_AG_300_V32.pdf",
+      "manifest_path": "parser-output/d5d/flight_test_rm_ag_300/manifest.json",
+      "profile_key": "flight_test_rm_ag_300",
+      "profile_role": "flight-test publication",
+      "source_path": "parser-input/Flight_Test_RM_AG_300_V32.pdf"
+    },
+    {
+      "allow_review_outcome": false,
+      "approved_adapter_warning_codes": [],
+      "artifact_path": "parser-output/d5d/mil_std_882e/structured_document.json",
+      "candidate_contexts": {},
+      "expected_document_id": "mil_std_882e",
+      "expected_page_count": 106,
+      "expected_source_filename": "MIL-STD-882E.pdf",
+      "manifest_path": "parser-output/d5d/mil_std_882e/manifest.json",
+      "profile_key": "mil_std_882e",
+      "profile_role": "formal safety standard",
+      "source_path": "parser-input/MIL-STD-882E.pdf"
+    },
+    {
+      "allow_review_outcome": true,
+      "approved_adapter_warning_codes": [],
+      "artifact_path": "parser-output/d5d/aircraft_system_safety/structured_document.json",
+      "candidate_contexts": {
+        "aircraft_system_safety:chunk:page-52-table-1": {
+          "accepted_limitation_codes": [
+            "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE"
+          ],
+          "review_required": true,
+          "warning_codes": [
+            "TABLE_CLASSIFICATION_REVIEW_REQUIRED"
+          ]
+        }
+      },
+      "expected_document_id": "aircraft_system_safety",
+      "expected_page_count": 367,
+      "expected_source_filename": "Aircraft_System_Safety_Military_Civil_Aeronautical_Applications.pdf",
+      "manifest_path": "parser-output/d5d/aircraft_system_safety/manifest.json",
+      "profile_key": "aircraft_system_safety",
+      "profile_role": "accepted-limitation profile",
+      "source_path": "parser-input/Aircraft_System_Safety_Military_Civil_Aeronautical_Applications.pdf"
+    }
+  ],
+  "schema_name": "aviationrag-multi-profile-persistence-gate",
+  "schema_version": "0.1.0"
+}

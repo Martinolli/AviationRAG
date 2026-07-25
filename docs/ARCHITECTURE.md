@@ -351,6 +351,27 @@ The D.5c implementation lives in
 `src/aviationrag/` the runtime ingestion owner, does not process the full
 corpus, and does not generate embeddings or touch Astra/FAISS.
 
+D.5d extends the controlled real-parser-output check to three independent
+profiles:
+
+```text
+Controlled real profiles
+        |
+        v
+independent D.5c gates
+        |
+        v
+D.5d aggregate consistency evaluation
+```
+
+The D.5d implementation lives in
+`src/aviationrag/ingestion/multi_profile_persistence_gate.py`, with manual CLI
+`tools/chunking/run-multi-profile-persistence-evaluation.py`. It aggregates
+sanitized outcomes, counts, digests, cross-document chunk-ID uniqueness, schema
+consistency, and authorization boundaries only. It does not create a merged
+corpus package, authorize full-corpus ingestion, generate embeddings, or touch
+Astra/FAISS.
+
 ```text
 src/aviationrag/
   __init__.py

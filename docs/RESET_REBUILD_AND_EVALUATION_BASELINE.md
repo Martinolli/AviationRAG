@@ -338,11 +338,22 @@ Decision:
 | D.5 | Persisted `ChunkRecord` mapping design. | Completed as design only; no mapper, persistence, reset, rebuild, embeddings, Astra, or FAISS. |
 | D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Completed for synthetic/local package review only; no real corpus, embeddings, Astra, or FAISS. |
 | D.5c | Controlled real parser-output sample persistence gate. | Completed for one real parser artifact only; no reset, rebuild, embeddings, Astra, or FAISS. |
-| D.6 | Controlled local manifest/chunk integration prototype. | Future gated local work only; disabled by default. |
-| D.7 | Controlled local reset/rebuild. | Future work requiring explicit reset window and validated persisted packages. |
+| D.5d | Controlled multi-profile parser-output persistence evaluation. | Completed for exactly three real parser-output profiles only; no reset, rebuild, embeddings, Astra, or FAISS. |
+| D.6 | Persistence governance decision and migration readiness review. | Future governance decision before broader processing or vector rebuild. |
+| D.7 | Controlled local reset/rebuild. | Future work requiring explicit reset window and validated governance decision. |
 | E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |
 | E.2 | Retrieval report/export shell. | Formats fake/mock evaluation results only; no real retrieval wiring. |
 | E.3 | Real retrieval evaluation integration. | Measures retrieval before behavior changes. |
 | F.1 | Response and citation validation. | Adds policy enforcement after evidence quality is measurable. |
 
 Actual reset/rebuild work must be performed in a later approved phase and should remain separate from dependency upgrades, prompt changes, retrieval algorithm changes, and deployment bridge changes.
+
+## 17. D.5d Baseline Note
+
+D.5d evaluated three real parser-output profiles through independent local
+packages. No reset or rebuild was executed, no database or index was changed,
+and all generated D.5d packages remained under ignored
+`data/migration_dry_run/multi_profile_persistence/`.
+
+This baseline does not authorize full-corpus processing, embedding generation,
+Astra rebuild, FAISS rebuild, or production retrieval integration.

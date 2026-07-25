@@ -1724,6 +1724,88 @@ Compatibility corrections made in AviationRAG D.4c:
 2. Parser `metadata` blocks are skipped as non-candidate blocks without emitting candidate warnings.
 3. Both corrections preserve validation and have synthetic regression tests.
 
+### 2026-07-25 D.5d Controlled Multi-Profile Parser-Output Persistence Evaluation
+
+1. Started and completed D.5d controlled multi-profile parser-output persistence evaluation.
+2. Confirmed AviationRAG was on `main` at `af2932e9 test(ingestion): add real parser sample persistence gate` with a clean working tree before changes.
+3. Confirmed `techdoc-parser` was on `main` at `27c4146 test(evaluation): close P0 pilot with accepted limitations` and remained read-only.
+4. Evaluated exactly three profiles:
+   - `flight_test_rm_ag_300`: `Flight_Test_RM_AG_300_V32.pdf`
+   - `mil_std_882e`: `MIL-STD-882E.pdf`
+   - `aircraft_system_safety`: `Aircraft_System_Safety_Military_Civil_Aeronautical_Applications.pdf`
+5. Source checksums:
+   - `flight_test_rm_ag_300`: `70bb005d0540836b0d5d5e759c088f32a5b98a094ad973344b11264507ffb98e`
+   - `mil_std_882e`: `b041218c488ce448738696eac463fae040db39cd18dd000939d6efe282a9ac14`
+   - `aircraft_system_safety`: `ce6bd8f65f6a1737b8538c0709580f043e853b5c407c87f32d651f17c6ec4477`
+6. No matching full-document StructuredDocument/manifest pair was found by source SHA-256, so new parser artifacts were generated under ignored `techdoc-parser/output/d5d_multi_profile/`.
+7. Parser commands:
+   - `techdoc-parse Flight_Test_RM_AG_300_V32.pdf --output document.json --structured-document-output structured_document.json --structured-document-id flight_test_rm_ag_300 --manifest-output manifest.json --structured-document-overwrite`
+   - `techdoc-parse MIL-STD-882E.pdf --output document.json --structured-document-output structured_document.json --structured-document-id mil_std_882e --manifest-output manifest.json --structured-document-overwrite`
+   - `techdoc-parse Aircraft_System_Safety_Military_Civil_Aeronautical_Applications.pdf --output document.json --structured-document-output structured_document.json --structured-document-id aircraft_system_safety --manifest-output manifest.json --structured-document-overwrite`
+8. Parser exit codes were `0` for all three profiles.
+9. The flight-test parser command reported that page 2 appeared to have no native text and may require OCR; no OCR experiment was run.
+10. Artifact checksums:
+    - `flight_test_rm_ag_300`: `16fcce707d92e99c231483263d08cfc3106c83a2994007d0b3e421e592711223`
+    - `mil_std_882e`: `7d9898fd35302f548b3a87cbca58cf1c4f0e6f379ad67722c70efb3700fc3a25`
+    - `aircraft_system_safety`: `1efcb160ed5d429e73e1fc09c825546d6d41c5738595c978b76ed3ba9cc47df7`
+11. Manifest checksums:
+    - `flight_test_rm_ag_300`: `ea8a3009a0a9a4f69a2d277e62e7a474e5c23d33166ecac678b7fe01adcdcd73`
+    - `mil_std_882e`: `5b36b4c0dcccb6b755d9b2e8380800e94c629eb00e130f61792a6cfea32f699e`
+    - `aircraft_system_safety`: `b93b5506fd95ca551b525f0771e9f474d75a25116ab083b5997aefa8145398dd`
+12. Parser/schema identity for all profiles:
+    - parser: `techdoc-parser / 0.1.0`
+    - schema: `techdoc-structured-document / 0.1.0`
+13. Page/block counts:
+    - `flight_test_rm_ag_300`: 210 pages, 6600 blocks
+    - `mil_std_882e`: 106 pages, 2862 blocks
+    - `aircraft_system_safety`: 367 pages, 8149 blocks
+14. Strict first-pass D.5c outcomes:
+    - `flight_test_rm_ag_300`: `PASS`, 6187 candidates, 6187 accepted, 0 rejected, 0 warnings
+    - `mil_std_882e`: `PASS`, 2406 candidates, 2406 accepted, 0 rejected, 0 warnings
+    - `aircraft_system_safety`: `PASS`, 7741 candidates, 7741 accepted, 0 rejected, 0 warnings
+15. Resolved the known `aircraft_system_safety` accepted limitation:
+    - one-based page number: 52
+    - PDF page index: 51
+    - candidate ID: `aircraft_system_safety:chunk:page-52-table-1`
+    - table ID: `aircraft_system_safety:p51:t0022`
+    - source block: `page-52-table-1`
+    - limitation code: `TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE`
+16. Created ignored local candidate context:
+    - `data/migration_dry_run/multi_profile_persistence/aircraft_system_safety/candidate_contexts.local.json`
+17. Ran D.5d CLI with explicit local-write and reviewed-profile permission:
+    - `python tools/chunking/run-multi-profile-persistence-evaluation.py --config data/migration_dry_run/multi_profile_persistence/profile_config.local.json --output-root data/migration_dry_run/multi_profile_persistence --allow-local-write --overwrite --verify-determinism --allow-reviewed-profiles --strict`
+18. Aggregate outcome: `ACCEPTED_WITH_LIMITATIONS`.
+19. Aggregate counts:
+    - total candidates: 16334
+    - total accepted: 16334
+    - total rejected: 0
+    - total warnings: 2
+    - total review required: 1
+20. Per-profile final outcomes:
+    - `flight_test_rm_ag_300`: adapter `PASS`, package `PASS`, gate `PASS`
+    - `mil_std_882e`: adapter `PASS`, package `PASS`, gate `PASS`
+    - `aircraft_system_safety`: adapter `PASS`, package `REVIEW`, gate `REVIEW`
+21. Package digests:
+    - `flight_test_rm_ag_300`: `44fc8fd6ab799d3b2bfe6e530c5e8ddc91e01ee834c8e4a190a8675da3717026`
+    - `mil_std_882e`: `f1abf41c7d93d23eec24829181e1496ca63a55869bc78d9d94bb6105e0ae71c1`
+    - `aircraft_system_safety`: `cdac3287b5da537ca47fe7d9f33f6140292bcf288baefca0a3ae285438b39bef`
+22. Determinism passed for all profiles; run 1 and run 2 package bytes and hashes matched.
+23. Cross-document chunk-ID collision count: 0.
+24. Schema consistency passed for persisted schema, mapper version, adapter version, package schema, and limitation registry version.
+25. Generated outputs remained ignored under `data/migration_dry_run/multi_profile_persistence/`.
+26. No source PDFs were copied into `AviationRAG/data/documents`.
+27. No source text, chunk text, full parser artifacts, full parser manifests, or package outputs were staged.
+28. Runtime ingestion remains unchanged.
+29. No embeddings were generated.
+30. Astra and FAISS were untouched.
+31. `techdoc-parser` was not modified.
+32. Remaining findings:
+    - `aircraft_system_safety` page-52 table classification remains an accepted nonblocking limitation with deferred parser refinement.
+    - The flight-test page-2 native-text parser note remains an observation; no OCR accuracy claim was made.
+    - Full-corpus ingestion, embeddings, Astra, FAISS, and production retrieval remain unauthorized.
+33. Recommended next phase:
+    - D.6 persistence governance decision and migration readiness review.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

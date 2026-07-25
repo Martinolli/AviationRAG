@@ -545,12 +545,27 @@ Do not silently delete superseded chunks that were used in prior retrieval or an
 | D.5 | Persisted `ChunkRecord` mapping design. | Completed as design only; no mapper, persisted records, runtime ingestion, embeddings, Astra, or FAISS. |
 | D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Completed for synthetic/local package review only; no real corpus, embeddings, Astra, or FAISS. |
 | D.5c | Controlled real parser-output sample persistence gate. | Completed for one real parser artifact only; no full corpus, embeddings, Astra, FAISS, or production migration. |
+| D.5d | Controlled multi-profile parser-output persistence evaluation. | Completed for exactly three real parser-output profiles only; no full corpus, legacy coexistence proof, embeddings, Astra, FAISS, or production migration. |
 | E.3 | Connect retrieval harness to local FAISS outputs. | Evaluation only, no answer behavior change. |
-| D.6/E.4 | Controlled local re-chunk, reset/rebuild, and evaluation baseline. | Requires go/no-go approval after D.5b and package governance pass. |
+| D.6 | Persistence governance decision and migration readiness review. | Required before broader document processing, legacy coexistence policy, vector rebuild, or production migration. |
+| E.4 | Controlled local re-chunk, reset/rebuild, and evaluation baseline. | Requires go/no-go approval after governance review. |
 
 Implementation sequencing rule:
 
 Do not combine real chunk migration with prompt changes, response-policy enforcement, public bridge work, major dependency upgrades, or production deployment changes.
+
+## 21. D.5d Boundary
+
+D.5d evaluated exactly three profiles:
+
+1. `flight_test_rm_ag_300`
+2. `mil_std_882e`
+3. `aircraft_system_safety`
+
+It did not process the full corpus, establish legacy coexistence, authorize
+corpus migration, authorize embedding generation, authorize Astra or FAISS
+rebuilds, or change runtime retrieval. D.6 must make a governance/readiness
+decision before any broader processing begins.
 
 ## 20. Open Questions
 
