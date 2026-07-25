@@ -372,6 +372,24 @@ consistency, and authorization boundaries only. It does not create a merged
 corpus package, authorize full-corpus ingestion, generate embeddings, or touch
 Astra/FAISS.
 
+D.6 adds the governance decision point between validated persisted packages and
+any migration execution:
+
+```text
+validated persisted package
+        |
+        v
+D.6 governance decision
+        |
+        v
+controlled shadow migration rehearsal
+```
+
+The governance policy sits between technical persistence validation and
+migration execution. Review-required records remain quarantined. D.6 does not
+authorize vector-store work, embedding generation, Astra operations, FAISS
+operations, or production retrieval.
+
 ```text
 src/aviationrag/
   __init__.py

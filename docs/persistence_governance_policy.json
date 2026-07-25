@@ -1,0 +1,186 @@
+{
+  "decision_authority": "migration_governance_review",
+  "legacy_coexistence_policy": {
+    "mode": "shadow_mode_only",
+    "no_automatic_cutover": true,
+    "no_destructive_overwrite": true,
+    "no_legacy_deletion": true,
+    "production_cutover_policy_complete": false,
+    "source_checksum_required": true,
+    "structured_and_legacy_origins_separate": true
+  },
+  "limitation_policy": {
+    "approval_scope_required": true,
+    "candidate_level_not_document_global": true,
+    "corpus_wide_default": false,
+    "known_codes": [
+      "CHUNK_SECTION_CROSSING_REVIEW",
+      "DUPLICATE_TEXT_LINES",
+      "TABLE_CANDIDATE_ONLY",
+      "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE"
+    ],
+    "owner_roles": [
+      "domain_safety_reviewer",
+      "aviationrag_ingestion_owner",
+      "migration_authority"
+    ]
+  },
+  "ocr_policy": {
+    "controlled_codes": [
+      "OCR_REVIEW_REQUIRED",
+      "OCR_COMPLETENESS_NOT_ESTABLISHED"
+    ],
+    "ocr_execution_authorized": false,
+    "production_indexing_requires_review": true,
+    "rehearsal_disposition": "quarantine"
+  },
+  "phase_authorizations": {
+    "astra_operations": false,
+    "controlled_local_persistence_package_generation": true,
+    "controlled_shadow_migration_rehearsal": "conditional_yes",
+    "dependency_remediation": "separate_task",
+    "embedding_generation": false,
+    "faiss_operations": false,
+    "ocr_execution": "separate_task",
+    "production_migration": false,
+    "production_retrieval": false,
+    "review_required_indexing": false,
+    "valid_records_in_rehearsal": true,
+    "valid_with_warnings_records": "approval_required"
+  },
+  "policy_name": "aviationrag-persistence-governance",
+  "policy_version": "0.1.0",
+  "provenance_policy": {
+    "full_provenance": {
+      "disposition": "eligible",
+      "production": "future_approval_required",
+      "rehearsal": "eligible"
+    },
+    "legacy_filename_only": {
+      "disposition": "quarantine",
+      "production": "blocked",
+      "rehearsal": "legacy_path_only"
+    },
+    "partial_provenance": {
+      "default": "disabled",
+      "disposition": "quarantine",
+      "indexing": "forbidden",
+      "rehearsal": "disabled_by_default"
+    },
+    "unknown_provenance": {
+      "disposition": "forbidden",
+      "production": "forbidden",
+      "rehearsal": "forbidden"
+    }
+  },
+  "record_status_policy": {
+    "rejected": {
+      "controlled_pilot": "forbidden",
+      "index_retrieval": "forbidden",
+      "production_persistence": "forbidden",
+      "rehearsal": "forbidden"
+    },
+    "review_required": {
+      "controlled_pilot": "blocked_unless_separately_reviewed",
+      "index_retrieval": "forbidden",
+      "production_persistence": "blocked",
+      "rehearsal": "quarantine"
+    },
+    "valid": {
+      "controlled_pilot": "eligible",
+      "index_retrieval": "future_approval_required",
+      "production_persistence": "future_approval_required",
+      "rehearsal": "eligible"
+    },
+    "valid_with_warnings": {
+      "controlled_pilot": "eligible_with_approval",
+      "index_retrieval": "blocked",
+      "production_persistence": "blocked_pending_governance",
+      "rehearsal": "eligible_with_approval"
+    }
+  },
+  "retention_policy": {
+    "no_automatic_deletion": true,
+    "previous_package_retained": true,
+    "production_retention_duration_finalized": false,
+    "rehearsal_retention_mode": "indefinite_local_controlled_rehearsal",
+    "replacement_requires_validation": true,
+    "rollback_material_retained": true
+  },
+  "security_gate": {
+    "dependency_remediation_authorized": false,
+    "findings_block_production": true,
+    "high_findings_require_triage": true,
+    "offline_rehearsal_allowed_without_network_or_deployment": true,
+    "production_security_review_required": true
+  },
+  "table_policy": {
+    "TABLE_CANDIDATE_ONLY": {
+      "cell_accuracy_claim_allowed": false,
+      "disposition": "eligible_with_approval",
+      "row_structure_claim_allowed": false
+    },
+    "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE": {
+      "candidate_scope_required": true,
+      "known_candidate_id": "aircraft_system_safety:chunk:page-52-table-1",
+      "record_status": "review_required",
+      "rehearsal_disposition": "quarantine"
+    }
+  },
+  "warning_ownership": {
+    "categories": {
+      "adapter_mapping_warning": {
+        "primary_owner": "aviationrag_ingestion_owner",
+        "required_reviewers": [
+          "repository_maintainer"
+        ]
+      },
+      "dependency_vulnerability": {
+        "primary_owner": "security_dependency_owner",
+        "required_reviewers": [
+          "repository_maintainer",
+          "migration_authority"
+        ]
+      },
+      "migration_authorization": {
+        "primary_owner": "migration_authority",
+        "required_reviewers": [
+          "required_technical_owners"
+        ]
+      },
+      "ocr_required_or_uncertain_page": {
+        "primary_owner": "parser_extraction_owner",
+        "required_reviewers": [
+          "domain_safety_reviewer",
+          "migration_authority"
+        ]
+      },
+      "parser_extraction_warning": {
+        "primary_owner": "parser_extraction_owner",
+        "required_reviewers": [
+          "aviationrag_ingestion_owner"
+        ]
+      },
+      "provenance_limitation": {
+        "primary_owner": "aviationrag_ingestion_owner",
+        "required_reviewers": [
+          "migration_authority"
+        ]
+      },
+      "safety_content_limitation": {
+        "primary_owner": "domain_safety_reviewer",
+        "required_reviewers": [
+          "aviationrag_ingestion_owner",
+          "migration_authority"
+        ]
+      },
+      "table_classification_ambiguity": {
+        "primary_owner": "domain_safety_reviewer",
+        "required_reviewers": [
+          "aviationrag_ingestion_owner"
+        ]
+      }
+    },
+    "production_owner_signoff_complete": false
+  }
+}

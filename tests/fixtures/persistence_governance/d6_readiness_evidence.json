@@ -1,0 +1,30 @@
+{
+  "accepted_limitation_codes": [
+    "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE"
+  ],
+  "astra_untouched": true,
+  "blocking_issue_codes": [],
+  "chunk_id_collision_count": 0,
+  "d5c_outcome": "PASS",
+  "d5d_outcome": "ACCEPTED_WITH_LIMITATIONS",
+  "deterministic_profile_count": 3,
+  "embeddings_untouched": true,
+  "evaluated_profile_count": 3,
+  "evidence_schema_name": "aviationrag-persistence-migration-readiness-evidence",
+  "evidence_schema_version": "0.1.0",
+  "expected_deterministic_profile_count": 3,
+  "faiss_untouched": true,
+  "high_security_finding_count": 16,
+  "low_security_finding_count": 12,
+  "moderate_security_finding_count": 28,
+  "ocr_observation_count": 1,
+  "runtime_ingestion_unchanged": true,
+  "schema_consistency_verified": true,
+  "total_accepted_record_count": 16334,
+  "total_candidate_count": 16334,
+  "total_rejected_candidate_count": 0,
+  "total_review_required_count": 1,
+  "total_warning_count": 2,
+  "unknown_provenance_count": 0,
+  "unresolved_security_findings": true
+}

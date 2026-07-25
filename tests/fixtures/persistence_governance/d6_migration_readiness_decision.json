@@ -1,0 +1,157 @@
+{
+  "authorization": {
+    "controlled_migration_pilot": false,
+    "controlled_migration_rehearsal": true,
+    "production_indexing": false,
+    "production_persistence": false,
+    "production_retrieval": false
+  },
+  "blocking_gate_codes": [],
+  "conditional_gate_codes": [
+    "APPROVED_LIMITATIONS_PRESENT",
+    "OCR_REVIEW_REQUIRED",
+    "PRODUCTION_LEGACY_CUTOVER_POLICY_REQUIRED",
+    "PRODUCTION_RETENTION_DURATION_UNRESOLVED",
+    "PRODUCTION_WARNING_OWNER_SIGNOFF_REQUIRED",
+    "REVIEW_REQUIRED_RECORDS_PRESENT",
+    "SECURITY_DEPENDENCY_REVIEW_REQUIRED"
+  ],
+  "controlled_pilot_authorized": false,
+  "controlled_rehearsal_authorized": true,
+  "decision": "CONDITIONALLY_READY_FOR_CONTROLLED_MIGRATION_REHEARSAL",
+  "decision_schema_name": "aviationrag-persistence-migration-readiness-decision",
+  "decision_schema_version": "0.1.0",
+  "policy_name": "aviationrag-persistence-governance",
+  "policy_version": "0.1.0",
+  "production_indexing_authorized": false,
+  "production_persistence_authorized": false,
+  "production_retrieval_authorized": false,
+  "required_controls": [
+    "SHADOW_MODE_ONLY",
+    "NO_DESTRUCTIVE_OVERWRITE",
+    "NO_LEGACY_DELETION",
+    "FULL_PROVENANCE_REQUIRED",
+    "ZERO_REJECTED_RECORDS",
+    "REVIEW_REQUIRED_RECORDS_QUARANTINED",
+    "NO_EMBEDDINGS",
+    "NO_ASTRA",
+    "NO_FAISS",
+    "NO_PRODUCTION_RETRIEVAL",
+    "PACKAGE_DETERMINISM_REQUIRED",
+    "ROLLBACK_PACKAGE_RETAINED",
+    "WARNING_APPROVALS_SCOPED",
+    "OCR_OBSERVATIONS_RETAINED",
+    "SECURITY_REVIEW_PENDING"
+  ],
+  "satisfied_gate_codes": [
+    "ACCEPTED_RECORDS_PRESENT",
+    "ALL_PROFILES_DETERMINISTIC",
+    "ASTRA_UNTOUCHED",
+    "D5C_PASS",
+    "D5D_ACCEPTABLE_OUTCOME",
+    "EMBEDDINGS_UNTOUCHED",
+    "FAISS_UNTOUCHED",
+    "NO_BLOCKING_ISSUES",
+    "RUNTIME_INGESTION_UNCHANGED",
+    "SCHEMA_CONSISTENCY_VERIFIED",
+    "THREE_OR_MORE_PROFILES_EVALUATED",
+    "ZERO_CHUNK_ID_COLLISIONS",
+    "ZERO_REJECTED_RECORDS",
+    "ZERO_UNKNOWN_PROVENANCE"
+  ],
+  "summary": {
+    "astra_touched": false,
+    "embedding_generation": false,
+    "faiss_touched": false,
+    "legacy_coexistence_mode": "shadow_mode_only",
+    "migration_executed": false,
+    "ocr_status": {
+      "ocr_execution_authorized": false,
+      "ocr_observation_count": 1
+    },
+    "phase_authorizations": {
+      "astra_operations": false,
+      "controlled_local_persistence_package_generation": true,
+      "controlled_shadow_migration_rehearsal": "conditional_yes",
+      "dependency_remediation": "separate_task",
+      "embedding_generation": false,
+      "faiss_operations": false,
+      "ocr_execution": "separate_task",
+      "production_migration": false,
+      "production_retrieval": false,
+      "review_required_indexing": false,
+      "valid_records_in_rehearsal": true,
+      "valid_with_warnings_records": "approval_required"
+    },
+    "policy_name": "aviationrag-persistence-governance",
+    "policy_version": "0.1.0",
+    "production_authorization": false,
+    "provenance_policy": {
+      "full_provenance": {
+        "disposition": "eligible",
+        "production": "future_approval_required",
+        "rehearsal": "eligible"
+      },
+      "legacy_filename_only": {
+        "disposition": "quarantine",
+        "production": "blocked",
+        "rehearsal": "legacy_path_only"
+      },
+      "partial_provenance": {
+        "default": "disabled",
+        "disposition": "quarantine",
+        "indexing": "forbidden",
+        "rehearsal": "disabled_by_default"
+      },
+      "unknown_provenance": {
+        "disposition": "forbidden",
+        "production": "forbidden",
+        "rehearsal": "forbidden"
+      }
+    },
+    "record_status_policy": {
+      "rejected": {
+        "controlled_pilot": "forbidden",
+        "index_retrieval": "forbidden",
+        "production_persistence": "forbidden",
+        "rehearsal": "forbidden"
+      },
+      "review_required": {
+        "controlled_pilot": "blocked_unless_separately_reviewed",
+        "index_retrieval": "forbidden",
+        "production_persistence": "blocked",
+        "rehearsal": "quarantine"
+      },
+      "valid": {
+        "controlled_pilot": "eligible",
+        "index_retrieval": "future_approval_required",
+        "production_persistence": "future_approval_required",
+        "rehearsal": "eligible"
+      },
+      "valid_with_warnings": {
+        "controlled_pilot": "eligible_with_approval",
+        "index_retrieval": "blocked",
+        "production_persistence": "blocked_pending_governance",
+        "rehearsal": "eligible_with_approval"
+      }
+    },
+    "retention_mode": "indefinite_local_controlled_rehearsal",
+    "runtime_ingestion_modified": false,
+    "security_status": {
+      "high": 16,
+      "low": 12,
+      "moderate": 28,
+      "unresolved_security_findings": true
+    }
+  },
+  "unresolved_findings": [
+    "APPROVED_LIMITATIONS_PRESENT",
+    "HIGH_SECURITY_FINDINGS_REMAIN",
+    "OCR_REVIEW_REQUIRED",
+    "PRODUCTION_LEGACY_CUTOVER_POLICY_REQUIRED",
+    "PRODUCTION_RETENTION_DURATION_UNRESOLVED",
+    "PRODUCTION_WARNING_OWNER_SIGNOFF_REQUIRED",
+    "REVIEW_REQUIRED_RECORDS_PRESENT",
+    "SECURITY_DEPENDENCY_REVIEW_REQUIRED"
+  ]
+}

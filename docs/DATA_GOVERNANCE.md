@@ -178,3 +178,52 @@ Planned controls:
    - Store question, mode, retrieved chunk IDs, scores, answer, citations, model, prompt version, latency, user/session, and timestamp.
 7. Feedback loop:
    - Capture wrong citation, hallucination, obsolete source, and quality feedback for future evaluation.
+
+## Persistence Governance Addendum
+
+D.6 defines the governance boundary between offline persisted-package validation
+and any future migration execution.
+
+Persisted-record status governance:
+
+| Status | Controlled rehearsal | Production/indexing |
+| --- | --- | --- |
+| `valid` | eligible | future approval required |
+| `valid_with_warnings` | eligible with approval | blocked pending governance |
+| `review_required` | quarantine only | forbidden for indexing/retrieval |
+| `rejected` | forbidden | forbidden |
+
+Warning and limitation ownership is role-based. Parser extraction warnings are
+owned by `parser_extraction_owner`; adapter/mapping warnings by
+`aviationrag_ingestion_owner`; safety-content and table-classification
+limitations by `domain_safety_reviewer`; dependency vulnerabilities by
+`security_dependency_owner`; and migration authorization by
+`migration_authority`.
+
+Approval-scope rules:
+
+1. Candidate-level approvals MUST NOT become document-global automatically.
+2. Document-level approvals MUST NOT become corpus-global automatically.
+3. Absence of approval fails closed.
+4. Approval fixtures MUST NOT contain source text or personal names.
+
+Partial provenance remains disabled by default. It MAY be considered only in a
+future controlled pilot with explicit per-record limitation, owner approvals,
+`review_required = true`, and indexing/retrieval exclusion. Unknown provenance
+is forbidden.
+
+OCR observations do not prove extraction failure, but they also do not establish
+page completeness. OCR-affected pages require review or explicit exclusion
+before production indexing. D.6 does not authorize OCR execution.
+
+Legacy coexistence for the next phase is shadow mode only: structured records
+and legacy chunks remain separate, legacy deletion is forbidden, silent origin
+merging is forbidden, and rollback material must be retained.
+
+Controlled rehearsal retention is conservative: no automatic deletion, previous
+packages retained until replacement validation succeeds, and production
+retention duration remains unresolved.
+
+The reported dependency findings remain a production security gate. They do not
+invalidate offline deterministic evidence, but production persistence, indexing,
+retrieval, or deployment requires separate security review.

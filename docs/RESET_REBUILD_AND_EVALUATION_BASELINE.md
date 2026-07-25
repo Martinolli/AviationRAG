@@ -357,3 +357,24 @@ and all generated D.5d packages remained under ignored
 
 This baseline does not authorize full-corpus processing, embedding generation,
 Astra rebuild, FAISS rebuild, or production retrieval integration.
+
+## 18. D.6 Governance Decision
+
+D.6 produced
+`CONDITIONALLY_READY_FOR_CONTROLLED_MIGRATION_REHEARSAL`.
+
+No reset or rebuild was executed. Production rebuild remains unauthorized.
+
+A future vector rebuild requires all of the following before execution:
+
+1. Controlled shadow migration rehearsal evidence.
+2. Security review of reported dependency findings.
+3. Record-eligibility approval.
+4. Warning and limitation owner signoff.
+5. OCR disposition or explicit page-level exclusion.
+6. Legacy cutover policy.
+7. Production retention policy.
+8. Explicit datastore authorization.
+
+Until those conditions are satisfied, embeddings, Astra operations, FAISS
+operations, and production retrieval remain blocked.

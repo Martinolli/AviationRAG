@@ -1806,6 +1806,105 @@ Compatibility corrections made in AviationRAG D.4c:
 33. Recommended next phase:
     - D.6 persistence governance decision and migration readiness review.
 
+### 2026-07-25 D.6 Persistence Governance Decision and Migration Readiness Review
+
+1. Started and completed D.6 governance-only readiness review.
+2. Evidence reviewed:
+   - D.5c single real sample: `PASS`
+   - D.5d multi-profile evaluation: `ACCEPTED_WITH_LIMITATIONS`
+   - accepted records: 16,334
+   - rejected records: 0
+   - unknown provenance: 0
+   - cross-document collisions: 0
+   - deterministic profiles: 3/3
+3. Readiness decision:
+   - `CONDITIONALLY_READY_FOR_CONTROLLED_MIGRATION_REHEARSAL`
+4. Technical gates passed:
+   - D.5c pass
+   - D.5d acceptable outcome
+   - three profiles evaluated
+   - accepted records present
+   - zero rejected records
+   - zero unknown provenance
+   - zero chunk-ID collisions
+   - all profiles deterministic
+   - schema consistency verified
+   - no blocking issue codes
+   - runtime ingestion unchanged
+   - embeddings, Astra, and FAISS untouched
+5. Conditional governance gates:
+   - `REVIEW_REQUIRED_RECORDS_PRESENT`
+   - `APPROVED_LIMITATIONS_PRESENT`
+   - `OCR_REVIEW_REQUIRED`
+   - `SECURITY_DEPENDENCY_REVIEW_REQUIRED`
+   - `PRODUCTION_RETENTION_DURATION_UNRESOLVED`
+   - `PRODUCTION_WARNING_OWNER_SIGNOFF_REQUIRED`
+   - `PRODUCTION_LEGACY_CUTOVER_POLICY_REQUIRED`
+6. Blocking gates:
+   - none for controlled shadow rehearsal
+7. Status eligibility:
+   - `valid`: rehearsal eligible
+   - `valid_with_warnings`: rehearsal eligible with approval
+   - `review_required`: quarantine only
+   - `rejected`: forbidden
+8. Provenance policy:
+   - `full_provenance`: eligible for controlled rehearsal
+   - `partial_provenance`: disabled by default
+   - `legacy_filename_only`: legacy path only and quarantined
+   - `unknown_provenance`: forbidden
+9. Warning ownership is role-based for parser extraction owner, AviationRAG ingestion owner, domain safety reviewer, migration authority, security/dependency owner, and repository maintainer.
+10. Limitation ownership is scoped; candidate-level limitations do not become document-global or corpus-global automatically.
+11. OCR policy:
+    - the `flight_test_rm_ag_300` page-2 observation is retained;
+    - no OCR completeness claim is made;
+    - OCR execution is not authorized.
+12. Table policy:
+    - `TABLE_CANDIDATE_ONLY` does not prove row/cell accuracy;
+    - `TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE` remains candidate-scoped to `aircraft_system_safety:chunk:page-52-table-1` and quarantined from indexing/retrieval.
+13. Legacy coexistence:
+    - shadow mode only;
+    - origin separation required;
+    - legacy deletion forbidden;
+    - silent merge/cutover forbidden;
+    - rollback material retained.
+14. Retention/rollback:
+    - no automatic deletion;
+    - previous package retained until replacement validation succeeds;
+    - production retention duration remains unresolved.
+15. Security gate:
+    - latest project-reported findings remain 16 high, 28 moderate, 12 low;
+    - production authorization remains blocked pending separate security review;
+    - dependency remediation is not authorized by D.6.
+16. Authorized next phase:
+    - D.7 controlled shadow migration rehearsal, conditional only.
+17. Prohibited activities:
+    - uncontrolled processing;
+    - production migration;
+    - embedding generation;
+    - Astra operations;
+    - FAISS operations;
+    - production retrieval;
+    - OCR execution;
+    - dependency remediation.
+18. Formal CLI:
+    - `python tools/governance/run-persistence-migration-readiness-review.py --evidence tests/fixtures/persistence_governance/d6_readiness_evidence.json --policy docs/persistence_governance_policy.json --strict`
+    - decision: `CONDITIONALLY_READY_FOR_CONTROLLED_MIGRATION_REHEARSAL`
+    - exit code: 2
+19. Deterministic report write check:
+    - two ignored local report runs under `data/migration_dry_run/governance_review/`
+    - JSON reports byte-identical
+    - Markdown reports byte-identical
+20. No parser execution occurred.
+21. No migration execution occurred.
+22. No source documents were processed.
+23. Runtime ingestion remains unchanged.
+24. No embeddings were generated.
+25. Astra and FAISS were untouched.
+26. `techdoc-parser` was not modified.
+27. Production readiness was not granted.
+28. Recommended next phase:
+    - D.7 controlled shadow migration rehearsal.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

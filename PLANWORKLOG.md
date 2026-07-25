@@ -1173,7 +1173,8 @@ Recommended immediate order:
 6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
 7. Use the D.5c real parser-output sample gate as the gate before any multi-profile parser-output evaluation, embedding, Astra, or FAISS work.
 8. D.5d controlled multi-profile parser-output persistence evaluation is complete for exactly three controlled profiles.
-9. Recommended next controlled phase: D.6 persistence governance decision and migration readiness review.
+9. D.6 persistence governance decision and migration readiness review is complete.
+10. Recommended next controlled phase: D.7 controlled shadow migration rehearsal.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.
 
@@ -1199,3 +1200,35 @@ Completion criteria:
 
 D.5d does not make the system production-ready and does not authorize broader
 document processing.
+
+## 12. D.6 Completion Record
+
+D.6 is complete with decision
+`CONDITIONALLY_READY_FOR_CONTROLLED_MIGRATION_REHEARSAL`.
+
+Completion criteria:
+
+1. Governance review document exists.
+2. Machine-readable policy exists.
+3. Readiness evaluator exists.
+4. Record-status matrix is defined.
+5. Provenance policy is defined.
+6. Warning ownership is defined.
+7. Limitation ownership is defined.
+8. Table governance is defined.
+9. OCR governance is defined.
+10. Legacy shadow coexistence is defined.
+11. Retention and rollback policy is defined.
+12. Security gate is defined.
+13. Deterministic decision is produced.
+14. Tests pass.
+15. No migration was executed.
+
+Recommended next phase:
+
+```text
+D.7 — Controlled Shadow Migration Rehearsal
+```
+
+D.7 must remain offline, local, reversible, non-destructive, without
+embeddings, without Astra, without FAISS, and without retrieval activation.

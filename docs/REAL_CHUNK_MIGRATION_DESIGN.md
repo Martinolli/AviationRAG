@@ -567,6 +567,31 @@ corpus migration, authorize embedding generation, authorize Astra or FAISS
 rebuilds, or change runtime retrieval. D.6 must make a governance/readiness
 decision before any broader processing begins.
 
+## 22. D.6 Governance Decision Requirements
+
+D.6 determined that D.5d technical evidence is sufficient for a governance
+decision and produced
+`CONDITIONALLY_READY_FOR_CONTROLLED_MIGRATION_REHEARSAL`.
+
+The next executable phase may be a controlled shadow migration rehearsal only.
+Production migration remains blocked.
+
+Baseline D.6 rules:
+
+1. `valid` records are the default rehearsal population.
+2. `valid_with_warnings` records require scoped approval.
+3. `review_required` records remain quarantined and must not be indexed.
+4. `rejected` records remain forbidden.
+5. Partial provenance remains disabled by default.
+6. Unknown provenance remains persistence-blocking.
+7. Legacy deletion remains forbidden.
+8. Structured and legacy origins must remain separate in shadow mode.
+9. No embeddings, Astra, FAISS, production retrieval, or production cutover are
+   involved in the next rehearsal.
+
+D.7 must remain local, reversible, non-destructive, storage-neutral, and
+auditable.
+
 ## 20. Open Questions
 
 1. How reliable is current page metadata across existing PDF and DOCX extraction outputs?

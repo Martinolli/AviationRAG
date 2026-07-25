@@ -238,6 +238,41 @@ Controlled `chunk_type` values:
 16. `metadata_only`
 17. `other`
 
+## 8. Governance Interpretation for Persisted Records
+
+D.6 adds governance interpretation for persisted-record metadata without
+changing the persisted schema.
+
+`validation_status`:
+
+| Value | Governance interpretation |
+| --- | --- |
+| `valid` | Eligible for controlled shadow rehearsal; production still requires later approval. |
+| `valid_with_warnings` | Eligible for controlled rehearsal only with scoped warning approval. |
+| `review_required` | Quarantine/audit-package only; indexing and retrieval are forbidden. |
+| `rejected` | Forbidden for rehearsal, persistence, indexing, and retrieval. |
+
+`provenance_status`:
+
+| Value | Governance interpretation |
+| --- | --- |
+| `full_provenance` | Eligible for controlled rehearsal subject to validation and warning policy. |
+| `partial_provenance` | Disabled by default; future pilot only with explicit approvals and retrieval exclusion. |
+| `legacy_filename_only` | Legacy path only; not generated for new structured records and not silently upgraded. |
+| `unknown_provenance` | Forbidden and persistence-blocking. |
+
+`accepted_limitation_codes` and `warning_codes` MUST remain scoped to the
+record/candidate evidence that produced them. They MUST NOT imply document-wide
+or corpus-wide approval.
+
+`review_required = true` means the record may be retained for audit, but it
+MUST NOT be indexed or made retrieval-eligible unless a later governance phase
+creates a specific approval path.
+
+Future indexing eligibility and retrieval eligibility are governance decisions.
+They are not inferred solely from record existence or from successful package
+generation.
+
 Guidance:
 
 1. Use `regulatory_paragraph` when a chunk maps to an identifiable regulation, clause, AMC, GM, AC paragraph, or standard requirement.
