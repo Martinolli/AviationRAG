@@ -245,3 +245,28 @@ requires approved tiny real sample selection, source-protection checks,
 partial-provenance governance, warning-owner approval, package-retention
 decision, legacy coexistence policy, and explicit authorization before any
 real corpus, embedding, Astra, FAISS, or retrieval work.
+
+## 18. D.5c Controlled Real Parser-Output Validation
+
+D.5c consumed one approved real parser-generated StructuredDocument artifact
+for `FAA_Order_4040_26B.pdf` through the unchanged D.5b package writer. The
+D.5b synthetic package result remained unchanged, and the storage-neutral
+package writer remained isolated from runtime ingestion.
+
+| Field | Value |
+| --- | --- |
+| Gate outcome | `PASS` |
+| Adapter outcome | `PASS` |
+| Package outcome | `PASS` |
+| Input candidates | 920 |
+| Accepted records | 920 |
+| Rejected candidates | 0 |
+| Warnings | 0 |
+| Review-required count | 0 |
+| Provenance counts | `{"full_provenance": 920}` |
+| Package digest | `d2509f9dbaba886b82cb135b386a7c494aaf0569a8422ad4031cd9c38a26f6a5` |
+
+No runtime integration occurred. The real artifact and generated packages
+remained ignored local files, no source PDF was copied into
+`AviationRAG/data/documents`, and no embeddings, Astra writes, FAISS writes, or
+production migration were authorized.

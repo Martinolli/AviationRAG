@@ -140,6 +140,31 @@ class StructuredDocumentAdapterTests(unittest.TestCase):
         self.assertEqual(result.outcome, REVIEW)
         self.assertTrue(any(issue.code == "VALIDATOR_WARNING_APPROVED" for issue in result.issues))
 
+    def test_resolved_cross_reference_can_target_figure_entity(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact, manifest, source = _copy_fixture(tmp)
+            data = load_structured_document_artifact(artifact)
+            data["cross_references"][0]["target_id"] = "figure-1"
+            data["cross_references"][0]["reference_type"] = "figure"
+            _write_artifact_and_manifest(artifact, manifest, source, data)
+
+            result = run_structured_document_adapter(artifact, manifest, source_path=source)
+
+        self.assertEqual(result.outcome, PASS)
+        self.assertFalse(any(issue.code == "CROSS_REFERENCE_TARGET_UNKNOWN" for issue in result.issues))
+
+    def test_metadata_blocks_are_skipped_without_candidate_warning(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact, manifest, source = _copy_fixture(tmp)
+            data = load_structured_document_artifact(artifact)
+            data["blocks"][0]["block_type"] = "metadata"
+            _write_artifact_and_manifest(artifact, manifest, source, data)
+
+            result = run_structured_document_adapter(artifact, manifest, source_path=source)
+
+        self.assertEqual(result.outcome, PASS)
+        self.assertFalse(any(issue.code == "BLOCK_CONTENT_TYPE_SKIPPED" for issue in result.issues))
+
     def test_integrity_result_is_json_serializable_and_does_not_mutate_inputs(self):
         artifact = load_structured_document_artifact(ARTIFACT)
         manifest = load_techdoc_parser_manifest(MANIFEST)

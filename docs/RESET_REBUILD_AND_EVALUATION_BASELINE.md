@@ -64,7 +64,11 @@ Current planning state:
 24. D.5b synthetic persisted-record package dry run passed locally against the
     formal D.4c fixture. The generated package is ignored under
     `data/migration_dry_run/` and is not a production persistence artifact.
-25. No reset, rebuild, embedding generation, Astra work, FAISS work, real corpus
+25. D.5c tested one real parser-output sample, `FAA_Order_4040_26B.pdf`,
+    through the offline D.4c and D.5b path. The generated packages remained
+    ignored, no source content was committed, no datastore changed, and no
+    embedding or index reset occurred.
+26. No reset, rebuild, embedding generation, Astra work, FAISS work, real corpus
     processing, or production retrieval activation is authorized by D.5.
 
 ## 4. Reset/Rebuild Triggers
@@ -87,6 +91,7 @@ The D.4 page and structure preservation design is documented in `docs/PAGE_AND_S
 The D.4c structured-document adapter dry run is documented in `docs/STRUCTURED_DOCUMENT_ADAPTER_DRY_RUN.md` and must remain a review gate before parser-output candidates are promoted to persisted chunks.
 The D.5 persisted-record mapping design is documented in `docs/PERSISTED_CHUNK_RECORD_MAPPING_DESIGN.md` and must remain a required gate before any structured candidates are persisted or used for vector payload generation.
 The D.5b persisted-record package dry run is documented in `docs/PERSISTED_CHUNK_PACKAGE_DRY_RUN.md`; it proves only synthetic/local package determinism and does not authorize reset, rebuild, embedding, Astra, FAISS, or real corpus work.
+The D.5c real parser-output sample gate is documented in `docs/REAL_PARSER_SAMPLE_PERSISTENCE_GATE.md`; it proves only one controlled real sample and does not authorize full reset/rebuild work.
 
 A reset should not be used as a shortcut for unclear metadata. If the target schema, evaluation baseline, or rollback path is incomplete, the decision must remain `No-Go`.
 
@@ -332,6 +337,7 @@ Decision:
 | D.4c | Structured-document parser-output adapter dry run. | Completed as offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.5 | Persisted `ChunkRecord` mapping design. | Completed as design only; no mapper, persistence, reset, rebuild, embeddings, Astra, or FAISS. |
 | D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Completed for synthetic/local package review only; no real corpus, embeddings, Astra, or FAISS. |
+| D.5c | Controlled real parser-output sample persistence gate. | Completed for one real parser artifact only; no reset, rebuild, embeddings, Astra, or FAISS. |
 | D.6 | Controlled local manifest/chunk integration prototype. | Future gated local work only; disabled by default. |
 | D.7 | Controlled local reset/rebuild. | Future work requiring explicit reset window and validated persisted packages. |
 | E.1 | Retrieval evaluation harness shell. | Fake/mock result scoring only; no real retrieval wiring. |

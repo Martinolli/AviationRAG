@@ -329,6 +329,28 @@ D.5b implements this path only for synthetic/sample dry runs in
 remains unchanged. The real corpus is untouched. Embeddings, Astra, and FAISS
 are not involved.
 
+D.5c adds one controlled real parser-output acceptance gate:
+
+```text
+One controlled real parser artifact
+        |
+        v
+D.4c adapter
+        |
+        v
+D.5b persisted package
+        |
+        v
+D.5c acceptance gate
+```
+
+The D.5c implementation lives in
+`src/aviationrag/ingestion/real_parser_sample_gate.py`, with manual CLI
+`tools/chunking/run-real-parser-sample-persistence-gate.py`. It verified
+`FAA_Order_4040_26B.pdf` as one offline sample only. This path does not make
+`src/aviationrag/` the runtime ingestion owner, does not process the full
+corpus, and does not generate embeddings or touch Astra/FAISS.
+
 ```text
 src/aviationrag/
   __init__.py

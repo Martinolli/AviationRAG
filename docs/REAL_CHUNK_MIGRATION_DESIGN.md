@@ -271,9 +271,10 @@ Real migration cannot begin until:
 
 1. D.5 design is approved.
 2. D.5b synthetic mapper and local package dry run remain passing.
-3. A controlled real parser-output sample-persistence package passes validation.
-4. Package rollback and audit checks pass.
-5. Production warning governance is approved.
+3. D.5c controlled real parser-output sample-persistence gate remains passing.
+4. A controlled multi-profile parser-output persistence evaluation passes.
+5. Package rollback and audit checks pass.
+6. Production warning governance is approved.
 
 The accepted upstream P0 parser pilot supports persisted-record design work and
 controlled local sample-persistence dry runs. It does not authorize real corpus
@@ -290,6 +291,19 @@ deterministic package digest
 `36355a2dbc52c1534ce884fc11d5554dfc9b4c37785054d85b11bc6696a134d9`. Real
 migration still requires a later D.5c controlled real parser-output sample
 persistence package before any corpus-wide or vector work.
+
+D.5c passed for one real parser-output document, `FAA_Order_4040_26B.pdf`.
+The gate verified source/artifact/manifest identity, D.4c adapter `PASS`, D.5b
+package `PASS`, 920 accepted persisted records, zero rejected candidates, zero
+warnings, full provenance for all records, and deterministic package digest
+`d2509f9dbaba886b82cb135b386a7c494aaf0569a8422ad4031cd9c38a26f6a5`.
+
+D.5c validates one document only. It does not validate the full corpus, does
+not authorize production migration, and does not establish final coexistence
+policy with legacy chunks. Before real migration, the project still needs D.5d
+controlled multi-profile evaluation, package retention/rollback policy,
+legacy coexistence policy, retrieval baseline, explicit reset/rebuild approval,
+and embedding/index authorization.
 
 ## 7. Legacy-to-New Mapping Strategy
 
@@ -530,6 +544,7 @@ Do not silently delete superseded chunks that were used in prior retrieval or an
 | D.4c | Structured-document parser-output adapter dry run. | Offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.5 | Persisted `ChunkRecord` mapping design. | Completed as design only; no mapper, persisted records, runtime ingestion, embeddings, Astra, or FAISS. |
 | D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Completed for synthetic/local package review only; no real corpus, embeddings, Astra, or FAISS. |
+| D.5c | Controlled real parser-output sample persistence gate. | Completed for one real parser artifact only; no full corpus, embeddings, Astra, FAISS, or production migration. |
 | E.3 | Connect retrieval harness to local FAISS outputs. | Evaluation only, no answer behavior change. |
 | D.6/E.4 | Controlled local re-chunk, reset/rebuild, and evaluation baseline. | Requires go/no-go approval after D.5b and package governance pass. |
 

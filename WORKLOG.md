@@ -1670,6 +1670,60 @@ Persistent execution log for deployment hardening and product-readiness work so 
 27. Recommended next phase:
    - D.5c controlled real parser-output sample persistence package.
 
+### 2026-07-25 D.5c Controlled Real Parser-Output Sample Persistence Gate
+
+1. Started and completed D.5c controlled real parser-output sample persistence gate.
+2. Selected `FAA_Order_4040_26B.pdf`.
+3. The source remained in `techdoc-parser/input`.
+4. Nothing was copied into `AviationRAG/data/documents`.
+5. No matching full-document StructuredDocument artifact/manifest pair existed, so a new parser artifact was generated under ignored `techdoc-parser/output/d5c_real_parser_sample/faa_order_4040_26b/`.
+6. Parser command:
+   - `techdoc-parse FAA_Order_4040_26B.pdf --output document.json --structured-document-output structured_document.json --structured-document-id faa_order_4040_26b --document-title "FAA Order 4040.26B" --document-number "FAA Order 4040.26B" --document-revision B --manifest-output manifest.json --structured-document-overwrite`
+7. Source checksum verified:
+   - `92faf3c369cafe243d668cab40000d6c31a2196a1063003504bfffe769d8c0a9`
+8. Artifact checksum verified:
+   - `fb33be7d2bfce62d813f0c88676f1da2f0ec4f5146e547ae91f04113be2c7d83`
+9. Manifest checksum recorded:
+   - `7f533273193c6f218e71833334f349bade3c5a7ad332b404b016010ff3252f6e`
+10. Parser/schema versions recorded:
+    - parser: `techdoc-parser / 0.1.0`
+    - StructuredDocument schema: `techdoc-structured-document / 0.1.0`
+11. D.4c adapter result recorded:
+    - `PASS`
+12. Candidate count recorded:
+    - 920
+13. D.5b package result recorded:
+    - `PASS`
+14. Accepted/rejected counts recorded:
+    - accepted records: 920
+    - rejected candidates: 0
+15. Warning/limitation counts recorded:
+    - warning count: 0
+    - accepted limitation counts: `{}`
+16. Provenance counts recorded:
+    - `{"full_provenance": 920}`
+17. Content-type counts recorded:
+    - `{"figure_caption": 2, "note": 7, "paragraph": 887, "table": 24}`
+18. Determinism verified by writing `run_1` and `run_2` packages and comparing all package files byte-for-byte and by SHA-256.
+19. Package digest recorded:
+    - `d2509f9dbaba886b82cb135b386a7c494aaf0569a8422ad4031cd9c38a26f6a5`
+20. Generated outputs remained ignored under `data/migration_dry_run/real_parser_sample/faa_order_4040_26b/`.
+21. No source content was committed.
+22. Runtime ingestion remains unchanged.
+23. No embeddings were generated.
+24. Astra and FAISS were untouched.
+25. `techdoc-parser` was not modified.
+26. Full-document accuracy was not established.
+27. Production migration was not authorized.
+28. Recommended next phase recorded:
+    - D.5d controlled multi-profile parser-output persistence evaluation.
+
+Compatibility corrections made in AviationRAG D.4c:
+
+1. Resolved cross-reference targets now accept known section, table, figure, or equation target IDs instead of section IDs only.
+2. Parser `metadata` blocks are skipped as non-candidate blocks without emitting candidate warnings.
+3. Both corrections preserve validation and have synthetic regression tests.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

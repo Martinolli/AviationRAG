@@ -601,6 +601,35 @@ Recommended next controlled phase:
 
 - D.5c controlled real parser-output sample persistence package.
 
+#### D.5c Controlled real parser-output sample persistence gate
+
+Status: `Completed` / `One real parser artifact only`
+
+Tasks:
+
+- [x] Verify source identity for `FAA_Order_4040_26B.pdf`.
+- [x] Generate or reuse a matching parser StructuredDocument artifact and manifest.
+- [x] Run the D.4c adapter against the real parser artifact.
+- [x] Run D.5b persisted mapping and package validation.
+- [x] Verify zero rejected candidates and zero warnings.
+- [x] Verify two-run package determinism.
+- [x] Keep generated packages ignored.
+- [x] Keep runtime ingestion, embeddings, Astra, FAISS, and production retrieval unchanged.
+
+Acceptance:
+
+- [x] Source checksum matched manifest and artifact identity.
+- [x] Artifact and manifest checksums were verified.
+- [x] D.4c adapter outcome was `PASS`.
+- [x] D.5b package outcome was `PASS`.
+- [x] Accepted records: 920.
+- [x] Rejected candidates: 0.
+- [x] Package digest: `d2509f9dbaba886b82cb135b386a7c494aaf0569a8422ad4031cd9c38a26f6a5`.
+
+Recommended next controlled phase:
+
+- D.5d controlled multi-profile parser-output persistence evaluation.
+
 ---
 
 ### Phase E — Retrieval Quality Upgrade
@@ -1142,7 +1171,7 @@ Recommended immediate order:
 4. Add backend package skeleton without behavior change.
 5. Add retrieval evaluation harness.
 6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
-7. Use the D.5b persisted-record package dry run as the gate before any real parser-output sample persistence, embedding, Astra, or FAISS work.
-8. Recommended next controlled phase: D.5c controlled real parser-output sample persistence package.
+7. Use the D.5c real parser-output sample gate as the gate before any multi-profile parser-output evaluation, embedding, Astra, or FAISS work.
+8. Recommended next controlled phase: D.5d controlled multi-profile parser-output persistence evaluation.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.

@@ -1,0 +1,47 @@
+{
+  "accepted_limitation_counts": {},
+  "accepted_record_count": 920,
+  "adapter_version": "D.4c",
+  "authorization": {
+    "additional_small_controlled_profiles": false,
+    "astra_rebuild": false,
+    "controlled_real_sample_package": true,
+    "embedding_generation": false,
+    "faiss_rebuild": false,
+    "full_corpus_ingestion": false,
+    "production_migration": false,
+    "production_retrieval_integration": false,
+    "runtime_ingestion": false
+  },
+  "blocking_issue_codes": [],
+  "candidate_count": 920,
+  "content_type_counts": {
+    "figure_caption": 2,
+    "note": 7,
+    "paragraph": 887,
+    "table": 24
+  },
+  "determinism_verified": true,
+  "document_key": "faa_order_4040_26b",
+  "gate_outcome": "PASS",
+  "gate_schema_name": "aviationrag-real-parser-sample-gate",
+  "gate_schema_version": "0.1.0",
+  "package_digest": "d2509f9dbaba886b82cb135b386a7c494aaf0569a8422ad4031cd9c38a26f6a5",
+  "package_outcome": "PASS",
+  "page_count": 39,
+  "parser_name": "techdoc-parser",
+  "parser_version": "0.1.0",
+  "persisted_mapper_version": "0.1.0",
+  "provenance_counts": {
+    "full_provenance": 920
+  },
+  "rejected_candidate_count": 0,
+  "review_required_count": 0,
+  "source_filename": "FAA_Order_4040_26B.pdf",
+  "source_sha256": "92faf3c369cafe243d668cab40000d6c31a2196a1063003504bfffe769d8c0a9",
+  "structured_document_schema_version": "0.1.0",
+  "validation_status_counts": {
+    "valid": 920
+  },
+  "warning_count": 0
+}

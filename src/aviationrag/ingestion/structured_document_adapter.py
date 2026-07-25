@@ -39,6 +39,7 @@ REVIEW = "REVIEW"
 FAIL = "FAIL"
 
 HEADING_BLOCK_TYPES = {"appendix_heading", "section_heading"}
+NON_CANDIDATE_BLOCK_TYPES = {"metadata"}
 ADAPTER_CANDIDATE_BLOCK_TYPES = {
     "caution",
     "definition",
@@ -458,7 +459,11 @@ def build_structured_document_chunk_candidates(
     table_ids_by_block = _ids_by_source_block(tables, "table_id", "$.tables", issues)
     figure_ids_by_block = _ids_by_source_block(figures, "figure_id", "$.figures", issues)
     equation_ids_by_block = _ids_by_source_block(equations, "equation_id", "$.equations", issues)
-    xref_ids_by_block = _cross_reference_ids_by_block(cross_references, section_by_id, issues)
+    xref_ids_by_block = _cross_reference_ids_by_block(
+        cross_references,
+        known_targets=_known_cross_reference_targets(sections, tables, figures, equations),
+        issues=issues,
+    )
     admonitions_by_block = _admonitions_by_block(admonitions, "$.admonitions", issues)
     admonition_block_ids = set(admonitions_by_block)
     emitted_block_ids: set[str] = set()
@@ -501,6 +506,8 @@ def build_structured_document_chunk_candidates(
         if block_id in emitted_block_ids:
             continue
         if block_type in admonition_block_ids:
+            continue
+        if block_type in NON_CANDIDATE_BLOCK_TYPES:
             continue
         if block_type in HEADING_BLOCK_TYPES and not include_headings:
             continue
@@ -970,11 +977,10 @@ def _admonitions_by_block(
 
 def _cross_reference_ids_by_block(
     cross_references: Sequence[Mapping[str, Any]],
-    section_by_id: Mapping[str, Mapping[str, Any]],
+    known_targets: set[str],
     issues: list[StructuredDocumentAdapterIssue],
 ) -> dict[str, set[str]]:
     result: dict[str, set[str]] = defaultdict(set)
-    known_targets = set(section_by_id)
     for index, reference in enumerate(cross_references):
         reference_id = _string_or_none(reference.get("reference_id"))
         status = _string_or_none(reference.get("resolution_status"))
@@ -986,7 +992,7 @@ def _cross_reference_ids_by_block(
                 issues,
                 "CROSS_REFERENCE_TARGET_UNKNOWN",
                 "error",
-                "Resolved cross reference target_id does not exist in sections.",
+                "Resolved cross reference target_id does not exist in known structured targets.",
                 f"$.cross_references[{index}].target_id",
                 reference_id,
             )
@@ -1003,6 +1009,27 @@ def _cross_reference_ids_by_block(
         for block_id in source_block_ids:
             result[block_id].add(reference_id)
     return result
+
+
+def _known_cross_reference_targets(
+    sections: Sequence[Mapping[str, Any]],
+    tables: Sequence[Mapping[str, Any]],
+    figures: Sequence[Mapping[str, Any]],
+    equations: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    targets: set[str] = set()
+    for collection, key in (
+        (sections, "section_id"),
+        (tables, "table_id"),
+        (figures, "figure_id"),
+        (equations, "equation_id"),
+    ):
+        targets.update(
+            str(item.get(key))
+            for item in collection
+            if _non_empty_string(item.get(key))
+        )
+    return targets
 
 
 def _build_adapter_summary(
