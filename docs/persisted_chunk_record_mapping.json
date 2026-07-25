@@ -1,0 +1,593 @@
+{
+  "approved_limitation_codes": [
+    {
+      "code": "CHUNK_SECTION_CROSSING_REVIEW",
+      "persistence_policy": "conditionally accepted; review_required true for crossings; unrelated sibling crossing rejects",
+      "review_required": true
+    },
+    {
+      "code": "DUPLICATE_TEXT_LINES",
+      "persistence_policy": "conditionally accepted; text-only deduplication forbidden",
+      "review_required": false
+    },
+    {
+      "code": "TABLE_CANDIDATE_ONLY",
+      "persistence_policy": "conditionally accepted; candidate table evidence is not proof of reconstructed tabular content",
+      "review_required": true
+    },
+    {
+      "code": "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE",
+      "persistence_policy": "conditionally accepted; table classification requires supporting evidence and review",
+      "review_required": true
+    }
+  ],
+  "content_type_policies": [
+    {
+      "content_type": "paragraph",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "list",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "table",
+      "persistence_eligibility": "conditional",
+      "review_required": true
+    },
+    {
+      "content_type": "figure_caption",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "equation",
+      "persistence_eligibility": "accepted_with_raw_text",
+      "review_required": false
+    },
+    {
+      "content_type": "warning",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "caution",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "note",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "important",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "safety_notice",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "unknown_admonition",
+      "persistence_eligibility": "conditional",
+      "review_required": true
+    },
+    {
+      "content_type": "procedure",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "requirement",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "definition",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "footnote",
+      "persistence_eligibility": "conditional",
+      "review_required": true
+    },
+    {
+      "content_type": "reference",
+      "persistence_eligibility": "conditional",
+      "review_required": true
+    },
+    {
+      "content_type": "appendix_content",
+      "persistence_eligibility": "accepted",
+      "review_required": false
+    },
+    {
+      "content_type": "mixed",
+      "persistence_eligibility": "conditional",
+      "review_required": true
+    },
+    {
+      "content_type": "unknown",
+      "persistence_eligibility": "conditional",
+      "review_required": true
+    }
+  ],
+  "deterministic_identity_policy": {
+    "canonical_input_order": [
+      "document_id",
+      "schema_name",
+      "schema_version",
+      "content_type",
+      "content_subtype",
+      "source_block_ids",
+      "entity_ids",
+      "chunk_sequence_key"
+    ],
+    "chunk_id_format": "<document_id>:chunk:<first-24-hex-of-sha256>",
+    "collision_behavior": "reject package unless longer truncation policy is approved",
+    "forbidden_inputs": [
+      "random_uuid",
+      "timestamp",
+      "absolute_path",
+      "embedding_content",
+      "astra_identity",
+      "faiss_position"
+    ],
+    "hash_algorithm": "sha256",
+    "hash_truncation_hex": 24
+  },
+  "fields": [
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "chunk_candidate_id",
+      "target_field": "chunk_id",
+      "transformation": "deterministic persisted chunk identity policy"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "document_id",
+      "target_field": "document_id",
+      "transformation": "preserve exact document identifier"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "source_filename",
+      "target_field": "source_filename",
+      "transformation": "preserve manifest-safe source filename"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "source_checksum",
+      "target_field": "source_checksum",
+      "transformation": "preserve verified source checksum"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "document_title",
+      "target_field": "document_title",
+      "transformation": "preserve when supplied"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "document_number",
+      "target_field": "document_number",
+      "transformation": "preserve when supplied"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "rename",
+      "required": false,
+      "source_field": "document_revision",
+      "target_field": "document_revision",
+      "transformation": "preserve when supplied"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "omit",
+      "required": false,
+      "source_field": null,
+      "target_field": "document_issue",
+      "transformation": "not currently available from D.4c candidate"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "omit",
+      "required": false,
+      "source_field": null,
+      "target_field": "effective_date",
+      "transformation": "not currently available from D.4c candidate"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "text",
+      "target_field": "text",
+      "transformation": "preserve exact text"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "normalized_text",
+      "target_field": "normalized_text",
+      "transformation": "preserve separately from raw text"
+    },
+    {
+      "failure_behavior": "reject_or_review",
+      "mapping_status": "conditional",
+      "required": true,
+      "source_field": "content_type",
+      "target_field": "content_type",
+      "transformation": "map D.4c type to persisted content taxonomy"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "omit",
+      "required": false,
+      "source_field": null,
+      "target_field": "content_subtype",
+      "transformation": "not currently available"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "omit",
+      "required": false,
+      "source_field": null,
+      "target_field": "language",
+      "transformation": "not currently available"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "page_start",
+      "target_field": "page_start",
+      "transformation": "preserve page start"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "page_end",
+      "target_field": "page_end",
+      "transformation": "preserve page end"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "pdf_page_index_start",
+      "target_field": "pdf_page_index_start",
+      "transformation": "preserve PDF page index start"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "pdf_page_index_end",
+      "target_field": "pdf_page_index_end",
+      "transformation": "preserve PDF page index end"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "page_start,page_end",
+      "target_field": "contributing_page_numbers",
+      "transformation": "expand page range until explicit spans exist"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "pdf_page_index_start,pdf_page_index_end",
+      "target_field": "contributing_pdf_page_indexes",
+      "transformation": "expand PDF page index range until explicit spans exist"
+    },
+    {
+      "failure_behavior": "empty_list",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "printed_page_labels",
+      "target_field": "printed_page_labels",
+      "transformation": "preserve labels when supplied"
+    },
+    {
+      "failure_behavior": "warning_or_review",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "section_id",
+      "target_field": "section_id",
+      "transformation": "conditionally required when section evidence exists"
+    },
+    {
+      "failure_behavior": "warning_or_review",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "section_path",
+      "target_field": "section_path",
+      "transformation": "preserve ordered section path"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "section_number",
+      "target_field": "section_number",
+      "transformation": "preserve when supplied"
+    },
+    {
+      "failure_behavior": "warning",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "section_title",
+      "target_field": "section_title",
+      "transformation": "preserve when supplied"
+    },
+    {
+      "failure_behavior": "null",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "clause_identifier",
+      "target_field": "clause_identifier",
+      "transformation": "preserve when supplied"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "source_block_ids",
+      "target_field": "source_block_ids",
+      "transformation": "preserve ordered source block IDs"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "page/pdf/source_block fields",
+      "target_field": "source_span",
+      "transformation": "build minimal span without fabricated offsets or bboxes"
+    },
+    {
+      "failure_behavior": "review_if_table_chunk_lacks_id",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "table_ids",
+      "target_field": "table_ids",
+      "transformation": "preserve table entity IDs"
+    },
+    {
+      "failure_behavior": "warning_if_caption_lacks_id",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "figure_ids",
+      "target_field": "figure_ids",
+      "transformation": "preserve figure entity IDs"
+    },
+    {
+      "failure_behavior": "review_if_equation_lacks_id",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "equation_ids",
+      "target_field": "equation_ids",
+      "transformation": "preserve equation entity IDs"
+    },
+    {
+      "failure_behavior": "reject_if_admonition_chunk_lacks_id",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "admonition_ids",
+      "target_field": "admonition_ids",
+      "transformation": "preserve admonition entity IDs"
+    },
+    {
+      "failure_behavior": "empty_list",
+      "mapping_status": "direct",
+      "required": false,
+      "source_field": "cross_reference_ids",
+      "target_field": "cross_reference_ids",
+      "transformation": "preserve cross-reference IDs"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "parser_name",
+      "target_field": "parser_name",
+      "transformation": "preserve parser name"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "parser_version",
+      "target_field": "parser_version",
+      "transformation": "preserve parser version"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "source_artifact.schema_version",
+      "target_field": "structured_document_schema_version",
+      "transformation": "copy from validated source artifact"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "adapter_policy",
+      "target_field": "adapter_version",
+      "transformation": "record D.4c adapter policy version"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "future_mapper_policy",
+      "target_field": "persistence_mapper_version",
+      "transformation": "record future mapper policy version"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "direct",
+      "required": true,
+      "source_field": "extraction_method",
+      "target_field": "extraction_method",
+      "transformation": "preserve extraction method"
+    },
+    {
+      "failure_behavior": "reject_unknown",
+      "mapping_status": "conditional",
+      "required": true,
+      "source_field": "provenance_status",
+      "target_field": "provenance_status",
+      "transformation": "map structured to full_provenance and structured_partial to partial_provenance"
+    },
+    {
+      "failure_behavior": "reject_unknown_code",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "future_validation",
+      "target_field": "accepted_limitation_codes",
+      "transformation": "apply approved limitation registry"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "future_validation",
+      "target_field": "validation_status",
+      "transformation": "derive valid, valid_with_warnings, review_required, or rejected"
+    },
+    {
+      "failure_behavior": "empty_list",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "future_validation",
+      "target_field": "warning_codes",
+      "transformation": "preserve validation warnings"
+    },
+    {
+      "failure_behavior": "reject",
+      "mapping_status": "derive_safely",
+      "required": true,
+      "source_field": "future_validation",
+      "target_field": "review_required",
+      "transformation": "derive explicit review flag"
+    },
+    {
+      "failure_behavior": "not_emitted",
+      "mapping_status": "omit",
+      "required": false,
+      "source_field": null,
+      "target_field": "persisted_at",
+      "transformation": "excluded from deterministic package core"
+    }
+  ],
+  "forbidden_fields": [
+    "embedding",
+    "embeddings",
+    "vector",
+    "vectors",
+    "index_specific_id",
+    "astra_identity",
+    "faiss_position",
+    "machine_absolute_path",
+    "temporary_path",
+    "random_id",
+    "fabricated_confidence",
+    "generated_figure_description",
+    "unverified_table_cells",
+    "inferred_revision"
+  ],
+  "package_design": {
+    "artifacts": [
+      "persisted_chunks.jsonl",
+      "persistence_manifest.json",
+      "persistence_report.json",
+      "rejected_candidates.jsonl",
+      "warnings.json"
+    ],
+    "determinism": {
+      "encoding": "utf-8",
+      "json_key_order": "deterministic",
+      "jsonl_final_newline": true,
+      "timestamps_in_core": false
+    },
+    "embeddings_or_vectors_allowed": false
+  },
+  "provenance_statuses": [
+    {
+      "legacy_migration": "not used",
+      "new_structured_chunks": "accepted",
+      "persistence_decision": "accepted",
+      "status": "full_provenance"
+    },
+    {
+      "legacy_migration": "not preferred",
+      "new_structured_chunks": "accepted only with approved limitation code and review_required true",
+      "persistence_decision": "sample_local_or_governed_acceptance",
+      "status": "partial_provenance"
+    },
+    {
+      "legacy_migration": "reserved",
+      "new_structured_chunks": "forbidden",
+      "persistence_decision": "migration_only",
+      "status": "legacy_filename_only"
+    },
+    {
+      "legacy_migration": "rejected unless future quarantine is approved",
+      "new_structured_chunks": "rejected",
+      "persistence_decision": "rejected",
+      "status": "unknown_provenance"
+    }
+  ],
+  "source_schema": {
+    "schema_name": "structured-document-chunk-candidate",
+    "schema_version": "D.4c"
+  },
+  "specification_name": "aviationrag-persisted-chunk-mapping",
+  "specification_version": "0.1.0",
+  "target_schema": {
+    "schema_name": "aviationrag-persisted-chunk",
+    "schema_version": "0.1.0"
+  },
+  "validation_gates": [
+    {
+      "accepted_for_future_real_persistence": true,
+      "state": "valid"
+    },
+    {
+      "accepted_for_future_real_persistence": true,
+      "state": "valid_with_warnings"
+    },
+    {
+      "accepted_for_future_real_persistence": false,
+      "state": "review_required"
+    },
+    {
+      "accepted_for_future_real_persistence": false,
+      "state": "rejected"
+    }
+  ]
+}

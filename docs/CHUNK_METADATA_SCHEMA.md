@@ -340,6 +340,73 @@ page/source-block evidence is present. Without source bytes, candidates are
 This adapter does not change `ALLOWED_CHUNK_TYPES`, `ChunkRecord`, vector
 payloads, retrieval metadata, or runtime ingestion.
 
+## 8d. D.5 Planned Persisted ChunkRecord Contract
+
+D.5 defines the planned persisted-record boundary in
+`docs/PERSISTED_CHUNK_RECORD_MAPPING_DESIGN.md` and the machine-readable
+mapping design in `docs/persisted_chunk_record_mapping.json`.
+
+Current runtime `ChunkRecord` remains unchanged. The D.4c
+`StructuredDocumentChunkCandidate` model remains review-only and is not a
+persisted runtime chunk. D.5 does not implement a mapper, write persisted
+records, modify runtime ingestion, process the real corpus, generate
+embeddings, touch Astra, touch FAISS, or change retrieval behavior.
+
+The planned persisted schema identity is:
+
+```json
+{
+  "schema_name": "aviationrag-persisted-chunk",
+  "schema_version": "0.1.0"
+}
+```
+
+Planned persisted records are the future durable source of truth between D.4c
+candidates and later vector payloads. Future vector payloads should derive
+their `chunk_id`, text, provenance metadata, and selected entity metadata from
+validated persisted records. Embeddings, vectors, Astra-specific IDs, FAISS
+positions, random IDs, machine-specific absolute paths, fabricated confidence,
+unverified table cells, generated figure descriptions, and inferred revisions
+are forbidden in the persisted record.
+
+The D.5 deterministic identity policy is:
+
+```text
+<document_id>:chunk:<first-24-hex-of-sha256>
+```
+
+The digest inputs are the document ID, persisted schema identity, content type,
+content subtype, ordered source block IDs, ordered entity IDs, and chunk
+sequence key. The persisted `chunk_index` is zero-based, deterministic for
+identical input, and used only for ordering/audit; it is not durable identity.
+
+D.5 planned provenance classes are:
+
+| Provenance status | New structured chunks | Legacy migration | Persistence decision |
+| --- | --- | --- | --- |
+| `full_provenance` | Accepted when document, checksum, source block, page/PDF, parser, and coherent section evidence are present. | Not used. | Accepted. |
+| `partial_provenance` | Accepted only with approved limitation code and `review_required=true`. | Not preferred. | Sample/local or governed acceptance only. |
+| `legacy_filename_only` | Forbidden. | Reserved for migrated legacy chunks. | Migration-only. |
+| `unknown_provenance` | Forbidden. | Rejected unless future quarantine is approved. | Rejected. |
+
+Validation states are `valid`, `valid_with_warnings`, `review_required`, and
+`rejected`. Future real persistence may accept `valid` and
+`valid_with_warnings` with audit records. `review_required` remains controlled
+sample/local persistence only until governance approves it. `rejected` cannot
+be persisted.
+
+The upstream P0 parser pilot accepted these limitations for controlled
+downstream design use only:
+
+- `CHUNK_SECTION_CROSSING_REVIEW`
+- `DUPLICATE_TEXT_LINES`
+- `TABLE_CANDIDATE_ONLY`
+
+It also recorded the confirmed nonblocking issue
+`TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE`. These codes must remain visible in
+warnings, accepted limitation codes, and persistence reports; they must not be
+used to erase warnings or silently repair evidence.
+
 ## 9. Extraction Quality Metadata
 
 Required or strongly recommended extraction metadata:
@@ -529,7 +596,9 @@ Alignment requirements:
 | D.4 | Page and structure preservation design. | Completed as design only; no reprocessing, migration, embeddings, Astra, or FAISS. |
 | D.4b | Synthetic structured-provenance validation. | Completed as offline validation only; no parser, runtime ingestion, migration, embeddings, Astra, or FAISS. |
 | D.4c | Structured-document parser-output adapter dry run. | Completed as offline candidate generation only; no runtime ingestion, migration, embeddings, Astra, or FAISS. |
-| D.5 | Re-embed/re-index after reset gate. | Future work requiring explicit reset approval. |
+| D.5 | Persisted `ChunkRecord` mapping design. | Completed as design only; no mapper, persistence, runtime ingestion, embeddings, Astra, or FAISS. |
+| D.5b | Synthetic persisted `ChunkRecord` mapper and local package dry run. | Future local synthetic work only; no real corpus, embeddings, Astra, or FAISS. |
+| D.6 | Re-embed/re-index after reset gate. | Future work requiring explicit reset approval. |
 
 Migration rules:
 

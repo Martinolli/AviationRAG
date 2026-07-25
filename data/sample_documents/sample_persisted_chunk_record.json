@@ -1,0 +1,67 @@
+{
+  "accepted_limitation_codes": [],
+  "adapter_version": "D.4c",
+  "admonition_ids": [],
+  "chunk_id": "synth-doc-001:chunk:0123456789abcdef01234567",
+  "chunk_index": 0,
+  "clause_identifier": "1.1",
+  "content_subtype": null,
+  "content_type": "paragraph",
+  "contributing_page_numbers": [
+    1
+  ],
+  "contributing_pdf_page_indexes": [
+    0
+  ],
+  "cross_reference_ids": [],
+  "document_id": "synth-doc-001",
+  "document_issue": null,
+  "document_number": "SYN-DESIGN-001",
+  "document_revision": "A",
+  "document_title": "Synthetic Persisted Chunk Design Fixture",
+  "effective_date": null,
+  "equation_ids": [],
+  "extraction_method": "synthetic structured-document adapter",
+  "figure_ids": [],
+  "language": null,
+  "normalized_text": "Synthetic persisted chunk text for design validation only.",
+  "page_end": 1,
+  "page_start": 1,
+  "parser_name": "synthetic-parser",
+  "parser_version": "0.1.0-design",
+  "pdf_page_index_end": 0,
+  "pdf_page_index_start": 0,
+  "persistence_mapper_version": "D.5-design-only",
+  "printed_page_labels": [
+    "1"
+  ],
+  "provenance_status": "full_provenance",
+  "review_required": false,
+  "schema_name": "aviationrag-persisted-chunk",
+  "schema_version": "0.1.0",
+  "section_id": "sec-1",
+  "section_number": "1",
+  "section_path": [
+    "1 Synthetic Section"
+  ],
+  "section_title": "Synthetic Section",
+  "source_block_ids": [
+    "blk-1"
+  ],
+  "source_checksum": "sha256:synthetic-design-fixture",
+  "source_filename": "synthetic-persisted-design.pdf",
+  "source_span": {
+    "page_end": 1,
+    "page_start": 1,
+    "pdf_page_index_end": 0,
+    "pdf_page_index_start": 0,
+    "source_block_ids": [
+      "blk-1"
+    ]
+  },
+  "structured_document_schema_version": "0.1.0",
+  "table_ids": [],
+  "text": "Synthetic persisted chunk text for design validation only.",
+  "validation_status": "valid",
+  "warning_codes": []
+}

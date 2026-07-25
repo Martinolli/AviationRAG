@@ -1,6 +1,6 @@
 # WORKLOG
 
-Last Updated: 2026-07-18
+Last Updated: 2026-07-25
 Active Branch: `main`
 Source Branch for Historical Entries: `hardening/sanitize-repo`
 
@@ -1564,6 +1564,54 @@ Persistent execution log for deployment hardening and product-readiness work so 
    - Embeddings and indexes have not been rebuilt.
    - Retrieval harness is not wired to FAISS/Astra.
    - Response policy is not enforced.
+
+### 2026-07-25
+
+1. Completed D.5 persisted `ChunkRecord` mapping design as documentation-only work.
+2. Verified upstream `techdoc-parser` P0 pilot acceptance state:
+   - outcome: `ACCEPTED_WITH_LIMITATIONS`
+   - 32/32 representative pages reviewed
+   - 28 `PASS`
+   - 4 `REVIEW`
+   - 0 `FAIL`
+   - 0 blocking findings
+3. Recorded accepted upstream limitations:
+   - `CHUNK_SECTION_CROSSING_REVIEW`
+   - `DUPLICATE_TEXT_LINES`
+   - `TABLE_CANDIDATE_ONLY`
+4. Recorded confirmed nonblocking upstream issue:
+   - `TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE`
+5. Created `docs/PERSISTED_CHUNK_RECORD_MAPPING_DESIGN.md`.
+6. Created `docs/persisted_chunk_record_mapping.json`.
+7. Created optional fictional design fixture `data/sample_documents/sample_persisted_chunk_record.json`.
+8. Defined persisted schema identity:
+   - `schema_name`: `aviationrag-persisted-chunk`
+   - `schema_version`: `0.1.0`
+9. Defined deterministic persisted `chunk_id` policy:
+   - `<document_id>:chunk:<first-24-hex-of-sha256>`
+   - canonical inputs include document ID, schema identity, content type, source block IDs, entity IDs, and chunk sequence key.
+10. Defined required, conditional, optional, and forbidden persisted fields.
+11. Defined full, partial, legacy filename-only, and unknown provenance governance.
+12. Defined heading, paragraph/list, table, figure-caption, equation, admonition, cross-reference, duplicate text, and section-crossing policies.
+13. Defined accepted limitation registry, validation states, persistence-package format, package determinism, rollback, and audit requirements.
+14. Updated `docs/CHUNK_METADATA_SCHEMA.md` with the D.5 planned persisted contract while keeping the current runtime `ChunkRecord` unchanged.
+15. Updated `docs/ARCHITECTURE.md` with the planned boundary:
+   - `StructuredDocumentChunkCandidate`
+   - `PersistedChunkRecord mapper`
+   - validated local persistence package
+   - future embedding/vector pipeline
+16. Updated `docs/REAL_CHUNK_MIGRATION_DESIGN.md` to make D.5 and future D.5b required gates before real migration.
+17. Updated `docs/RESET_REBUILD_AND_EVALUATION_BASELINE.md` to record that the upstream P0 pilot supports design/sample dry-run work only and does not authorize reset/rebuild work.
+18. Updated `PLANWORKLOG.md` to mark D.4c complete, mark D.5 complete, and add recommended next phase D.5b.
+19. No mapper was implemented.
+20. No persisted chunks were written.
+21. Runtime ingestion remains unchanged.
+22. No real corpus was processed.
+23. No embeddings were generated.
+24. Astra and FAISS were untouched.
+25. `techdoc-parser` was inspected read-only and not modified.
+26. Next phase documented:
+   - D.5b synthetic persisted `ChunkRecord` mapper and local package dry run.
 
 ## Session Recovery Procedure
 

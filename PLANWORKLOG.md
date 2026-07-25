@@ -1,6 +1,6 @@
 # PLANWORKLOG
 
-Last Updated: 2026-07-18
+Last Updated: 2026-07-25
 Repository: `Martinolli/AviationRAG`  
 Base Branch: `main`  
 Purpose: Refactored execution plan comparing the current `WORKLOG.md` status with the broader AviationRAG product/audit roadmap.
@@ -540,13 +540,56 @@ Acceptance criteria:
 
 #### D.4c Synthetic parser-output adapter design and dry run
 
-Status: `Planned`
+Status: `Completed` / `Offline candidate generation only`
 
 Tasks:
 
-- [ ] Design a synthetic parser-output adapter that consumes validated structured-document records.
-- [ ] Define dry-run mapping from `StructuredDocument` blocks to future chunk-ready records.
-- [ ] Keep real parser output, real documents, runtime ingestion, migration, embeddings, Astra, and FAISS out of this phase unless explicitly approved.
+- [x] Design an offline parser-output adapter that consumes validated structured-document records.
+- [x] Define dry-run mapping from `StructuredDocument` blocks/entities to review-only `StructuredDocumentChunkCandidate` records.
+- [x] Add synthetic fixture coverage and manual dry-run CLI.
+- [x] Keep runtime ingestion, real migration, embeddings, Astra, and FAISS out of this phase.
+
+Acceptance criteria:
+
+- [x] Adapter is implemented at `src/aviationrag/ingestion/structured_document_adapter.py`.
+- [x] CLI is implemented at `tools/chunking/run-structured-document-adapter-dry-run.py`.
+- [x] Adapter output remains review-only and separate from persisted `ChunkRecord` records.
+- [x] No runtime ingestion integration occurs.
+
+#### D.5 Persisted ChunkRecord mapping design
+
+Status: `Completed` / `Design only; persistence not implemented`
+
+Tasks:
+
+- [x] Create `docs/PERSISTED_CHUNK_RECORD_MAPPING_DESIGN.md`.
+- [x] Create `docs/persisted_chunk_record_mapping.json`.
+- [x] Document accepted limitation governance.
+- [x] Document deterministic persisted `chunk_id` policy.
+- [x] Document required, conditional, optional, and forbidden fields.
+- [x] Document full/partial/legacy/unknown provenance policy.
+- [x] Document heading, table, figure, equation, admonition, cross-reference, duplicate text, and section-crossing policies.
+- [x] Document persistence-package format, determinism, rollback, and audit requirements.
+- [x] Keep implementation, runtime ingestion, real corpus processing, embeddings, Astra, and FAISS out of D.5.
+
+Acceptance criteria:
+
+- [x] D.5 is documentation-only.
+- [x] Persisted records are not generated.
+- [x] Runtime ingestion remains unchanged.
+- [x] No real corpus processing occurs.
+- [x] Embeddings, Astra, and FAISS are untouched.
+
+#### D.5b Synthetic persisted ChunkRecord mapper and local package dry run
+
+Status: `Recommended next phase` / `Do not begin automatically`
+
+Tasks:
+
+- [ ] Implement a synthetic-only persisted-record mapper after D.5 approval.
+- [ ] Write a controlled local persistence package using synthetic/sample inputs only.
+- [ ] Validate package determinism, warnings, rejections, rollback, and audit outputs.
+- [ ] Keep real corpus ingestion, embeddings, Astra, FAISS, and runtime retrieval out of this phase.
 
 ---
 
@@ -1089,6 +1132,7 @@ Recommended immediate order:
 4. Add backend package skeleton without behavior change.
 5. Add retrieval evaluation harness.
 6. Use D.4 page and structure preservation design as the gate before any real parsing, migration, embedding, or indexing work.
-7. Review D.4c structured-document adapter dry-run candidates before any parser integration, persisted chunk mapping, embedding, Astra, or FAISS work.
+7. Use the D.5 persisted-record mapping design as the gate before any persisted mapper, parser integration, embedding, Astra, or FAISS work.
+8. Recommended next controlled phase: D.5b synthetic persisted `ChunkRecord` mapper and local package dry run.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.

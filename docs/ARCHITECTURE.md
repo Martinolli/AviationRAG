@@ -146,9 +146,11 @@ source file
   -> StructuredDocument
   -> Structured-document validator
   -> AviationRAG ingestion adapter
-  -> ChunkRecord with page and structure provenance
-  -> validated vector payloads
-  -> retrieval citations
+  -> StructuredDocumentChunkCandidate
+  -> planned PersistedChunkRecord mapper
+  -> validated local persistence package
+  -> future embedding/vector pipeline
+  -> future retrieval citations
 ```
 
 This boundary is design-only. Runtime ingestion still uses the legacy scripts,
@@ -156,6 +158,11 @@ and no parser integration, document reprocessing, embedding regeneration, Astra
 reset, or FAISS rebuild has been performed. The D.4b validator is offline
 pre-runtime scaffolding for synthetic records only; it does not parse source
 documents or feed runtime ingestion.
+
+The D.5 persisted-record boundary is also design-only. The
+`PersistedChunkRecord` mapper is not implemented, persistence is not active,
+and no vectors are involved. Future vector payloads must derive from validated
+persisted records rather than directly from review-only D.4c candidates.
 
 Current retrieval and generation:
 
@@ -292,6 +299,29 @@ review-only chunk candidates. It does not import `techdoc-parser` runtime
 modules, does not modify runtime ingestion scripts, and does not write chunks,
 embeddings, Astra records, FAISS indexes, API routes, prompts, or deployment
 behavior.
+
+D.5 defines the planned persisted chunk contract in
+`docs/PERSISTED_CHUNK_RECORD_MAPPING_DESIGN.md` and the machine-readable mapping
+specification in `docs/persisted_chunk_record_mapping.json`.
+
+Planned D.5 boundary:
+
+```text
+StructuredDocumentChunkCandidate
+        |
+        v
+PersistedChunkRecord mapper
+        |
+        v
+validated local persistence package
+        |
+        v
+future embedding/vector pipeline
+```
+
+The mapper is not implemented. Persisted records are not generated. Runtime
+ingestion remains unchanged. The real corpus is untouched. Embeddings, Astra,
+and FAISS are not involved.
 
 ```text
 src/aviationrag/
