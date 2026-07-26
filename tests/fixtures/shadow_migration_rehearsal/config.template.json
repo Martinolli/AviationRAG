@@ -1,0 +1,48 @@
+{
+  "config_schema_name": "aviationrag-shadow-migration-rehearsal-config",
+  "config_schema_version": "0.1.0",
+  "document_identity_aliases": {
+    "flight_test_rm_ag_300": [
+      "Flight_Test_Safety_Risk_Management_AD1183573_v1.pdf"
+    ]
+  },
+  "legacy_inventory": {
+    "chunk_roots": [
+      "data/processed/chunked_documents"
+    ],
+    "source_roots": [
+      "data/documents"
+    ]
+  },
+  "observations": [
+    {
+      "document_id": "flight_test_rm_ag_300",
+      "observation_code": "OCR_COMPLETENESS_NOT_ESTABLISHED",
+      "page": 2,
+      "scope": "document_page",
+      "summary": "flight_test_rm_ag_300 page 2 may require OCR; OCR was not executed."
+    }
+  ],
+  "packages": [
+    {
+      "document_id": "faa_order_4040_26b",
+      "expected_package_digest": "d2509f9dbaba886b82cb135b386a7c494aaf0569a8422ad4031cd9c38a26f6a5",
+      "package_dir": "data/migration_dry_run/real_parser_sample/faa_order_4040_26b/run_1"
+    },
+    {
+      "document_id": "flight_test_rm_ag_300",
+      "expected_package_digest": "44fc8fd6ab799d3b2bfe6e530c5e8ddc91e01ee834c8e4a190a8675da3717026",
+      "package_dir": "data/migration_dry_run/multi_profile_persistence/flight_test_rm_ag_300/run_1"
+    },
+    {
+      "document_id": "mil_std_882e",
+      "expected_package_digest": "f1abf41c7d93d23eec24829181e1496ca63a55869bc78d9d94bb6105e0ae71c1",
+      "package_dir": "data/migration_dry_run/multi_profile_persistence/mil_std_882e/run_1"
+    },
+    {
+      "document_id": "aircraft_system_safety",
+      "expected_package_digest": "cdac3287b5da537ca47fe7d9f33f6140292bcf288baefca0a3ae285438b39bef",
+      "package_dir": "data/migration_dry_run/multi_profile_persistence/aircraft_system_safety/run_1"
+    }
+  ]
+}

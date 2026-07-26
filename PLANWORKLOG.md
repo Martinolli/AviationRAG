@@ -1174,7 +1174,8 @@ Recommended immediate order:
 7. Use the D.5c real parser-output sample gate as the gate before any multi-profile parser-output evaluation, embedding, Astra, or FAISS work.
 8. D.5d controlled multi-profile parser-output persistence evaluation is complete for exactly three controlled profiles.
 9. D.6 persistence governance decision and migration readiness review is complete.
-10. Recommended next controlled phase: D.7 controlled shadow migration rehearsal.
+10. D.7 controlled shadow migration rehearsal is complete.
+11. Recommended next controlled phase: D.8 controlled migration pilot readiness review.
 
 This sequence keeps the project stable while moving it toward the real goal: a trustworthy aviation engineering and compliance-support RAG system.
 
@@ -1232,3 +1233,42 @@ D.7 — Controlled Shadow Migration Rehearsal
 
 D.7 must remain offline, local, reversible, non-destructive, without
 embeddings, without Astra, without FAISS, and without retrieval activation.
+
+## 13. D.7 Completion Record
+
+D.7 is complete with outcome `PASS_WITH_QUARANTINE`.
+
+Completion criteria:
+
+1. All four approved packages were loaded.
+2. Package integrity passed for all packages.
+3. Legacy inventory was read-only and restricted to `data/documents` and `data/processed/chunked_documents`.
+4. Document reconciliation completed.
+5. Identity ambiguity did not block the rehearsal.
+6. Eligibility classification completed.
+7. The review-required page-52 record was quarantined.
+8. Zero rejected records remained.
+9. Accounting reconciled.
+10. Output determinism passed across `run_1` and `run_2`.
+11. Rollback passed.
+12. Legacy files remained unchanged.
+13. No runtime ingestion, vector, embedding, Astra, FAISS, OCR, parser, or retrieval activity occurred.
+
+Actual D.7 counts:
+
+```text
+Structured records: 17,254
+Shadow eligible: 17,253
+Quarantined: 1
+Forbidden: 0
+Rejected: 0
+Aggregate shadow digest: 6a8ad070f565e207616abf8e0e104835a60e683f3be6eab193c098762894b02f
+```
+
+Recommended next phase:
+
+```text
+D.8 — Controlled Migration Pilot Readiness Review
+```
+
+D.8 must be a governance decision before any controlled pilot execution.

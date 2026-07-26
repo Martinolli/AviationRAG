@@ -1905,6 +1905,74 @@ Compatibility corrections made in AviationRAG D.4c:
 28. Recommended next phase:
     - D.7 controlled shadow migration rehearsal.
 
+### 2026-07-26 D.7 Controlled Shadow Migration Rehearsal
+
+1. Started and completed D.7 controlled local shadow migration rehearsal.
+2. Input packages and digests:
+   - `faa_order_4040_26b`: 920 records, `d2509f9dbaba886b82cb135b386a7c494aaf0569a8422ad4031cd9c38a26f6a5`
+   - `flight_test_rm_ag_300`: 6,187 records, `44fc8fd6ab799d3b2bfe6e530c5e8ddc91e01ee834c8e4a190a8675da3717026`
+   - `mil_std_882e`: 2,406 records, `f1abf41c7d93d23eec24829181e1496ca63a55869bc78d9d94bb6105e0ae71c1`
+   - `aircraft_system_safety`: 7,741 records, `cdac3287b5da537ca47fe7d9f33f6140292bcf288baefca0a3ae285438b39bef`
+3. Package integrity result: PASS for all four packages.
+4. Legacy inventory roots:
+   - `data/documents`
+   - `data/processed/chunked_documents`
+5. Legacy inventory counts:
+   - legacy document records: 3
+   - legacy chunks: 160
+   - provenance classifications: `full_provenance` source match and `legacy_filename_only` chunk metadata matches
+6. Document reconciliation outcomes:
+   - `flight_test_rm_ag_300`: `EXACT_SOURCE_CHECKSUM_MATCH`
+   - `mil_std_882e`: `DOCUMENT_ID_MATCH_WITHOUT_SOURCE_CHECKSUM`
+   - `faa_order_4040_26b`: `NO_LEGACY_MATCH`
+   - `aircraft_system_safety`: `NO_LEGACY_MATCH`
+7. Checksum matches:
+   - `flight_test_rm_ag_300` matched one local legacy source file by SHA-256.
+8. Filename-only findings:
+   - `mil_std_882e` matched legacy chunk metadata without source checksum and remains review-required for identity.
+9. Record eligibility:
+   - structured records: 17,254
+   - shadow eligible: 17,253
+   - quarantine: 1
+   - forbidden: 0
+   - rejected: 0
+10. Limitation counts:
+    - `TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE`: 1
+11. Warning counts:
+    - `TABLE_CLASSIFICATION_REVIEW_REQUIRED`: 1
+12. Known quarantine:
+    - `aircraft_system_safety:chunk:page-52-table-1`
+    - reason: review-required table-classification limitation
+    - indexing eligible: false
+    - retrieval eligible: false
+    - limitation did not leak to other records
+13. OCR observation handling:
+    - `flight_test_rm_ag_300` page 2 retained `OCR_COMPLETENESS_NOT_ESTABLISHED`
+    - no OCR execution occurred
+    - no record mutation occurred
+    - production cutover remains blocked for the observation
+14. Accounting result: PASS.
+15. Determinism result: PASS; `run_1` and `run_2` run artifacts were byte-identical.
+16. Rollback result: PASS.
+17. Legacy unchanged result: PASS; no legacy files were created, deleted, or modified.
+18. Aggregate shadow digest:
+    - `6a8ad070f565e207616abf8e0e104835a60e683f3be6eab193c098762894b02f`
+19. Formal command:
+    - `python tools/migration/run-shadow-migration-rehearsal.py --config data/migration_dry_run/shadow_migration_rehearsal/config.local.json --output-root data/migration_dry_run/shadow_migration_rehearsal --allow-local-write --verify-determinism --verify-rollback --strict`
+    - outcome: `PASS_WITH_QUARANTINE`
+    - exit code: 2
+20. Generated local outputs remained ignored under `data/migration_dry_run/shadow_migration_rehearsal/`.
+21. No migration cutover occurred.
+22. No embeddings were generated.
+23. Astra was untouched.
+24. FAISS was untouched.
+25. Production retrieval was not activated.
+26. Runtime ingestion remains unchanged.
+27. `techdoc-parser` remained unchanged.
+28. Production readiness was not granted.
+29. Recommended next governance phase:
+    - D.8 controlled migration pilot readiness review.
+
 ## Session Recovery Procedure
 
 If the chat/session freezes:

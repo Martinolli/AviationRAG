@@ -1,0 +1,51 @@
+{
+  "authorization": {
+    "astra_operations": false,
+    "controlled_migration_pilot": false,
+    "d8_controlled_migration_pilot_readiness_review": true,
+    "embedding_generation": false,
+    "faiss_operations": false,
+    "full_corpus_migration": false,
+    "legacy_deletion": false,
+    "ocr_execution": false,
+    "production_persistence": false,
+    "production_retrieval": false,
+    "runtime_retrieval_activation": false
+  },
+  "expected_outcome": "PASS_WITH_QUARANTINE",
+  "actual_rehearsal_summary": {
+    "aggregate_shadow_digest": "6a8ad070f565e207616abf8e0e104835a60e683f3be6eab193c098762894b02f",
+    "determinism_verified": true,
+    "forbidden_count": 0,
+    "legacy_chunk_count": 160,
+    "legacy_document_count": 3,
+    "package_count": 4,
+    "package_integrity_verified": true,
+    "quarantine_count": 1,
+    "rejected_count": 0,
+    "rollback_verified": true,
+    "shadow_eligible_count": 17253,
+    "structured_record_count": 17254
+  },
+  "governance_policy_name": "aviationrag-persistence-governance",
+  "governance_policy_version": "0.1.0",
+  "known_quarantine": {
+    "indexing_eligible": false,
+    "limitation_code": "TABLE_FALSE_POSITIVE_ON_FIGURE_PAGE",
+    "record_reference": "aircraft_system_safety:chunk:page-52-table-1",
+    "retrieval_eligible": false
+  },
+  "reconciliation_status_counts": {
+    "DOCUMENT_ID_MATCH_WITHOUT_SOURCE_CHECKSUM": 1,
+    "EXACT_SOURCE_CHECKSUM_MATCH": 1,
+    "NO_LEGACY_MATCH": 2
+  },
+  "privacy": {
+    "absolute_paths_in_committed_fixture": false,
+    "chunk_text_in_committed_fixture": false,
+    "source_text_in_committed_fixture": false,
+    "vectors_in_committed_fixture": false
+  },
+  "rehearsal_schema_name": "aviationrag-controlled-shadow-migration-rehearsal",
+  "rehearsal_schema_version": "0.1.0"
+}

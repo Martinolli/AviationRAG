@@ -390,6 +390,30 @@ migration execution. Review-required records remain quarantined. D.6 does not
 authorize vector-store work, embedding generation, Astra operations, FAISS
 operations, or production retrieval.
 
+D.7 adds an offline rehearsal boundary:
+
+```text
+validated persisted packages
+        +
+legacy read-only inventory
+        |
+        v
+D.7 deterministic shadow store
+        |
+        v
+quarantine and reconciliation
+        |
+        v
+rollback evidence
+```
+
+The D.7 implementation lives in
+`src/aviationrag/migration/shadow_migration_rehearsal.py`, with manual CLI
+`tools/migration/run-shadow-migration-rehearsal.py`. The shadow store is local,
+ignored, deterministic, and not queried by runtime retrieval. D.7 does not
+activate structured records in production, generate embeddings, connect to
+Astra, touch FAISS, or modify runtime ingestion.
+
 ```text
 src/aviationrag/
   __init__.py

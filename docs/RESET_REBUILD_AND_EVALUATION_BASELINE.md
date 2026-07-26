@@ -378,3 +378,16 @@ A future vector rebuild requires all of the following before execution:
 
 Until those conditions are satisfied, embeddings, Astra operations, FAISS
 operations, and production retrieval remain blocked.
+
+## 19. D.7 Shadow Migration Rehearsal Baseline
+
+D.7 completed on 2026-07-26 with `PASS_WITH_QUARANTINE`.
+
+No reset or rebuild occurred. No embeddings were generated. Astra and FAISS were
+untouched. Runtime retrieval and runtime ingestion were unchanged. The
+structured shadow output remained local under ignored
+`data/migration_dry_run/shadow_migration_rehearsal/`.
+
+D.7 provides evidence for D.8 controlled migration pilot readiness review only;
+it does not authorize a reset, rebuild, embedding generation, datastore writes,
+or production retrieval.

@@ -592,6 +592,32 @@ Baseline D.6 rules:
 D.7 must remain local, reversible, non-destructive, storage-neutral, and
 auditable.
 
+## 23. D.7 Controlled Shadow Migration Rehearsal Stage
+
+D.7 adds this rehearsal stage before any controlled pilot readiness review:
+
+```text
+validated packages
+        |
+        v
+shadow store
+        |
+        v
+reconciliation
+        |
+        v
+rollback verification
+        |
+        v
+controlled pilot readiness review
+```
+
+D.7 completed with `PASS_WITH_QUARANTINE`: 17,254 structured records,
+17,253 shadow-eligible records, 1 quarantined record, 0 forbidden records, and
+0 rejected records. No cutover occurred, no legacy data changed, no index
+changed, no embeddings were generated, Astra and FAISS were untouched, and no
+production migration authorization follows automatically.
+
 ## 20. Open Questions
 
 1. How reliable is current page metadata across existing PDF and DOCX extraction outputs?

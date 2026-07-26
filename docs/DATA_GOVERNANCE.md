@@ -227,3 +227,31 @@ retention duration remains unresolved.
 The reported dependency findings remain a production security gate. They do not
 invalidate offline deterministic evidence, but production persistence, indexing,
 retrieval, or deployment requires separate security review.
+
+## Controlled Shadow Migration Rehearsal Addendum
+
+D.7 shadow-store origin rules:
+
+1. Structured package records retain `new_structured` origin and remain separate
+   from legacy records.
+2. Legacy inventory records use `legacy_processed`, `legacy_chunked`, or
+   `legacy_unresolved`; filename-only legacy evidence remains
+   `legacy_filename_only`.
+3. No filename-only or title-only evidence may establish exact identity.
+4. Exact source identity requires SHA-256 source checksum match.
+
+Quarantine storage:
+
+1. `review_required` records are written only to quarantine.
+2. `valid_with_warnings` records quarantine by default without scoped approval.
+3. Quarantine records are not indexing-eligible or retrieval-eligible.
+4. Quarantine is accounted for but is not rejection.
+
+Reconciliation records must preserve structured document ID, source filename,
+source checksum, reconciliation status, matched legacy keys, exact checksum
+match count, filename match count, review requirement, cutover eligibility, and
+warning codes.
+
+Legacy snapshot and rollback evidence must record file counts, sizes, and
+SHA-256 checksums before and after rehearsal. No destructive overwrite, legacy
+deletion, silent origin merge, or legacy chunk mutation is allowed.

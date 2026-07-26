@@ -254,3 +254,24 @@ cutover policy remain open.
 Production remains blocked by security review, OCR disposition, warning-owner
 signoff, production retention duration, legacy cutover policy, and controlled
 rehearsal evidence. Production readiness MUST NOT be claimed from D.6.
+
+## 28. D.7 Rehearsal Execution Status
+
+D.7 was executed on 2026-07-26 as a controlled local shadow migration rehearsal
+using only the four approved D.5c/D.5d persisted packages and a read-only legacy
+inventory.
+
+Result:
+
+```text
+Outcome: PASS_WITH_QUARANTINE
+Quarantine count: 1
+Rollback result: PASS
+Legacy unchanged result: PASS
+Conditions for D.8 controlled migration pilot readiness review: present
+```
+
+D.7 did not change the historical D.6 decision. Controlled migration pilot,
+production persistence, production indexing, production retrieval, embeddings,
+Astra, FAISS, OCR execution, parser execution, and runtime ingestion changes
+remain unauthorized.
